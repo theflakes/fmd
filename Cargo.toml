@@ -1,8 +1,18 @@
 [package]
-name = "fmd1"
+name = "fmd"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
+tree_magic = "*"
+fuzzyhash = "*"
+
+[profile.release]
+lto = true
+panic = 'abort'
+opt-level = "z"
+debug = false
+rpath = false
+debug-assertions = false
+codegen-units = 1
