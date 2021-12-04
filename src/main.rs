@@ -19,7 +19,6 @@ fn get_mimetype(target_file: &Path) {
 /* 
     See:    https://github.com/rustysec/fuzzyhash-rs
             https://docs.rs/fuzzyhash/latest/fuzzyhash/
-
 */
 fn get_fuzzy_hash(target_file: &Path) {
     let mut file = std::fs::File::open(target_file).unwrap();
