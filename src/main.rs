@@ -60,6 +60,7 @@ fn print_help() {
     process::exit(1)
 }
 
+
 fn main() -> io::Result<()> {
     let args: Vec<String> = env::args().collect();
     if args.len() != 2 { print_help() }
