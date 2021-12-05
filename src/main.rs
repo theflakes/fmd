@@ -118,6 +118,7 @@ fn convert_to_path(target_file: &str) -> io::Result<&Path> {
         return Ok(file_path)
     }
 
+    println!("\nFile not found!\n");
     process::exit(1)
 }
 
