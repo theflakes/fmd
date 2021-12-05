@@ -57,16 +57,16 @@ impl MetaData {
 
 
 // report out in json
-fn print_log(mime_type: &str, fuzzy_hash: FuzzyHash) -> std::io::Result<()> {
+fn print_log(mime_type: &str, fuzzy_hash: FuzzyHash) -> io::Result<()> {
     MetaData::new(mime_type.to_string(), fuzzy_hash.to_string()).report_log();
     Ok(())
 }
 
 
-fn get_mimetype(target_file: &Path) -> String{
+fn get_mimetype(target_file: &Path) -> io::Result<String> {
     let mtype = tree_magic::from_filepath(target_file);
 
-    return mtype
+    Ok(mtype)
 }
 
 
@@ -74,7 +74,7 @@ fn get_mimetype(target_file: &Path) -> String{
     See:    https://github.com/rustysec/fuzzyhash-rs
             https://docs.rs/fuzzyhash/latest/fuzzyhash/
 */
-fn get_fuzzy_hash(target_file: &Path) -> FuzzyHash {
+fn get_fuzzy_hash(target_file: &Path) -> io::Result<FuzzyHash> {
     let mut file = std::fs::File::open(target_file).unwrap();
     let mut fuzzy_hash = FuzzyHash::default();
 
@@ -91,7 +91,7 @@ fn get_fuzzy_hash(target_file: &Path) -> FuzzyHash {
     
     fuzzy_hash.finalize();
     
-    return fuzzy_hash
+    Ok(fuzzy_hash)
 }
 
 
@@ -119,8 +119,8 @@ fn main() -> io::Result<()> {
     if args.len() != 2 { print_help() }
     let file_path = &args[1];
     let path = convert_to_path(&file_path).unwrap();
-    let mime_type = get_mimetype(path);
-    let fuzzy_hash = get_fuzzy_hash(path);
+    let mime_type = get_mimetype(path).unwrap();
+    let fuzzy_hash = get_fuzzy_hash(path).unwrap();
     print_log(&mime_type, fuzzy_hash).unwrap();
     Ok(())
 }
