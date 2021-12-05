@@ -7,6 +7,8 @@ edition = "2021"
 [dependencies]
 tree_magic = "*"
 fuzzyhash = "*"
+serde = { version = "*", features = ["derive"] }
+serde_json = "*"
 
 [profile.release]
 lto = true
