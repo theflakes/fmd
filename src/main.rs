@@ -128,7 +128,7 @@ fn print_help() {
     println!("See: https://docs.rs/tree_magic/latest/tree_magic/\n");
     println!("Usage: fmd <file path>");
     println!("  Options:");
-    println!("       -p, --pretty     Pretty Print Json");
+    println!("       -p, --pretty     Pretty print JSON");
     println!("\n");
     process::exit(1)
 }
