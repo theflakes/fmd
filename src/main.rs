@@ -19,9 +19,13 @@ use serde::Serialize;
 type Str = ::std::borrow::Cow<'static, str>;
 trait Loggable : Serialize {
     /// convert struct to json
-    fn to_log (self: &'_ Self) -> Str
-    {
+    fn to_log (self: &'_ Self) -> Str  {
         ::serde_json::to_string(&self)
+            .ok()
+            .map_or("<failed to serialize>".into(), Into::into)
+    }
+    fn to_pretty_log (self: &'_ Self) -> Str {
+        ::serde_json::to_string_pretty(&self)
             .ok()
             .map_or("<failed to serialize>".into(), Into::into)
     }
@@ -30,6 +34,10 @@ trait Loggable : Serialize {
     fn write_log (self: &'_ Self)
     {
         println!("{}", self.to_log());
+    }
+    fn write_pretty_log (self: &'_ Self)
+    {
+        println!("{}", self.to_pretty_log());
     }
 }
 impl<T : ?Sized + Serialize> Loggable for T {}
@@ -53,12 +61,21 @@ impl MetaData {
     pub fn report_log(&self) {
         self.write_log()
     }
+
+    pub fn report_pretty_log(&self) {
+        self.write_pretty_log()
+    }
 }
 
 
 // report out in json
-fn print_log(mime_type: &str, fuzzy_hash: FuzzyHash) -> io::Result<()> {
-    MetaData::new(mime_type.to_string(), fuzzy_hash.to_string()).report_log();
+fn print_log(mime_type: &str, fuzzy_hash: FuzzyHash, pprint: bool) -> io::Result<()> {
+    if pprint {
+        MetaData::new(mime_type.to_string(), fuzzy_hash.to_string()).report_pretty_log();
+    } else {
+        MetaData::new(mime_type.to_string(), fuzzy_hash.to_string()).report_log();
+    }
+    
     Ok(())
 }
 
@@ -109,18 +126,37 @@ fn print_help() {
     println!("\nAuthor: Brian Kellogg");
     println!("Pull various file metadata.");
     println!("See: https://docs.rs/tree_magic/latest/tree_magic/\n");
-    println!("\nUsage: fmd <file path>\n");
+    println!("Usage: fmd <file path>");
+    println!("  Options:");
+    println!("       -p, --pretty     Pretty Print Json");
+    println!("\n");
     process::exit(1)
 }
 
 
 fn main() -> io::Result<()> {
     let args: Vec<String> = env::args().collect();
-    if args.len() != 2 { print_help() }
-    let file_path = &args[1];
+    let mut pprint = false;
+    let mut file_path = &String::new();
+    match args.len() {
+        2 => {
+            file_path = &args[1];
+        },
+        3 => {
+            if &args[1] == "-p" || &args[1] == "--pretty" {
+                file_path = &args[2];
+            } else if &args[2] == "-p" || &args[2] == "--pretty" {
+                file_path = &args[1];
+            } else {
+                print_help();
+            }
+            pprint = true;
+        },
+        _ => { print_help() }
+    };
     let path = convert_to_path(&file_path).unwrap();
     let mime_type = get_mimetype(path).unwrap();
     let fuzzy_hash = get_fuzzy_hash(path).unwrap();
-    print_log(&mime_type, fuzzy_hash).unwrap();
+    print_log(&mime_type, fuzzy_hash, pprint).unwrap();
     Ok(())
 }
