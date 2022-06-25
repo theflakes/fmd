@@ -14,10 +14,14 @@ Usage: fmd <file path>
 
 Example output:
 ```
-fmd.exe -p C:\windows\system32\AcSpecfc.dll
+.\fmd.exe --pretty .\fmd.exe
 {
+  "bytes": 453120,
   "mime_type": "application/x-executable",
-  "fuzzy_hash": "1536:hD6MmkvB6eQmKudOEq7RObnZv9x6sTFLW2f8ZRWupmlkc:4MmkJQmKlvOb9z5LgWupmlkc"
+  "md5": "7b85c1b2a0e6aa641e9c0657256efaf4",
+  "sha1": "81f909b63ae250eda2038a1e9ee30a1db6a277da",
+  "sha256": "6735d16bb91fef82abf9cbfb6d45d7babde042cc66757fefae10c5614b57c348",
+  "fuzzy_hash": "6144:f8rgbmFAgpy+wY4lFhXxkI3xNGAdRlH29xnQx0/U9h36fD9+nntfQ50ox:6JfX4lFhhkodRixnQKU9e9Kox"
 }
 ```
 
