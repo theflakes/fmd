@@ -11,6 +11,9 @@ tree_magic = "*"
 fuzzyhash = "*"
 serde = { version = "*", features = ["derive"] }
 serde_json = "*"
+md5 = "*"
+rust-crypto = "*"
+sha256 = "*"
 
 [profile.release]
 lto = true
