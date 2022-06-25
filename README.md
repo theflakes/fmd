@@ -5,7 +5,6 @@ fmd = File Metadata
 ```
 Author: Brian Kellogg
 Pull various file metadata.
-See: https://docs.rs/tree_magic/latest/tree_magic/
 
 Usage: fmd <file path>
   Options:
