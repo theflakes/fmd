@@ -6,6 +6,7 @@ extern crate sha256;
 extern crate crypto;
 
 use std::path::Path;
+use std::ptr::null;
 use std::{io, str};
 use std::env;
 use std::process;
@@ -13,7 +14,12 @@ use fuzzyhash::FuzzyHash;
 use std::io::{Read, Seek};
 use serde::Serialize;
 use crypto::digest::Digest;
-use std::{fs::{self, File}};
+use std::fs::{self, File};
+use pelite::FileMap;
+use pelite::pe32::Pe as pe32;
+use pelite::pe64::Pe as pe64;
+use pelite::pe32::PeFile as pefile32;
+use pelite::pe64::PeFile as pefile64;
 
 
 /*
@@ -47,29 +53,41 @@ trait Loggable : Serialize {
 impl<T : ?Sized + Serialize> Loggable for T {}
 
 #[derive(Serialize)]
+pub struct Imports {
+    pub name: String,
+    pub count: usize
+}
+
+#[derive(Serialize)]
 pub struct MetaData {
+    pub arch: i8,
     pub bytes: u64,
     pub mime_type: String,
     pub md5: String,
     pub sha1: String,
     pub sha256: String,
-    pub fuzzy_hash: String
+    pub fuzzy_hash: String,
+    pub imports: Vec<Imports>
 }
 impl MetaData {
     pub fn new(
+            arch: i8,
             bytes: u64,
             mime_type: String,
             md5: String,
             sha1: String,
             sha256: String,
-            fuzzy_hash: String) -> MetaData {
+            fuzzy_hash: String,
+            imports: Vec<Imports>) -> MetaData {
         MetaData {
+            arch,
             bytes,
             mime_type,
             md5,
             sha1,
             sha256,
-            fuzzy_hash
+            fuzzy_hash,
+            imports
         }
     }
 
@@ -86,31 +104,37 @@ impl MetaData {
 
 // report out in json
 fn print_log(
+                arch: i8,
                 bytes: u64,
                 mime_type: &str, 
                 md5: &str,
                 sha1: &str,
                 sha256: &str,
-                fuzzy_hash: FuzzyHash, 
+                fuzzy_hash: FuzzyHash,
+                imports: Vec<Imports>,
                 pprint: bool
             ) -> io::Result<()> {
     if pprint {
         MetaData::new(
+            arch,
             bytes,
             mime_type.to_string(), 
             md5.to_string(), 
             sha1.to_string(), 
             sha256.to_string(), 
-            fuzzy_hash.to_string()
+            fuzzy_hash.to_string(),
+            imports
         ).report_pretty_log();
     } else {
         MetaData::new(
+            arch,
             bytes,
             mime_type.to_string(), 
             md5.to_string(), 
             sha1.to_string(), 
             sha256.to_string(), 
-            fuzzy_hash.to_string()
+            fuzzy_hash.to_string(),
+            imports
         ).report_log();
     }
     
@@ -210,6 +234,47 @@ pub fn get_file_content_info(
     Ok((bytes, md5, sha1, sha256))
 }
 
+fn dll_deps_32(image: &[u8]) -> pelite::Result<(Vec<Imports>)> {
+	let mut file = match pefile32::from_bytes(image) {
+        Ok(i) => i,
+        Err(err) => return Err(err),
+    };
+    let mut imports: Vec<Imports> = Vec::new();
+	let iat = file.imports()?;
+    let mut imports: Vec<Imports> = Vec::new();
+	for import in iat {
+		let dll_name = import.dll_name()?;
+        let num_of_functs = import.iat()?;
+        let imp = Imports {
+            name: dll_name.to_string(),
+            count: num_of_functs.len()
+        };
+        imports.push(imp);
+	}
+	Ok((imports))
+}
+
+
+fn dll_deps_64(image: &[u8]) -> pelite::Result<(Vec<Imports>)> {
+	let mut file = match pefile64::from_bytes(image) {
+        Ok(i) => i,
+        Err(err) => return Err(err),
+    };
+    let mut imports: Vec<Imports> = Vec::new();
+	let iat = file.imports()?;
+    let mut imports: Vec<Imports> = Vec::new();
+	for import in iat {
+		let dll_name = import.dll_name()?;
+        let num_of_functs = import.iat()?;
+        let imp = Imports {
+            name: dll_name.to_string(),
+            count: num_of_functs.len()
+        };
+        imports.push(imp);
+	}
+	Ok((imports))
+}
+
 
 fn print_help() {
     println!("\nAuthor: Brian Kellogg");
@@ -248,6 +313,20 @@ fn main() -> io::Result<()> {
     let fuzzy_hash = get_fuzzy_hash(&file)?;
     let mut mime_type = get_mimetype(&path)?;
     let (bytes, md5, sha1, sha256) = get_file_content_info(&file)?;
-    print_log(bytes, &mime_type, &md5, &sha1, &sha256, fuzzy_hash, pprint)?;
+	let file_map = FileMap::open(path).unwrap();
+    let mut arch = 0;
+    let mut imports: Vec<Imports> = Vec::new();
+	let mut results = dll_deps_64(file_map.as_ref());
+    if results.is_err() {
+        results = dll_deps_32(file_map.as_ref());
+        if !results.is_err() { 
+            arch = 32;
+            imports = results.unwrap();
+        }
+    } else {
+        arch = 64;
+        imports = results.unwrap();
+    }
+    print_log(arch, bytes, &mime_type, &md5, &sha1, &sha256, fuzzy_hash, imports, pprint)?;
     Ok(())
 }

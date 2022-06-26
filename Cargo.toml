@@ -14,6 +14,7 @@ serde_json = "*"
 md5 = "*"
 rust-crypto = "*"
 sha256 = "*"
+pelite ="*"
 
 [profile.release]
 lto = true
