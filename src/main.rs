@@ -276,6 +276,26 @@ fn dll_deps_64(image: &[u8]) -> pelite::Result<(Vec<Imports>)> {
 }
 
 
+fn get_imports(path: &Path) -> std::io::Result<(Vec<Imports>, i8)> {
+    let mut imports: Vec<Imports> = Vec::new();
+    let mut arch: i8 = 0;
+    let file_map = FileMap::open(path)?;
+	let mut results = dll_deps_64(file_map.as_ref());
+    if results.is_err() {
+        results = dll_deps_32(file_map.as_ref());
+        if !results.is_err() { 
+            arch = 32;
+            imports = results.unwrap();
+        }
+    } else {
+        arch = 64;
+        imports = results.unwrap();
+    }
+
+    Ok((imports, arch))
+}
+
+
 fn print_help() {
     println!("\nAuthor: Brian Kellogg");
     println!("Pull various file metadata.");
@@ -313,20 +333,7 @@ fn main() -> io::Result<()> {
     let fuzzy_hash = get_fuzzy_hash(&file)?;
     let mut mime_type = get_mimetype(&path)?;
     let (bytes, md5, sha1, sha256) = get_file_content_info(&file)?;
-	let file_map = FileMap::open(path).unwrap();
-    let mut arch = 0;
-    let mut imports: Vec<Imports> = Vec::new();
-	let mut results = dll_deps_64(file_map.as_ref());
-    if results.is_err() {
-        results = dll_deps_32(file_map.as_ref());
-        if !results.is_err() { 
-            arch = 32;
-            imports = results.unwrap();
-        }
-    } else {
-        arch = 64;
-        imports = results.unwrap();
-    }
+    let (imports, arch) = get_imports(path)?;
     print_log(arch, bytes, &mime_type, &md5, &sha1, &sha256, fuzzy_hash, imports, pprint)?;
     Ok(())
 }
