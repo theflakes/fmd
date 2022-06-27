@@ -52,11 +52,13 @@ trait Loggable : Serialize {
 }
 impl<T : ?Sized + Serialize> Loggable for T {}
 
+
 #[derive(Serialize)]
 pub struct Imports {
     pub name: String,
     pub count: usize
 }
+
 
 #[derive(Serialize)]
 pub struct MetaData {
@@ -204,12 +206,14 @@ pub fn read_file_bytes(
     Ok(buffer)
 }
 
+
 fn get_sha1(buffer: &Vec<u8>) -> std::io::Result<(String)> {
     let mut hasher = crypto::sha1::Sha1::new();
     hasher.input(buffer);
     let sha1 = hasher.result_str();
     Ok(sha1)
 }
+
 
 // get metadata for the file's content (md5, sha1, ...)
 pub fn get_file_content_info(
@@ -233,6 +237,7 @@ pub fn get_file_content_info(
     }
     Ok((bytes, md5, sha1, sha256))
 }
+
 
 fn dll_deps_32(image: &[u8]) -> pelite::Result<(Vec<Imports>)> {
 	let mut file = match pefile32::from_bytes(image) {
