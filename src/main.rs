@@ -4,18 +4,25 @@ extern crate serde;             // needed for json serialization
 extern crate serde_json;        // needed for json serialization
 extern crate sha256;
 extern crate crypto;
+extern crate path_abs;
+extern crate dunce;
+extern crate chrono;
 
 use std::path::Path;
 use std::ptr::null;
 use std::{io, str};
 use std::env;
 use std::process;
+use std::borrow::Cow;
 use fuzzyhash::FuzzyHash;
 use std::io::{Read, Seek};
 use serde::Serialize;
 use crypto::digest::Digest;
 use std::fs::{self, File};
 use pelite::FileMap;
+use path_abs::{PathAbs, PathInfo};
+use chrono::prelude::{DateTime, Utc};
+use std::time::SystemTime;
 use pelite::pe32::Pe as pe32;
 use pelite::pe64::Pe as pe64;
 use pelite::pe32::PeFile as pefile32;
@@ -62,6 +69,8 @@ pub struct Imports {
 
 #[derive(Serialize)]
 pub struct MetaData {
+    pub timestamp: String,
+    pub path: String,
     pub arch: i8,
     pub bytes: u64,
     pub mime_type: String,
@@ -73,6 +82,8 @@ pub struct MetaData {
 }
 impl MetaData {
     pub fn new(
+            timestamp: String,
+            path: String,
             arch: i8,
             bytes: u64,
             mime_type: String,
@@ -82,6 +93,8 @@ impl MetaData {
             fuzzy_hash: String,
             imports: Vec<Imports>) -> MetaData {
         MetaData {
+            timestamp,
+            path,
             arch,
             bytes,
             mime_type,
@@ -106,35 +119,41 @@ impl MetaData {
 
 // report out in json
 fn print_log(
+                timestamp: String,
+                path: String,
                 arch: i8,
                 bytes: u64,
-                mime_type: &str, 
-                md5: &str,
-                sha1: &str,
-                sha256: &str,
+                mime_type: String, 
+                md5: String,
+                sha1: String,
+                sha256: String,
                 fuzzy_hash: FuzzyHash,
                 imports: Vec<Imports>,
                 pprint: bool
             ) -> io::Result<()> {
     if pprint {
         MetaData::new(
+            timestamp,
+            path.to_string(),
             arch,
             bytes,
-            mime_type.to_string(), 
-            md5.to_string(), 
-            sha1.to_string(), 
-            sha256.to_string(), 
+            mime_type, 
+            md5, 
+            sha1, 
+            sha256, 
             fuzzy_hash.to_string(),
             imports
         ).report_pretty_log();
     } else {
         MetaData::new(
+            timestamp,
+            path.to_string(),
             arch,
             bytes,
-            mime_type.to_string(), 
-            md5.to_string(), 
-            sha1.to_string(), 
-            sha256.to_string(), 
+            mime_type, 
+            md5, 
+            sha1, 
+            sha256, 
             fuzzy_hash.to_string(),
             imports
         ).report_log();
@@ -303,6 +322,23 @@ fn get_imports(path: &Path) -> std::io::Result<(Vec<Imports>, i8)> {
 }
 
 
+// find the parent directory of a given dir or file
+pub fn get_abs_path(
+                path: &std::path::Path
+            ) -> io::Result<(std::path::PathBuf)> 
+{
+    let abs = PathAbs::new(&path)?;
+    Ok(dunce::simplified(&abs.as_path()).into())
+}
+
+
+fn get_time_iso8601() -> io::Result<(String)> {
+    let now = SystemTime::now();
+    let now: DateTime<Utc> = now.into();
+    Ok(now.to_rfc3339())
+}
+
+
 fn print_help() {
     println!("\nAuthor: Brian Kellogg");
     println!("Pull various file metadata.");
@@ -335,12 +371,14 @@ fn main() -> io::Result<()> {
         },
         _ => { print_help() }
     };
+    let timestamp = get_time_iso8601()?;
     let path = convert_to_path(&file_path)?;
+    let abs_path = get_abs_path(path)?.as_path().to_str().unwrap().to_string();
     let file = open_file(&path)?;
     let fuzzy_hash = get_fuzzy_hash(&file)?;
     let mut mime_type = get_mimetype(&path)?;
     let (bytes, md5, sha1, sha256) = get_file_content_info(&file)?;
     let (imports, arch) = get_imports(path)?;
-    print_log(arch, bytes, &mime_type, &md5, &sha1, &sha256, fuzzy_hash, imports, pprint)?;
+    print_log(timestamp, abs_path, arch, bytes, mime_type, md5, sha1, sha256, fuzzy_hash, imports, pprint)?;
     Ok(())
 }

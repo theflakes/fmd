@@ -15,6 +15,9 @@ md5 = "*"
 rust-crypto = "*"
 sha256 = "*"
 pelite ="*"
+dunce = "*"
+path_abs = "*"
+chrono = "*"
 
 [profile.release]
 lto = true
