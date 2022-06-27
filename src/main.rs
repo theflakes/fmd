@@ -99,10 +99,11 @@ fn get_mimetype(target_file: &Path) -> io::Result<String> {
 */
 fn get_fuzzy_hash(mut file: &std::fs::File) -> io::Result<FuzzyHash> {
     let mut fuzzy_hash = FuzzyHash::default();
+    file.rewind();
 
     loop {
         let mut buffer = vec![0; 1024];
-        let count = Read::read(&mut file, &mut buffer).unwrap();
+        let count = file.read(&mut buffer).unwrap();
     
         fuzzy_hash.update(buffer);
     
@@ -112,7 +113,6 @@ fn get_fuzzy_hash(mut file: &std::fs::File) -> io::Result<FuzzyHash> {
     }
     
     fuzzy_hash.finalize();
-    
     Ok(fuzzy_hash)
 }
 
@@ -287,7 +287,6 @@ fn main() -> io::Result<()> {
     let fuzzy_hash = get_fuzzy_hash(&file)?;
     let mut mime_type = get_mimetype(&path)?;
     let (bytes, md5, sha1, sha256) = get_file_content_info(&file, buffer)?;
-    //let (imports, arch) = get_imports(path)?;
     let (imps, is64) = get_imports(path)?;
     print_log(timestamp, abs_path, is64, 
                 bytes, mime_type, md5, 

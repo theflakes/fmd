@@ -25,7 +25,7 @@ Example output:
   "md5": "4157e3855a96ecb9055923fc1dbdbfca",
   "sha1": "c9149496528393c89381a5a693b48c5b6205a809",
   "sha256": "d49ecd6dc80af230dde8577ac5d32dea7c7f98a4c9ae7a57178333f2f8f316c4",
-  "fuzzy": "3::",
+  "fuzzy": "1536:hD6MmkvB6eQmKudOEq7RObnZv9x6sTFLW2f8ZRWupmlkc:4MmkJQmKlvOb9z5LgWupmlkc",
   "imports": [
     {
       "dll": "apphelp.dll",
