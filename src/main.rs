@@ -286,7 +286,7 @@ fn get_imports(path: &Path) -> std::io::Result<(Vec<Imports>, i8)> {
     let mut arch: i8 = 0; // we need to find if bin is 32 or 64
     let file_map = FileMap::open(path)?;
 	let mut results = dll_deps_64(file_map.as_ref());
-    // look for an error on parsing 64 bit imports, this means the file is either 32 bit or not a bin
+    // look for an error on parsing 64 bit imports, this means the file is either 32 bit or not a bin at all
     if results.is_err() {
         results = dll_deps_32(file_map.as_ref());
         if !results.is_err() { 
