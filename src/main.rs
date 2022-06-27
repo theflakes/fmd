@@ -33,14 +33,13 @@ use goblin::{error, Object};
 fn print_log(
                 timestamp: String,
                 path: String,
-                is_64: bool,
                 bytes: u64,
                 mime_type: String, 
                 md5: String,
                 sha1: String,
                 sha256: String,
                 fuzzy: FuzzyHash,
-                imports: Vec<Imports>,
+                binary: Binary,
                 pprint: bool
             ) -> io::Result<()> {
     if pprint {
@@ -48,28 +47,26 @@ fn print_log(
             timestamp,
             DEVICE_TYPE.to_string(),
             path.to_string(),
-            is_64,
             bytes,
             mime_type, 
             md5, 
             sha1, 
             sha256, 
             fuzzy.to_string(),
-            imports
+            binary
         ).report_pretty_log();
     } else {
         MetaData::new(
             timestamp,
             DEVICE_TYPE.to_string(),
             path.to_string(),
-            is_64,
             bytes,
             mime_type, 
             md5, 
             sha1, 
             sha256, 
             fuzzy.to_string(),
-            imports
+            binary
         ).report_log();
     }
     
@@ -172,10 +169,14 @@ pub fn get_file_content_info(
 }
 
 
-fn get_imports(path: &Path) -> io::Result<(Vec<Imports>, bool)> {
+fn get_imports(path: &Path) -> io::Result<(Binary)> {
     let buffer = fs::read(path).unwrap();
-    let mut imps: Vec<Imports> = Vec::new();
-    let mut is64 = false;
+    let imps: Vec<Imports> = Vec::new();
+    let mut bin = Binary {
+        is_64: false,
+        is_lib: false,
+        imports: imps
+    };
     match Object::parse(&buffer).unwrap() {
         Object::Elf(elf) => {
             println!("elf: {:#?}", &elf);
@@ -197,9 +198,10 @@ fn get_imports(path: &Path) -> io::Result<(Vec<Imports>, bool)> {
                     temp.count += 1;
                     temp.name.push(m.name.to_string());
                 }
-                imps.push(temp.clone());
+                bin.imports.push(temp.clone());
             }
-            is64 = pe.is_64;
+            bin.is_64 = pe.is_64;
+            bin.is_lib = pe.is_lib;
         },
         Object::Mach(mach) => {
             println!("mach: {:#?}", &mach);
@@ -209,7 +211,7 @@ fn get_imports(path: &Path) -> io::Result<(Vec<Imports>, bool)> {
         },
         Object::Unknown(magic) => { println!("unknown magic: {:#x}", magic) }
     }
-    Ok((imps, is64))
+    Ok(bin)
 }
 
 
@@ -287,10 +289,10 @@ fn main() -> io::Result<()> {
     let fuzzy_hash = get_fuzzy_hash(&file)?;
     let mut mime_type = get_mimetype(&path)?;
     let (bytes, md5, sha1, sha256) = get_file_content_info(&file, buffer)?;
-    let (imps, is64) = get_imports(path)?;
-    print_log(timestamp, abs_path, is64, 
+    let bin = get_imports(path)?;
+    print_log(timestamp, abs_path, 
                 bytes, mime_type, md5, 
                 sha1, sha256, fuzzy_hash, 
-                imps, pprint)?;
+                bin, pprint)?;
     Ok(())
 }

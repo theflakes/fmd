@@ -48,46 +48,49 @@ pub struct Imports {
     pub name: Vec<String>
 }
 
+#[derive(Serialize, Clone)]
+pub struct Binary {
+    pub is_64: bool,
+    pub is_lib: bool,
+    pub imports: Vec<Imports>
+}
 
 #[derive(Serialize)]
 pub struct MetaData {
     pub timestamp: String,
     pub device_type: String,
     pub path: String,
-    pub is_64: bool,
     pub bytes: u64,
     pub mime_type: String,
     pub md5: String,
     pub sha1: String,
     pub sha256: String,
     pub fuzzy: String,
-    pub imports: Vec<Imports>
+    pub binary: Binary
 }
 impl MetaData {
     pub fn new(
             timestamp: String,
             device_type: String,
             path: String,
-            is_64: bool,
             bytes: u64,
             mime_type: String,
             md5: String,
             sha1: String,
             sha256: String,
             fuzzy: String,
-            imports: Vec<Imports>) -> MetaData {
+            binary: Binary) -> MetaData {
         MetaData {
             timestamp,
             device_type,
             path,
-            is_64,
             bytes,
             mime_type,
             md5,
             sha1,
             sha256,
             fuzzy,
-            imports
+            binary
         }
     }
 
