@@ -41,10 +41,11 @@ trait Loggable : Serialize {
 impl<T : ?Sized + Serialize> Loggable for T {}
 
 
-#[derive(Serialize)]
+#[derive(Serialize, Clone)]
 pub struct Imports {
-    pub name: String,
-    pub count: usize
+    pub dll: String,
+    pub count: u32,
+    pub name: Vec<String>
 }
 
 
@@ -53,7 +54,7 @@ pub struct MetaData {
     pub timestamp: String,
     pub device_type: String,
     pub path: String,
-    pub arch: i8,
+    pub is_64: bool,
     pub bytes: u64,
     pub mime_type: String,
     pub md5: String,
@@ -67,7 +68,7 @@ impl MetaData {
             timestamp: String,
             device_type: String,
             path: String,
-            arch: i8,
+            is_64: bool,
             bytes: u64,
             mime_type: String,
             md5: String,
@@ -79,7 +80,7 @@ impl MetaData {
             timestamp,
             device_type,
             path,
-            arch,
+            is_64,
             bytes,
             mime_type,
             md5,

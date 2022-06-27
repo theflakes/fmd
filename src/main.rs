@@ -12,6 +12,7 @@ extern crate goblin;
 mod data_defs;
 
 use data_defs::*;
+use goblin::pe::PE;
 use std::path::Path;
 use std::ptr::null;
 use std::{io, str};
@@ -22,21 +23,17 @@ use fuzzyhash::FuzzyHash;
 use std::io::{Read, Seek};
 use crypto::digest::Digest;
 use std::fs::{self, File};
-use pelite::FileMap;
 use path_abs::{PathAbs, PathInfo};
 use chrono::prelude::{DateTime, Utc};
 use std::time::SystemTime;
-use pelite::pe32::Pe as pe32;
-use pelite::pe64::Pe as pe64;
-use pelite::pe32::PeFile as pefile32;
-use pelite::pe64::PeFile as pefile64;
+use goblin::{error, Object};
 
 
 // report out in json
 fn print_log(
                 timestamp: String,
                 path: String,
-                arch: i8,
+                is_64: bool,
                 bytes: u64,
                 mime_type: String, 
                 md5: String,
@@ -51,7 +48,7 @@ fn print_log(
             timestamp,
             DEVICE_TYPE.to_string(),
             path.to_string(),
-            arch,
+            is_64,
             bytes,
             mime_type, 
             md5, 
@@ -65,7 +62,7 @@ fn print_log(
             timestamp,
             DEVICE_TYPE.to_string(),
             path.to_string(),
-            arch,
+            is_64,
             bytes,
             mime_type, 
             md5, 
@@ -153,7 +150,8 @@ fn get_sha1(buffer: &Vec<u8>) -> std::io::Result<(String)> {
 
 // get metadata for the file's content (md5, sha1, ...)
 pub fn get_file_content_info(
-                                file: &std::fs::File
+                                file: &std::fs::File,
+                                mut buffer: Vec<u8>
                             ) -> std::io::Result<(u64, String, String, String)> 
 {
     let mut md5 = "".to_string();
@@ -161,7 +159,6 @@ pub fn get_file_content_info(
     let mut sha256 = "".to_string();
     let bytes = file.metadata()?.len();
     if bytes != 0 { // don't bother with opening empty files
-        let mut buffer = read_file_bytes(file)?;
         md5 = format!("{:x}", md5::compute(&buffer)).to_lowercase();
         sha1 = get_sha1(&buffer)?;
         sha256 = sha256::digest_bytes(&buffer);
@@ -175,69 +172,44 @@ pub fn get_file_content_info(
 }
 
 
-// parse PE of 32 bit binary
-fn dll_deps_32(image: &[u8]) -> pelite::Result<(Vec<Imports>)> {
-	let mut file = match pefile32::from_bytes(image) {
-        Ok(i) => i,
-        Err(err) => return Err(err),
-    };
-    let mut imports: Vec<Imports> = Vec::new();
-	let iat = file.imports()?;
-    let mut imports: Vec<Imports> = Vec::new();
-	for import in iat {
-		let dll_name = import.dll_name()?;
-        let num_of_functs = import.iat()?;
-        let imp = Imports {
-            name: dll_name.to_string(),
-            count: num_of_functs.len()
-        };
-        imports.push(imp);
-	}
-	Ok((imports))
-}
-
-
-// parse PE of 64 bit binary
-fn dll_deps_64(image: &[u8]) -> pelite::Result<(Vec<Imports>)> {
-	let mut file = match pefile64::from_bytes(image) {
-        Ok(i) => i,
-        Err(err) => return Err(err),
-    };
-    //print!("{:?}", file.nt_headers());
-    let mut imports: Vec<Imports> = Vec::new();
-	let iat = file.imports()?;
-    let mut imports: Vec<Imports> = Vec::new();
-	for import in iat {
-		let dll_name = import.dll_name()?;
-        let num_of_functs = import.iat()?;
-        let imp = Imports {
-            name: dll_name.to_string(),
-            count: num_of_functs.len()
-        };
-        imports.push(imp);
-	}
-	Ok((imports))
-}
-
-
-fn get_imports(path: &Path) -> std::io::Result<(Vec<Imports>, i8)> {
-    let mut imports: Vec<Imports> = Vec::new();
-    let mut arch: i8 = 0; // we need to find if bin is 32 or 64
-    let file_map = FileMap::open(path)?;
-	let mut results = dll_deps_64(file_map.as_ref());
-    // look for an error on parsing 64 bit imports, this means the file is either 32 bit or not a bin at all
-    if results.is_err() {
-        results = dll_deps_32(file_map.as_ref());
-        if !results.is_err() { 
-            arch = 32;
-            imports = results.unwrap();
-        }
-    } else { // 64 bit iat parsing was successful, therefore this is a 64 bit bin
-        arch = 64;
-        imports = results.unwrap();
+fn get_imports(path: &Path) -> io::Result<(Vec<Imports>, bool)> {
+    let buffer = fs::read(path).unwrap();
+    let mut imps: Vec<Imports> = Vec::new();
+    let mut is64 = false;
+    match Object::parse(&buffer).unwrap() {
+        Object::Elf(elf) => {
+            println!("elf: {:#?}", &elf);
+        },
+        Object::PE(pe) => {
+            let mut dlls:Vec<&str> = Vec::new();
+            for i in pe.imports.iter() {
+                if dlls.contains(&i.dll) { continue; }
+                dlls.push(i.dll);
+                let empty: Vec<String> = Vec::new();
+                let mut temp = Imports {
+                    dll: "".to_string(),
+                    count: 0,
+                    name: empty
+                };
+                temp.dll = i.dll.to_string();
+                for m in pe.imports.iter() {
+                    if i.dll != m.dll { continue; }
+                    temp.count += 1;
+                    temp.name.push(m.name.to_string());
+                }
+                imps.push(temp.clone());
+            }
+            is64 = pe.is_64;
+        },
+        Object::Mach(mach) => {
+            println!("mach: {:#?}", &mach);
+        },
+        Object::Archive(archive) => {
+            println!("archive: {:#?}", &archive);
+        },
+        Object::Unknown(magic) => { println!("unknown magic: {:#x}", magic) }
     }
-
-    Ok((imports, arch))
+    Ok((imps, is64))
 }
 
 
@@ -311,13 +283,15 @@ fn main() -> io::Result<()> {
     let path = convert_to_path(&file_path)?;
     let abs_path = get_abs_path(path)?.as_path().to_str().unwrap().to_string();
     let file = open_file(&path)?;
+    let mut buffer = read_file_bytes(&file)?;
     let fuzzy_hash = get_fuzzy_hash(&file)?;
     let mut mime_type = get_mimetype(&path)?;
-    let (bytes, md5, sha1, sha256) = get_file_content_info(&file)?;
-    let (imports, arch) = get_imports(path)?;
-    print_log(timestamp, abs_path, arch, 
+    let (bytes, md5, sha1, sha256) = get_file_content_info(&file, buffer)?;
+    //let (imports, arch) = get_imports(path)?;
+    let (imps, is64) = get_imports(path)?;
+    print_log(timestamp, abs_path, is64, 
                 bytes, mime_type, md5, 
                 sha1, sha256, fuzzy_hash, 
-                imports, pprint)?;
+                imps, pprint)?;
     Ok(())
 }
