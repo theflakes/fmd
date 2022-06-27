@@ -13,19 +13,65 @@ Usage: fmd <file path>
 
 Example output:
 ```
-.\fmd.exe --pretty .\fmd.exe
+.\fmd.exe --pretty ../../../../../..\Windows\System32\AcSpecfc.dll
 {
+  "timestamp": "2022-06-27T15:09:42.960582900+00:00",
+  "path": "C:\\Windows\\System32\\AcSpecfc.dll",
   "arch": 64,
-  "bytes": 459264,
+  "bytes": 102400,
   "mime_type": "application/x-executable",
-  "md5": "1081e7f84087ce43a401b54068c60bad",
-  "sha1": "915ee686ee15732c37307a87bdb22473f349d427",
-  "sha256": "80cd658abc317a57a99825a93381c24346b09d9dc5dbd6a59b42566db17d3aa0",
-  "fuzzy_hash": "6144:ZvLL5xXUa+wsBGLUD3r+iwwe4kHEpHmVO7RiEmQsE8M9C+Y1J/0SD:ZvJ63/BGLq3NkgH+O7RiiCj",
+  "md5": "4157e3855a96ecb9055923fc1dbdbfca",
+  "sha1": "c9149496528393c89381a5a693b48c5b6205a809",
+  "sha256": "d49ecd6dc80af230dde8577ac5d32dea7c7f98a4c9ae7a57178333f2f8f316c4",
+  "fuzzy_hash": "1536:hD6MmkvB6eQmKudOEq7RObnZv9x6sTFLW2f8ZRWupmlkc:4MmkJQmKlvOb9z5LgWupmlkc",
   "imports": [
     {
+      "name": "apphelp.dll",
+      "count": 6
+    },
+    {
+      "name": "msvcrt.dll",
+      "count": 25
+    },
+    {
+      "name": "ntdll.dll",
+      "count": 6
+    },
+    {
+      "name": "api-ms-win-core-registry-l1-1-0.dll",
+      "count": 5
+    },
+    {
+      "name": "SspiCli.dll",
+      "count": 1
+    },
+    {
       "name": "KERNEL32.dll",
-      "count": 96
+      "count": 49
+    },
+    {
+      "name": "ADVAPI32.dll",
+      "count": 11
+    },
+    {
+      "name": "ole32.dll",
+      "count": 2
+    },
+    {
+      "name": "SHELL32.dll",
+      "count": 2
+    },
+    {
+      "name": "USERENV.dll",
+      "count": 2
+    },
+    {
+      "name": "msi.dll",
+      "count": 1
+    },
+    {
+      "name": "WINSPOOL.DRV",
+      "count": 2
     }
   ]
 }
