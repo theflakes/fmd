@@ -1,10 +1,8 @@
 extern crate serde;             // needed for json serialization
 extern crate serde_json;        // needed for json serialization
-extern crate docopt;
 extern crate whoami;
 
 use serde::Serialize;
-use docopt::Docopt;
 use std::env;
 
 

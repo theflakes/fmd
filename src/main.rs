@@ -5,6 +5,7 @@ extern crate crypto;
 extern crate path_abs;
 extern crate dunce;
 extern crate chrono;
+extern crate goblin;
 
 #[macro_use] extern crate lazy_static;
 

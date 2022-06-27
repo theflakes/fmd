@@ -19,8 +19,8 @@ dunce = "*"
 path_abs = "*"
 chrono = "*"
 lazy_static = "*"
-docopt = "*"
 whoami = "*"
+goblin = "*"
 
 [profile.release]
 lto = true
