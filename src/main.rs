@@ -265,6 +265,7 @@ fn dll_deps_64(image: &[u8]) -> pelite::Result<(Vec<Imports>)> {
         Ok(i) => i,
         Err(err) => return Err(err),
     };
+    //print!("{:?}", file.nt_headers());
     let mut imports: Vec<Imports> = Vec::new();
 	let iat = file.imports()?;
     let mut imports: Vec<Imports> = Vec::new();

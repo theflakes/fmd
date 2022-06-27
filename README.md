@@ -15,12 +15,19 @@ Example output:
 ```
 .\fmd.exe --pretty .\fmd.exe
 {
-  "bytes": 453120,
+  "arch": 64,
+  "bytes": 459264,
   "mime_type": "application/x-executable",
-  "md5": "7b85c1b2a0e6aa641e9c0657256efaf4",
-  "sha1": "81f909b63ae250eda2038a1e9ee30a1db6a277da",
-  "sha256": "6735d16bb91fef82abf9cbfb6d45d7babde042cc66757fefae10c5614b57c348",
-  "fuzzy_hash": "6144:f8rgbmFAgpy+wY4lFhXxkI3xNGAdRlH29xnQx0/U9h36fD9+nntfQ50ox:6JfX4lFhhkodRixnQKU9e9Kox"
+  "md5": "1081e7f84087ce43a401b54068c60bad",
+  "sha1": "915ee686ee15732c37307a87bdb22473f349d427",
+  "sha256": "80cd658abc317a57a99825a93381c24346b09d9dc5dbd6a59b42566db17d3aa0",
+  "fuzzy_hash": "6144:ZvLL5xXUa+wsBGLUD3r+iwwe4kHEpHmVO7RiEmQsE8M9C+Y1J/0SD:ZvJ63/BGLq3NkgH+O7RiiCj",
+  "imports": [
+    {
+      "name": "KERNEL32.dll",
+      "count": 96
+    }
+  ]
 }
 ```
 
