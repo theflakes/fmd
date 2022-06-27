@@ -169,39 +169,58 @@ pub fn get_file_content_info(
 }
 
 
-fn get_imports(path: &Path) -> io::Result<(Binary)> {
-    let buffer = fs::read(path).unwrap();
+fn init_import_struct() -> Imports {
+    let imps: Vec<String> = Vec::new();
+    let mut imports = Imports {
+        dll: "".to_string(),
+        count: 0,
+        name: imps
+    };
+    return imports
+}
+
+
+fn init_bin_struct() -> Binary {
     let imps: Vec<Imports> = Vec::new();
     let mut bin = Binary {
         is_64: false,
         is_lib: false,
         imports: imps
     };
+    return bin
+}
+
+
+fn parse_pe_header(pe: PE) -> io::Result<Binary> {
+    let mut dlls:Vec<&str> = Vec::new();
+    let mut bin = init_bin_struct();
+    for i in pe.imports.iter() {
+        if dlls.contains(&i.dll) { continue; }
+        dlls.push(i.dll);
+        let mut temp = init_import_struct();
+        temp.dll = i.dll.to_string();
+        for m in pe.imports.iter() {
+            if i.dll != m.dll { continue; }
+            temp.count += 1;
+            temp.name.push(m.name.to_string());
+        }
+        bin.imports.push(temp.clone());
+    }
+    bin.is_64 = pe.is_64;
+    bin.is_lib = pe.is_lib;
+    Ok(bin)
+}
+
+
+fn get_imports(path: &Path) -> io::Result<(Binary)> {
+    let buffer = fs::read(path)?;
+    let mut bin = init_bin_struct();
     match Object::parse(&buffer).unwrap() {
         Object::Elf(elf) => {
             println!("elf: {:#?}", &elf);
         },
         Object::PE(pe) => {
-            let mut dlls:Vec<&str> = Vec::new();
-            for i in pe.imports.iter() {
-                if dlls.contains(&i.dll) { continue; }
-                dlls.push(i.dll);
-                let empty: Vec<String> = Vec::new();
-                let mut temp = Imports {
-                    dll: "".to_string(),
-                    count: 0,
-                    name: empty
-                };
-                temp.dll = i.dll.to_string();
-                for m in pe.imports.iter() {
-                    if i.dll != m.dll { continue; }
-                    temp.count += 1;
-                    temp.name.push(m.name.to_string());
-                }
-                bin.imports.push(temp.clone());
-            }
-            bin.is_64 = pe.is_64;
-            bin.is_lib = pe.is_lib;
+            bin = parse_pe_header(pe)?;
         },
         Object::Mach(mach) => {
             println!("mach: {:#?}", &mach);
