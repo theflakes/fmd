@@ -5,8 +5,9 @@ fmd = File Metadata
 ```
 Author: Brian Kellogg
 Pull various file metadata.
+See: https://docs.rs/tree_magic/latest/tree_magic/
 
-Usage: fmd <file path>
+Usage: fmd <file path> [--pretty | -p]
   Options:
        -p, --pretty     Pretty print JSON
 ```
@@ -15,7 +16,8 @@ Example output:
 ```
 .\fmd.exe --pretty ../../../../../..\Windows\System32\AcSpecfc.dll
 {
-  "timestamp": "2022-06-27T15:09:42.960582900+00:00",
+  "timestamp": "2022-06-27T18:10:27.755560200+00:00",
+  "device_type": "Windows 10.0.22000 (Workstation)",
   "path": "C:\\Windows\\System32\\AcSpecfc.dll",
   "arch": 64,
   "bytes": 102400,
@@ -23,7 +25,7 @@ Example output:
   "md5": "4157e3855a96ecb9055923fc1dbdbfca",
   "sha1": "c9149496528393c89381a5a693b48c5b6205a809",
   "sha256": "d49ecd6dc80af230dde8577ac5d32dea7c7f98a4c9ae7a57178333f2f8f316c4",
-  "fuzzy_hash": "1536:hD6MmkvB6eQmKudOEq7RObnZv9x6sTFLW2f8ZRWupmlkc:4MmkJQmKlvOb9z5LgWupmlkc",
+  "fuzzy": "1536:hD6MmkvB6eQmKudOEq7RObnZv9x6sTFLW2f8ZRWupmlkc:4MmkJQmKlvOb9z5LgWupmlkc",
   "imports": [
     {
       "name": "apphelp.dll",

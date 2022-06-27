@@ -1,13 +1,16 @@
 extern crate tree_magic;
 extern crate fuzzyhash;
-extern crate serde;             // needed for json serialization
-extern crate serde_json;        // needed for json serialization
 extern crate sha256;
 extern crate crypto;
 extern crate path_abs;
 extern crate dunce;
 extern crate chrono;
 
+#[macro_use] extern crate lazy_static;
+
+mod data_defs;
+
+use data_defs::*;
 use std::path::Path;
 use std::ptr::null;
 use std::{io, str};
@@ -16,7 +19,6 @@ use std::process;
 use std::borrow::Cow;
 use fuzzyhash::FuzzyHash;
 use std::io::{Read, Seek};
-use serde::Serialize;
 use crypto::digest::Digest;
 use std::fs::{self, File};
 use pelite::FileMap;
@@ -29,94 +31,6 @@ use pelite::pe32::PeFile as pefile32;
 use pelite::pe64::PeFile as pefile64;
 
 
-/*
-    Help provided by Yandros on using traits: 
-        https://users.rust-lang.org/t/refactor-struct-fn-with-macro/40093
-*/
-type Str = ::std::borrow::Cow<'static, str>;
-trait Loggable : Serialize {
-    /// convert struct to json
-    fn to_log (self: &'_ Self) -> Str  {
-        ::serde_json::to_string(&self)
-            .ok()
-            .map_or("<failed to serialize>".into(), Into::into)
-    }
-    fn to_pretty_log (self: &'_ Self) -> Str {
-        ::serde_json::to_string_pretty(&self)
-            .ok()
-            .map_or("<failed to serialize>".into(), Into::into)
-    }
-    
-    /// convert struct to json and report it out
-    fn write_log (self: &'_ Self)
-    {
-        println!("{}", self.to_log());
-    }
-    fn write_pretty_log (self: &'_ Self)
-    {
-        println!("{}", self.to_pretty_log());
-    }
-}
-impl<T : ?Sized + Serialize> Loggable for T {}
-
-
-#[derive(Serialize)]
-pub struct Imports {
-    pub name: String,
-    pub count: usize
-}
-
-
-#[derive(Serialize)]
-pub struct MetaData {
-    pub timestamp: String,
-    pub path: String,
-    pub arch: i8,
-    pub bytes: u64,
-    pub mime_type: String,
-    pub md5: String,
-    pub sha1: String,
-    pub sha256: String,
-    pub fuzzy_hash: String,
-    pub imports: Vec<Imports>
-}
-impl MetaData {
-    pub fn new(
-            timestamp: String,
-            path: String,
-            arch: i8,
-            bytes: u64,
-            mime_type: String,
-            md5: String,
-            sha1: String,
-            sha256: String,
-            fuzzy_hash: String,
-            imports: Vec<Imports>) -> MetaData {
-        MetaData {
-            timestamp,
-            path,
-            arch,
-            bytes,
-            mime_type,
-            md5,
-            sha1,
-            sha256,
-            fuzzy_hash,
-            imports
-        }
-    }
-
-    // convert struct to json and report it out
-    pub fn report_log(&self) {
-        self.write_log()
-    }
-
-    pub fn report_pretty_log(&self) {
-        self.write_pretty_log()
-    }
-}
-
-
 // report out in json
 fn print_log(
                 timestamp: String,
@@ -127,13 +41,14 @@ fn print_log(
                 md5: String,
                 sha1: String,
                 sha256: String,
-                fuzzy_hash: FuzzyHash,
+                fuzzy: FuzzyHash,
                 imports: Vec<Imports>,
                 pprint: bool
             ) -> io::Result<()> {
     if pprint {
         MetaData::new(
             timestamp,
+            DEVICE_TYPE.to_string(),
             path.to_string(),
             arch,
             bytes,
@@ -141,12 +56,13 @@ fn print_log(
             md5, 
             sha1, 
             sha256, 
-            fuzzy_hash.to_string(),
+            fuzzy.to_string(),
             imports
         ).report_pretty_log();
     } else {
         MetaData::new(
             timestamp,
+            DEVICE_TYPE.to_string(),
             path.to_string(),
             arch,
             bytes,
@@ -154,7 +70,7 @@ fn print_log(
             md5, 
             sha1, 
             sha256, 
-            fuzzy_hash.to_string(),
+            fuzzy.to_string(),
             imports
         ).report_log();
     }
@@ -258,6 +174,7 @@ pub fn get_file_content_info(
 }
 
 
+// parse PE of 32 bit binary
 fn dll_deps_32(image: &[u8]) -> pelite::Result<(Vec<Imports>)> {
 	let mut file = match pefile32::from_bytes(image) {
         Ok(i) => i,
@@ -279,6 +196,7 @@ fn dll_deps_32(image: &[u8]) -> pelite::Result<(Vec<Imports>)> {
 }
 
 
+// parse PE of 64 bit binary
 fn dll_deps_64(image: &[u8]) -> pelite::Result<(Vec<Imports>)> {
 	let mut file = match pefile64::from_bytes(image) {
         Ok(i) => i,
@@ -343,7 +261,7 @@ fn print_help() {
     println!("\nAuthor: Brian Kellogg");
     println!("Pull various file metadata.");
     println!("See: https://docs.rs/tree_magic/latest/tree_magic/\n");
-    println!("Usage: fmd <file path>");
+    println!("Usage: fmd <file path> [--pretty | -p]");
     println!("  Options:");
     println!("       -p, --pretty     Pretty print JSON");
     println!("\n");
@@ -351,10 +269,10 @@ fn print_help() {
 }
 
 
-fn main() -> io::Result<()> {
+fn get_args() -> io::Result<(String, bool)> {
     let args: Vec<String> = env::args().collect();
-    let mut pprint = false;
     let mut file_path = &String::new();
+    let mut pprint = false;
     match args.len() {
         2 => {
             file_path = &args[1];
@@ -369,8 +287,25 @@ fn main() -> io::Result<()> {
             }
             pprint = true;
         },
+        4 => {
+            if &args[1] == "-p" || &args[1] == "--pretty" {
+                file_path = &args[2];
+            } else if &args[2] == "-p" || &args[2] == "--pretty" {
+                file_path = &args[1];
+            } else {
+                print_help();
+            }
+            pprint = true;
+        }
         _ => { print_help() }
     };
+    Ok((file_path.to_string(), pprint))
+}
+
+
+fn main() -> io::Result<()> {
+    let (file_path, pprint) = get_args()?;
+    let mut imps = false;
     let timestamp = get_time_iso8601()?;
     let path = convert_to_path(&file_path)?;
     let abs_path = get_abs_path(path)?.as_path().to_str().unwrap().to_string();
@@ -379,6 +314,9 @@ fn main() -> io::Result<()> {
     let mut mime_type = get_mimetype(&path)?;
     let (bytes, md5, sha1, sha256) = get_file_content_info(&file)?;
     let (imports, arch) = get_imports(path)?;
-    print_log(timestamp, abs_path, arch, bytes, mime_type, md5, sha1, sha256, fuzzy_hash, imports, pprint)?;
+    print_log(timestamp, abs_path, arch, 
+                bytes, mime_type, md5, 
+                sha1, sha256, fuzzy_hash, 
+                imports, pprint)?;
     Ok(())
 }
