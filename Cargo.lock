@@ -143,7 +143,6 @@ dependencies = [
  "pelite",
  "rust-crypto",
  "serde",
- "serde_derive",
  "serde_json",
  "sha256",
  "tree_magic",
