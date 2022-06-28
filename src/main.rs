@@ -12,6 +12,7 @@ extern crate goblin;
 mod data_defs;
 
 use data_defs::*;
+use fuzzyhash::FuzzyHash;
 use goblin::pe::PE;
 use std::path::Path;
 use std::ptr::null;
@@ -19,7 +20,6 @@ use std::{io, str};
 use std::env;
 use std::process;
 use std::borrow::Cow;
-use fuzzyhash::FuzzyHash;
 use std::io::{Read, Seek};
 use crypto::digest::Digest;
 use std::fs::{self, File};
@@ -38,7 +38,7 @@ fn print_log(
                 md5: String,
                 sha1: String,
                 sha256: String,
-                fuzzy: FuzzyHash,
+                ssdeep: String,
                 binary: Binary,
                 pprint: bool
             ) -> io::Result<()> {
@@ -52,7 +52,7 @@ fn print_log(
             md5, 
             sha1, 
             sha256, 
-            fuzzy.to_string(),
+            ssdeep,
             binary
         ).report_pretty_log();
     } else {
@@ -65,7 +65,7 @@ fn print_log(
             md5, 
             sha1, 
             sha256, 
-            fuzzy.to_string(),
+            ssdeep,
             binary
         ).report_log();
     }
@@ -94,23 +94,9 @@ fn get_mimetype(target_file: &Path) -> io::Result<String> {
     See:    https://github.com/rustysec/fuzzyhash-rs
             https://docs.rs/fuzzyhash/latest/fuzzyhash/
 */
-fn get_fuzzy_hash(mut file: &std::fs::File) -> io::Result<FuzzyHash> {
-    let mut fuzzy_hash = FuzzyHash::default();
-    file.rewind();
-
-    loop {
-        let mut buffer = vec![0; 1024];
-        let count = file.read(&mut buffer).unwrap();
-    
-        fuzzy_hash.update(buffer);
-    
-        if count < 1024 {
-            break;
-        }
-    }
-    
-    fuzzy_hash.finalize();
-    Ok(fuzzy_hash)
+fn get_ssdeep_hash(mut buffer: &Vec<u8>) -> io::Result<String> {
+    let ssdeep = FuzzyHash::new(buffer);
+    Ok(ssdeep.to_string())
 }
 
 
@@ -148,7 +134,7 @@ fn get_sha1(buffer: &Vec<u8>) -> std::io::Result<(String)> {
 // get metadata for the file's content (md5, sha1, ...)
 pub fn get_file_content_info(
                                 file: &std::fs::File,
-                                mut buffer: Vec<u8>
+                                mut buffer: &Vec<u8>
                             ) -> std::io::Result<(u64, String, String, String)> 
 {
     let mut md5 = "".to_string();
@@ -156,9 +142,9 @@ pub fn get_file_content_info(
     let mut sha256 = "".to_string();
     let bytes = file.metadata()?.len();
     if bytes != 0 { // don't bother with opening empty files
-        md5 = format!("{:x}", md5::compute(&buffer)).to_lowercase();
-        sha1 = get_sha1(&buffer)?;
-        sha256 = sha256::digest_bytes(&buffer);
+        md5 = format!("{:x}", md5::compute(buffer)).to_lowercase();
+        sha1 = get_sha1(buffer)?;
+        sha256 = sha256::digest_bytes(buffer);
         drop(buffer);
     } else {
         md5 = "d41d8cd98f00b204e9800998ecf8427e".to_string(); // md5 of empty file
@@ -186,6 +172,8 @@ fn init_bin_struct() -> Binary {
     let mut bin = Binary {
         is_64: false,
         is_lib: false,
+        original_filename: "".to_string(),
+        imphash: "".to_string(),
         imports: imps,
         exports: exps
     };
@@ -193,31 +181,47 @@ fn init_bin_struct() -> Binary {
 }
 
 
-fn parse_pe_imports(imports: Vec<goblin::pe::import::Import>) -> io::Result<Binary> {
+fn parse_pe_imports(imports: Vec<goblin::pe::import::Import>) -> io::Result<(Vec<Imports>, String)> {
     let mut dlls:Vec<&str> = Vec::new();
-    let mut bin = init_bin_struct();
+    let mut imphash_test = "".to_string();
+    let mut imps: Vec<Imports> = Vec::new();
     for i in imports.iter() {
         if dlls.contains(&i.dll) { continue; }
         dlls.push(i.dll);
+        imphash_test.push_str(i.dll);
+        imphash_test.push_str(" ");
         let mut temp = init_imports_struct();
         temp.dll = i.dll.to_string();
         for m in imports.iter() {
             if i.dll != m.dll { continue; }
             temp.count += 1;
             temp.name.push(m.name.to_string());
+            imphash_test.push_str(i.dll);
+            imphash_test.push_str(".");
+            imphash_test.push_str(&m.name);
+            imphash_test.push_str(" ");
         }
-        bin.imports.push(temp.clone());
+        imps.push(temp.clone());
     }
-    Ok(bin)
+    print!("{}", imphash_test.trim());
+    let imphash = format!("{:x}", md5::compute(imphash_test.trim())).to_lowercase();
+    Ok((imps, imphash))
 }
 
 
 fn parse_pe_exports(exports: Vec<goblin::pe::export::Export>) -> io::Result<(Vec<String>)>{
     let mut exps:Vec<String> = Vec::new();
     for e in exports.iter() {
-        exps.push(e.name.unwrap().to_string());
+        exps.push(e.name.unwrap_or("").to_string());
     }
     Ok(exps)
+}
+
+
+fn calculate_imphash(imports: Vec<Imports>) -> io::Result<(String)> {
+    let imphash = "".to_string();
+
+    Ok(imphash)
 }
 
 
@@ -229,10 +233,11 @@ fn get_imports(path: &Path) -> io::Result<(Binary)> {
             println!("elf: {:#?}", &elf);
         },
         Object::PE(pe) => {
-            bin = parse_pe_imports(pe.imports)?;
+            (bin.imports, bin.imphash) = parse_pe_imports(pe.imports)?;
             bin.is_64 = pe.is_64;
             bin.is_lib = pe.is_lib;
             bin.exports = parse_pe_exports(pe.exports)?;
+            bin.original_filename = pe.name.unwrap_or("").to_string();
         },
         Object::Mach(mach) => {
             println!("mach: {:#?}", &mach);
@@ -318,13 +323,13 @@ fn main() -> io::Result<()> {
     let abs_path = get_abs_path(path)?.as_path().to_str().unwrap().to_string();
     let file = open_file(&path)?;
     let mut buffer = read_file_bytes(&file)?;
-    let fuzzy_hash = get_fuzzy_hash(&file)?;
+    let ssdeep = get_ssdeep_hash(&buffer)?;
     let mut mime_type = get_mimetype(&path)?;
-    let (bytes, md5, sha1, sha256) = get_file_content_info(&file, buffer)?;
+    let (bytes, md5, sha1, sha256) = get_file_content_info(&file, &buffer)?;
     let bin = get_imports(path)?;
     print_log(timestamp, abs_path, 
                 bytes, mime_type, md5, 
-                sha1, sha256, fuzzy_hash, 
+                sha1, sha256, ssdeep, 
                 bin, pprint)?;
     Ok(())
 }

@@ -52,6 +52,8 @@ pub struct Imports {
 pub struct Binary {
     pub is_64: bool,
     pub is_lib: bool,
+    pub original_filename: String,
+    pub imphash: String,
     pub imports: Vec<Imports>,
     pub exports: Vec<String>
 }
@@ -66,7 +68,7 @@ pub struct MetaData {
     pub md5: String,
     pub sha1: String,
     pub sha256: String,
-    pub fuzzy: String,
+    pub ssdeep: String,
     pub binary: Binary
 }
 impl MetaData {
@@ -79,7 +81,7 @@ impl MetaData {
             md5: String,
             sha1: String,
             sha256: String,
-            fuzzy: String,
+            ssdeep: String,
             binary: Binary) -> MetaData {
         MetaData {
             timestamp,
@@ -90,7 +92,7 @@ impl MetaData {
             md5,
             sha1,
             sha256,
-            fuzzy,
+            ssdeep,
             binary
         }
     }
