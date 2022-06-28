@@ -203,7 +203,7 @@ fn parse_pe_imports(imports: Vec<goblin::pe::import::Import>) -> io::Result<(Vec
         }
         imps.push(temp.clone());
     }
-    print!("{}", imphash_test.trim());
+    //print!("{}", imphash_test.trim());
     let imphash = format!("{:x}", md5::compute(imphash_test.trim())).to_lowercase();
     Ok((imps, imphash))
 }
