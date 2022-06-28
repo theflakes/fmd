@@ -169,7 +169,7 @@ pub fn get_file_content_info(
 }
 
 
-fn init_import_struct() -> Imports {
+fn init_imports_struct() -> Imports {
     let imps: Vec<String> = Vec::new();
     let mut imports = Imports {
         dll: "".to_string(),
@@ -197,7 +197,7 @@ fn parse_pe_header(pe: PE) -> io::Result<Binary> {
     for i in pe.imports.iter() {
         if dlls.contains(&i.dll) { continue; }
         dlls.push(i.dll);
-        let mut temp = init_import_struct();
+        let mut temp = init_imports_struct();
         temp.dll = i.dll.to_string();
         for m in pe.imports.iter() {
             if i.dll != m.dll { continue; }
