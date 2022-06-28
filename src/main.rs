@@ -252,13 +252,14 @@ fn get_time_iso8601() -> io::Result<(String)> {
 
 
 fn print_help() {
-    println!("\nAuthor: Brian Kellogg");
-    println!("Pull various file metadata.");
-    println!("See: https://docs.rs/tree_magic/latest/tree_magic/\n");
-    println!("Usage: fmd <file path> [--pretty | -p]");
-    println!("  Options:");
-    println!("       -p, --pretty     Pretty print JSON");
-    println!("\n");
+    let help = "
+        Author: Brian Kellogg
+        Pull various file metadata.
+        Usage: fmd <file path> [--pretty | -p]
+        Options:
+            -p, --pretty     Pretty print JSON
+    ";
+    println!("{}", help);
     process::exit(1)
 }
 
