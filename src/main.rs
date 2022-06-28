@@ -182,33 +182,42 @@ fn init_imports_struct() -> Imports {
 
 fn init_bin_struct() -> Binary {
     let imps: Vec<Imports> = Vec::new();
+    let exps: Vec<String> = Vec::new();
     let mut bin = Binary {
         is_64: false,
         is_lib: false,
-        imports: imps
+        imports: imps,
+        exports: exps
     };
     return bin
 }
 
 
-fn parse_pe_header(pe: PE) -> io::Result<Binary> {
+fn parse_pe_imports(imports: Vec<goblin::pe::import::Import>) -> io::Result<Binary> {
     let mut dlls:Vec<&str> = Vec::new();
     let mut bin = init_bin_struct();
-    for i in pe.imports.iter() {
+    for i in imports.iter() {
         if dlls.contains(&i.dll) { continue; }
         dlls.push(i.dll);
         let mut temp = init_imports_struct();
         temp.dll = i.dll.to_string();
-        for m in pe.imports.iter() {
+        for m in imports.iter() {
             if i.dll != m.dll { continue; }
             temp.count += 1;
             temp.name.push(m.name.to_string());
         }
         bin.imports.push(temp.clone());
     }
-    bin.is_64 = pe.is_64;
-    bin.is_lib = pe.is_lib;
     Ok(bin)
+}
+
+
+fn parse_pe_exports(exports: Vec<goblin::pe::export::Export>) -> io::Result<(Vec<String>)>{
+    let mut exps:Vec<String> = Vec::new();
+    for e in exports.iter() {
+        exps.push(e.name.unwrap().to_string());
+    }
+    Ok(exps)
 }
 
 
@@ -220,7 +229,10 @@ fn get_imports(path: &Path) -> io::Result<(Binary)> {
             println!("elf: {:#?}", &elf);
         },
         Object::PE(pe) => {
-            bin = parse_pe_header(pe)?;
+            bin = parse_pe_imports(pe.imports)?;
+            bin.is_64 = pe.is_64;
+            bin.is_lib = pe.is_lib;
+            bin.exports = parse_pe_exports(pe.exports)?;
         },
         Object::Mach(mach) => {
             println!("mach: {:#?}", &mach);

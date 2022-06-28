@@ -52,7 +52,8 @@ pub struct Imports {
 pub struct Binary {
     pub is_64: bool,
     pub is_lib: bool,
-    pub imports: Vec<Imports>
+    pub imports: Vec<Imports>,
+    pub exports: Vec<String>
 }
 
 #[derive(Serialize)]
