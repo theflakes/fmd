@@ -16,7 +16,7 @@ Example output:
 ```
 .\fmd.exe --pretty ../../../../../..\Windows\System32\AcSpecfc.dll
 {
-  "timestamp": "2022-06-27T22:19:58.372562200+00:00",
+  "timestamp": "2022-06-28T14:53:55.863348500+00:00",
   "device_type": "Windows 10.0.22000 (Workstation)",
   "path": "C:\\Windows\\System32\\AcSpecfc.dll",
   "bytes": 102400,
@@ -213,6 +213,10 @@ Example output:
           "EnumFormsW"
         ]
       }
+    ],
+    "exports": [
+      "GetHookAPIs",
+      "NotifyShims"
     ]
   }
 }
