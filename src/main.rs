@@ -158,7 +158,7 @@ pub fn get_file_content_info(
 fn init_imports_struct() -> Imports {
     let imps: Vec<String> = Vec::new();
     let mut imports = Imports {
-        dll: String::new(),
+        lib: String::new(),
         count: 0,
         name: imps
     };
@@ -194,7 +194,7 @@ fn parse_pe_imports(imports: &Vec<goblin::pe::import::Import>) -> io::Result<Vec
         if dlls.contains(&i.dll) { continue; }
         dlls.push(i.dll);
         let mut temp = init_imports_struct();
-        temp.dll = i.dll.to_string();
+        temp.lib = i.dll.to_string();
         for m in imports.iter() {
             if i.dll != m.dll { continue; }
             temp.count += 1;

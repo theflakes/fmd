@@ -43,7 +43,7 @@ impl<T : ?Sized + Serialize> Loggable for T {}
 
 #[derive(Serialize, Clone)]
 pub struct Imports {
-    pub dll: String,
+    pub lib: String,
     pub count: u32,
     pub name: Vec<String>
 }
