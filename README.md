@@ -16,7 +16,7 @@ Example output:
 ```
 .\fmd.exe --pretty ../../../../../..\Windows\System32\AcSpecfc.dll
 {
-  "timestamp": "2022-06-29T15:05:20.779009400+00:00",
+  "timestamp": "2022-06-29T23:20:42.980696300+00:00",
   "device_type": "Windows 10.0.22000 (Workstation)",
   "path": "C:\\Windows\\System32\\AcSpecfc.dll",
   "bytes": 102400,
@@ -27,12 +27,13 @@ Example output:
   "ssdeep": "1536:hD6MmkvB6eQmKudOEq7RObnZv9x6sTFLW2f8ZRWupmlkc:4MmkJQmKlvOb9z5LgWupmlkc",
   "binary": {
     "is_64": true,
+    "is_dotnet": false,
     "is_lib": true,
     "original_filename": "AcSpecfc.dll",
-    "imphash": "4def35a73084468da377f56b9ee63f37",
-    "imphash_sorted": "741b41060b0f71a58044f79bc884144c",
-    "imphash_ssdeep": "48:waKYqcXmnqQ8rAYLRMmtBvTL3fYrBXOZJdjL:VKYbXmnqVfRrtBvTL34B+fJ",
-    "imphash_ssdeep_sorted": "48:jrbTFMzPt9D1MMtCnHW4XmCXVqqTSEzEdbZqf:3bmLtJ1MsCnHW4XmCXUqTMtY",
+    "imphash": "6d31b225dad22f928cc5acadced3efaf",
+    "imphash_sorted": "74f283ff81744eb83835f09d0a0dcbdc",
+    "imphash_ssdeep": "48:waKYqcXmnqQ8rAYLRMmtBvTL3fYrBXOZJdeL:VKYbXmnqVfRrtBvTL34B+fA",
+    "imphash_ssdeep_sorted": "48:jrbTFMzPt9D1MMtCnHd4XmCXVqqTSEzEdbZqf:3bmLtJ1MsCnHd4XmCXUqTMtY",
     "imports_lib_count": 12,
     "imports_func_count": 112,
     "imports": [
