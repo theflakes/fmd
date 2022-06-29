@@ -16,7 +16,7 @@ Example output:
 ```
 .\fmd.exe --pretty ../../../../../..\Windows\System32\AcSpecfc.dll
 {
-  "timestamp": "2022-06-29T14:26:56.906787300+00:00",
+  "timestamp": "2022-06-29T15:05:20.779009400+00:00",
   "device_type": "Windows 10.0.22000 (Workstation)",
   "path": "C:\\Windows\\System32\\AcSpecfc.dll",
   "bytes": 102400,
@@ -37,7 +37,7 @@ Example output:
     "imports_func_count": 112,
     "imports": [
       {
-        "dll": "apphelp.dll",
+        "lib": "apphelp.dll",
         "count": 6,
         "name": [
           "SE_COM_AddServer",
@@ -49,7 +49,7 @@ Example output:
         ]
       },
       {
-        "dll": "msvcrt.dll",
+        "lib": "msvcrt.dll",
         "count": 25,
         "name": [
           "memmove",
@@ -80,7 +80,7 @@ Example output:
         ]
       },
       {
-        "dll": "ntdll.dll",
+        "lib": "ntdll.dll",
         "count": 6,
         "name": [
           "RtlAllocateHeap",
@@ -92,7 +92,7 @@ Example output:
         ]
       },
       {
-        "dll": "api-ms-win-core-registry-l1-1-0.dll",
+        "lib": "api-ms-win-core-registry-l1-1-0.dll",
         "count": 5,
         "name": [
           "RegOpenKeyExW",
@@ -103,14 +103,14 @@ Example output:
         ]
       },
       {
-        "dll": "SspiCli.dll",
+        "lib": "SspiCli.dll",
         "count": 1,
         "name": [
           "GetUserNameExW"
         ]
       },
       {
-        "dll": "KERNEL32.dll",
+        "lib": "KERNEL32.dll",
         "count": 49,
         "name": [
           "K32GetProcessImageFileNameW",
@@ -165,7 +165,7 @@ Example output:
         ]
       },
       {
-        "dll": "ADVAPI32.dll",
+        "lib": "ADVAPI32.dll",
         "count": 11,
         "name": [
           "QueryServiceStatusEx",
@@ -182,7 +182,7 @@ Example output:
         ]
       },
       {
-        "dll": "ole32.dll",
+        "lib": "ole32.dll",
         "count": 2,
         "name": [
           "CoTaskMemAlloc",
@@ -190,7 +190,7 @@ Example output:
         ]
       },
       {
-        "dll": "SHELL32.dll",
+        "lib": "SHELL32.dll",
         "count": 2,
         "name": [
           "SHGetSpecialFolderPathW",
@@ -198,7 +198,7 @@ Example output:
         ]
       },
       {
-        "dll": "USERENV.dll",
+        "lib": "USERENV.dll",
         "count": 2,
         "name": [
           "GetUserProfileDirectoryW",
@@ -206,14 +206,14 @@ Example output:
         ]
       },
       {
-        "dll": "msi.dll",
+        "lib": "msi.dll",
         "count": 1,
         "name": [
           "ORDINAL 145"
         ]
       },
       {
-        "dll": "WINSPOOL.DRV",
+        "lib": "WINSPOOL.DRV",
         "count": 2,
         "name": [
           "OpenPrinterW",
