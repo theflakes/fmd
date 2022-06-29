@@ -10,6 +10,7 @@ extern crate goblin;
 #[macro_use] extern crate lazy_static;
 
 mod data_defs;
+mod ordinals;
 
 use data_defs::*;
 use fuzzyhash::FuzzyHash;
@@ -146,10 +147,6 @@ pub fn get_file_content_info(
         sha1 = get_sha1(buffer)?;
         sha256 = sha256::digest_bytes(buffer);
         drop(buffer);
-    } else {
-        md5 = "d41d8cd98f00b204e9800998ecf8427e".to_string(); // md5 of empty file
-        sha1 = "da39a3ee5e6b4b0d3255bfef95601890afd80709".to_string(); // sha1 of empty file
-        sha256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855".to_string(); // sha256 or empty file
     }
     Ok((bytes, md5, sha1, sha256))
 }
@@ -219,6 +216,15 @@ fn get_imphash_sorted(imphash_array: &mut Vec<String>) -> io::Result<(String, St
 }
 
 
+fn check_ordinal(dll: &str, func: &str) -> io::Result<String> {
+    let mut f: String = func.to_ascii_lowercase().replace("ordinal ", "");
+    if f.parse::<u32>().is_ok() {
+        let o = f.parse::<u32>().unwrap();
+        f = ordinals::imphash_resolve(dll, o).to_ascii_lowercase();
+    }
+    Ok(f)
+}
+
 fn get_imphashes(imports: &Vec<goblin::pe::import::Import>) 
                         -> io::Result<((String, String, String, String, u32, u32))> {
     let mut imphash_array: Vec<String> = Vec::new();    // store in array for calculating imphash on sorted
@@ -229,16 +235,15 @@ fn get_imphashes(imports: &Vec<goblin::pe::import::Import>)
     for i in imports.iter() {
         let mut temp = String::new();
         if i.dll != track_dll { total_dlls += 1; }
-        let dll = i.dll.to_ascii_lowercase()
+        let mut dll = i.dll.to_ascii_lowercase()
             .replace(".dll", "")
             .replace(".sys", "")
             .replace(".drv", "")
             .replace(".ocx", "").to_string();
         temp.push_str(&dll);
         temp.push_str(".");
-        temp.push_str(&i.name
-            .to_string().to_ascii_lowercase()
-            .replace("ordinal ", ""));
+        let func = check_ordinal(i.dll, &i.name)?;
+        temp.push_str(&func);
         temp.push_str(",");
         imphash_text.push_str(&temp.to_string());
         imphash_array.push(temp.to_string());
@@ -371,14 +376,25 @@ fn main() -> io::Result<()> {
     let path = convert_to_path(&file_path)?;
     let abs_path = get_abs_path(path)?.as_path().to_str().unwrap().to_string();
     let file = open_file(&path)?;
-    let mut buffer = read_file_bytes(&file)?;
-    let ssdeep = get_ssdeep_hash(&buffer)?;
-    let mut mime_type = get_mimetype(&path)?;
-    let (bytes, md5, sha1, sha256) = get_file_content_info(&file, &buffer)?;
-    let bin = get_imports(path)?;
+    let mut md5 = "d41d8cd98f00b204e9800998ecf8427e".to_string(); // md5 of empty file
+    let mut sha1 = "da39a3ee5e6b4b0d3255bfef95601890afd80709".to_string(); // sha1 of empty file
+    let mut sha256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855".to_string(); // sha256 or empty file
+    let mut mime_type = String::new();
+    let mut ssdeep = String::new();
+    let mut bytes = 0;
+    let mut bin = init_bin_struct();
+    if file.metadata().unwrap().len() != 0 {
+        let mut buffer = read_file_bytes(&file)?;
+        let ssdeep = get_ssdeep_hash(&buffer)?;
+        let mut mime_type = get_mimetype(&path)?;
+        let (bytes, md5, 
+            sha1, sha256) = get_file_content_info(&file, &buffer)?;
+        let bin = get_imports(path)?;
+        
+    }
     print_log(timestamp, abs_path, 
-                bytes, mime_type, md5, 
-                sha1, sha256, ssdeep, 
-                bin, pprint)?;
+        bytes, mime_type, md5, 
+        sha1, sha256, ssdeep, 
+        bin, pprint)?;
     Ok(())
 }
