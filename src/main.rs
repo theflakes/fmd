@@ -136,19 +136,16 @@ fn get_sha1(buffer: &Vec<u8>) -> std::io::Result<(String)> {
 pub fn get_file_content_info(
                                 file: &std::fs::File,
                                 mut buffer: &Vec<u8>
-                            ) -> std::io::Result<(u64, String, String, String)> 
+                            ) -> std::io::Result<(String, String, String)> 
 {
     let mut md5 = String::new();
     let mut sha1 = String::new();
     let mut sha256 = String::new();
-    let bytes = file.metadata()?.len();
-    if bytes != 0 { // don't bother with opening empty files
-        md5 = format!("{:x}", md5::compute(buffer)).to_lowercase();
-        sha1 = get_sha1(buffer)?;
-        sha256 = sha256::digest_bytes(buffer);
-        drop(buffer);
-    }
-    Ok((bytes, md5, sha1, sha256))
+    md5 = format!("{:x}", md5::compute(buffer)).to_lowercase();
+    sha1 = get_sha1(buffer)?;
+    sha256 = sha256::digest_bytes(buffer);
+    drop(buffer);
+    Ok((md5, sha1, sha256))
 }
 
 
@@ -381,16 +378,15 @@ fn main() -> io::Result<()> {
     let mut sha256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855".to_string(); // sha256 or empty file
     let mut mime_type = String::new();
     let mut ssdeep = String::new();
-    let mut bytes = 0;
+    let mut bytes = file.metadata().unwrap().len();
     let mut bin = init_bin_struct();
-    if file.metadata().unwrap().len() != 0 {
-        let mut buffer = read_file_bytes(&file)?;
-        let ssdeep = get_ssdeep_hash(&buffer)?;
-        let mut mime_type = get_mimetype(&path)?;
-        let (bytes, md5, 
-            sha1, sha256) = get_file_content_info(&file, &buffer)?;
-        let bin = get_imports(path)?;
-        
+    let mut buffer: Vec<u8> = Vec::new();
+    if bytes != 0 {
+        buffer = read_file_bytes(&file)?;
+        ssdeep = get_ssdeep_hash(&buffer)?;
+        mime_type = get_mimetype(&path)?;
+        (md5, sha1, sha256) = get_file_content_info(&file, &buffer)?;
+        bin = get_imports(path)?;
     }
     print_log(timestamp, abs_path, 
         bytes, mime_type, md5, 
