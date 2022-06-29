@@ -174,6 +174,9 @@ fn init_bin_struct() -> Binary {
         is_lib: false,
         original_filename: "".to_string(),
         imphash: "".to_string(),
+        imphash_sorted: "".to_string(),
+        imphash_ssdeep: "".to_string(),
+        imphash_ssdeep_sorted: "".to_string(),
         imports: imps,
         exports: exps
     };
@@ -181,47 +184,76 @@ fn init_bin_struct() -> Binary {
 }
 
 
-fn parse_pe_imports(imports: Vec<goblin::pe::import::Import>) -> io::Result<(Vec<Imports>, String)> {
+fn parse_pe_imports(imports: &Vec<goblin::pe::import::Import>) -> io::Result<Vec<Imports>> {
     let mut dlls:Vec<&str> = Vec::new();
-    let mut imphash_test = "".to_string();
     let mut imps: Vec<Imports> = Vec::new();
     for i in imports.iter() {
         if dlls.contains(&i.dll) { continue; }
         dlls.push(i.dll);
-        imphash_test.push_str(i.dll);
-        imphash_test.push_str(" ");
         let mut temp = init_imports_struct();
         temp.dll = i.dll.to_string();
         for m in imports.iter() {
             if i.dll != m.dll { continue; }
             temp.count += 1;
             temp.name.push(m.name.to_string());
-            imphash_test.push_str(i.dll);
-            imphash_test.push_str(".");
-            imphash_test.push_str(&m.name);
-            imphash_test.push_str(" ");
         }
         imps.push(temp.clone());
     }
-    //print!("{}", imphash_test.trim());
-    let imphash = format!("{:x}", md5::compute(imphash_test.trim())).to_lowercase();
-    Ok((imps, imphash))
+    Ok(imps)
 }
 
 
-fn parse_pe_exports(exports: Vec<goblin::pe::export::Export>) -> io::Result<(Vec<String>)>{
+fn calculate_imphash_sorted(imphash_array: &mut Vec<String>) -> io::Result<(String, String)> {
+    imphash_array.sort();
+    let mut imphash_text_sorted = "".to_string();
+    for i in imphash_array.iter() {
+        imphash_text_sorted.push_str(i);
+    }
+    imphash_text_sorted = imphash_text_sorted.trim_end_matches(",").to_string();
+    let imphash_sorted = format!("{:x}", md5::compute(&imphash_text_sorted)).to_lowercase();
+
+    Ok((imphash_text_sorted, imphash_sorted))
+}
+
+
+fn calculate_imphashes(imports: &Vec<goblin::pe::import::Import>) 
+                        -> io::Result<((String, String, String, String))> {
+    let mut imphash_array: Vec<String> = Vec::new(); // store in array for calculating imphash on sorted
+    let mut imphash_text = "".to_string(); // text imphash for imports in bin natural order
+    for i in imports.iter() {
+        let mut temp = "".to_string();
+        let dll = i.dll.to_ascii_lowercase()
+            .replace(".dll", "")
+            .replace(".sys", "")
+            .replace(".drv", "")
+            .replace(".ocx", "").to_string();
+        temp.push_str(&dll);
+        temp.push_str(".");
+        temp.push_str(&i.name
+            .to_string().to_ascii_lowercase()
+            .replace("ordinal ", ""));
+        temp.push_str(",");
+        imphash_text.push_str(&temp.to_string());
+        imphash_array.push(temp.to_string());
+    }
+    imphash_text = imphash_text.trim_end_matches(",").to_string();
+    let imphash = format!("{:x}", md5::compute(imphash_text.clone())).to_lowercase();
+    let (imphash_text_sorted, imphash_sorted) = calculate_imphash_sorted(&mut imphash_array)?;
+    let imphash_bytes: Vec<u8> = imphash_text.as_bytes().to_vec();
+    let imphash_bytes_ordered: Vec<u8> = imphash_text_sorted.as_bytes().to_vec();
+    let imphash_ssdeep = get_ssdeep_hash(&imphash_bytes)?;
+    let imphash_ssdeep_sorted = get_ssdeep_hash(&imphash_bytes_ordered)?;
+    
+    Ok((imphash, imphash_sorted, imphash_ssdeep, imphash_ssdeep_sorted))
+}
+
+
+fn parse_pe_exports(exports: &Vec<goblin::pe::export::Export>) -> io::Result<(Vec<String>)>{
     let mut exps:Vec<String> = Vec::new();
     for e in exports.iter() {
         exps.push(e.name.unwrap_or("").to_string());
     }
     Ok(exps)
-}
-
-
-fn calculate_imphash(imports: Vec<Imports>) -> io::Result<(String)> {
-    let imphash = "".to_string();
-
-    Ok(imphash)
 }
 
 
@@ -233,10 +265,12 @@ fn get_imports(path: &Path) -> io::Result<(Binary)> {
             println!("elf: {:#?}", &elf);
         },
         Object::PE(pe) => {
-            (bin.imports, bin.imphash) = parse_pe_imports(pe.imports)?;
+            bin.imports = parse_pe_imports(&pe.imports)?;
+            (bin.imphash, bin.imphash_sorted, 
+                bin.imphash_ssdeep, bin.imphash_ssdeep_sorted) = calculate_imphashes(&pe.imports)?;
             bin.is_64 = pe.is_64;
             bin.is_lib = pe.is_lib;
-            bin.exports = parse_pe_exports(pe.exports)?;
+            bin.exports = parse_pe_exports(&pe.exports)?;
             bin.original_filename = pe.name.unwrap_or("").to_string();
         },
         Object::Mach(mach) => {

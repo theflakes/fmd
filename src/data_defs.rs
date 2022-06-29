@@ -54,6 +54,9 @@ pub struct Binary {
     pub is_lib: bool,
     pub original_filename: String,
     pub imphash: String,
+    pub imphash_sorted: String,
+    pub imphash_ssdeep: String,
+    pub imphash_ssdeep_sorted: String,
     pub imports: Vec<Imports>,
     pub exports: Vec<String>
 }
