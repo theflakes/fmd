@@ -16,7 +16,7 @@ Example output:
 ```
 .\fmd.exe --pretty ../../../../../..\Windows\System32\AcSpecfc.dll
 {
-  "timestamp": "2022-06-28T20:42:51.607379100+00:00",
+  "timestamp": "2022-06-29T14:26:56.906787300+00:00",
   "device_type": "Windows 10.0.22000 (Workstation)",
   "path": "C:\\Windows\\System32\\AcSpecfc.dll",
   "bytes": 102400,
@@ -29,7 +29,12 @@ Example output:
     "is_64": true,
     "is_lib": true,
     "original_filename": "AcSpecfc.dll",
-    "imphash": "c42815d007386e1c03ce3bbbc60db18c",
+    "imphash": "4def35a73084468da377f56b9ee63f37",
+    "imphash_sorted": "741b41060b0f71a58044f79bc884144c",
+    "imphash_ssdeep": "48:waKYqcXmnqQ8rAYLRMmtBvTL3fYrBXOZJdjL:VKYbXmnqVfRrtBvTL34B+fJ",
+    "imphash_ssdeep_sorted": "48:jrbTFMzPt9D1MMtCnHW4XmCXVqqTSEzEdbZqf:3bmLtJ1MsCnHW4XmCXUqTMtY",
+    "imports_lib_count": 12,
+    "imports_func_count": 112,
     "imports": [
       {
         "dll": "apphelp.dll",
@@ -216,6 +221,7 @@ Example output:
         ]
       }
     ],
+    "exports_count": 2,
     "exports": [
       "GetHookAPIs",
       "NotifyShims"
