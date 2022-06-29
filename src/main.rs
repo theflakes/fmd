@@ -165,6 +165,7 @@ fn init_bin_struct() -> Binary {
     let exps: Vec<String> = Vec::new();
     let mut bin = Binary {
         is_64: false,
+        is_dotnet: false,
         is_lib: false,
         original_filename: String::new(),
         imphash: String::new(),
@@ -181,7 +182,20 @@ fn init_bin_struct() -> Binary {
 }
 
 
-fn parse_pe_imports(imports: &Vec<goblin::pe::import::Import>) -> io::Result<Vec<Imports>> {
+fn is_dotnet(imps: &Vec<Imports>) -> io::Result<bool > {
+    let mut is_dot_net = false;
+    if imps.len() == 1 {
+        if imps[0].count ==1 
+            && imps[0].lib == "mscoree.dll" 
+            && imps[0].name[0] == "_CorExeMain" {
+            is_dot_net = true;
+        }
+    }
+    Ok(is_dot_net)
+}
+
+
+fn parse_pe_imports(imports: &Vec<goblin::pe::import::Import>) -> io::Result<(Vec<Imports>, bool)> {
     let mut dlls:Vec<&str> = Vec::new();
     let mut imps: Vec<Imports> = Vec::new();
     for i in imports.iter() {
@@ -194,9 +208,10 @@ fn parse_pe_imports(imports: &Vec<goblin::pe::import::Import>) -> io::Result<Vec
             temp.count += 1;
             temp.name.push(m.name.to_string());
         }
-        imps.push(temp.clone());
+        imps.push(temp);
     }
-    Ok(imps)
+    let is_dot_net = is_dotnet(&imps)?;
+    Ok((imps, is_dot_net))
 }
 
 
@@ -281,7 +296,7 @@ fn get_imports(path: &Path) -> io::Result<(Binary)> {
             println!("elf: {:#?}", &elf);
         },
         Object::PE(pe) => {
-            bin.imports = parse_pe_imports(&pe.imports)?;
+            (bin.imports, bin.is_dotnet) = parse_pe_imports(&pe.imports)?;
             (bin.imphash, bin.imphash_sorted, 
                 bin.imphash_ssdeep, bin.imphash_ssdeep_sorted,
                 bin.imports_lib_count, bin.imports_func_count) = get_imphashes(&pe.imports)?;

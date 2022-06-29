@@ -51,6 +51,7 @@ pub struct Imports {
 #[derive(Serialize, Clone)]
 pub struct Binary {
     pub is_64: bool,
+    pub is_dotnet: bool,
     pub is_lib: bool,
     pub original_filename: String,
     pub imphash: String,
