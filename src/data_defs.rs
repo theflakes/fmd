@@ -57,7 +57,10 @@ pub struct Binary {
     pub imphash_sorted: String,
     pub imphash_ssdeep: String,
     pub imphash_ssdeep_sorted: String,
+    pub imports_lib_count: u32,
+    pub imports_func_count: u32,
     pub imports: Vec<Imports>,
+    pub exports_count: u32,
     pub exports: Vec<String>
 }
 
