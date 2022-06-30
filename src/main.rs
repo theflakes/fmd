@@ -182,6 +182,10 @@ fn init_bin_struct() -> Binary {
 }
 
 
+/*
+    detects if the binary is a .Net assembly
+    .Net assemblies will only have one lib and one function in imports
+*/
 fn is_dotnet(imps: &Vec<Imports>) -> io::Result<bool> {
     if imps.len() == 1 {
         if imps[0].count ==1 
