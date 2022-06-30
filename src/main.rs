@@ -182,16 +182,15 @@ fn init_bin_struct() -> Binary {
 }
 
 
-fn is_dotnet(imps: &Vec<Imports>) -> io::Result<bool > {
-    let mut is_dot_net = false;
+fn is_dotnet(imps: &Vec<Imports>) -> io::Result<bool> {
     if imps.len() == 1 {
         if imps[0].count ==1 
             && imps[0].lib == "mscoree.dll" 
             && imps[0].name[0] == "_CorExeMain" {
-            is_dot_net = true;
+            return Ok(true);
         }
     }
-    Ok(is_dot_net)
+    Ok(false)
 }
 
 
