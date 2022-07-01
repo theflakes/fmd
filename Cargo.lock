@@ -112,6 +112,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "453440c271cf5577fd2a40e4942540cb7d0d2f85e27c8d07dd0023c925a67541"
 
 [[package]]
+name = "entropy"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e885f8dca86fbf1999f9b4643d6e94e984c5c8b36073404dd227be3e5255f1d5"
+
+[[package]]
 name = "fixedbitset"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -123,6 +129,7 @@ version = "0.1.0"
 dependencies = [
  "chrono",
  "dunce",
+ "entropy",
  "fuzzyhash",
  "goblin",
  "lazy_static",

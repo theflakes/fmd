@@ -21,6 +21,7 @@ chrono = "*"
 lazy_static = "*"
 whoami = "*"
 goblin = "*"
+entropy = "*"
 
 [profile.release]
 lto = true

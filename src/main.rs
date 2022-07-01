@@ -6,6 +6,7 @@ extern crate path_abs;
 extern crate dunce;
 extern crate chrono;
 extern crate goblin;
+extern crate entropy;
 
 #[macro_use] extern crate lazy_static;
 
@@ -28,6 +29,7 @@ use path_abs::{PathAbs, PathInfo};
 use chrono::prelude::{DateTime, Utc};
 use std::time::SystemTime;
 use goblin::{error, Object};
+use entropy::shannon_entropy;
 
 
 // report out in json
@@ -36,6 +38,7 @@ fn print_log(
                 path: String,
                 bytes: u64,
                 mime_type: String, 
+                entropy: f32,
                 md5: String,
                 sha1: String,
                 sha256: String,
@@ -49,7 +52,8 @@ fn print_log(
             DEVICE_TYPE.to_string(),
             path.to_string(),
             bytes,
-            mime_type, 
+            mime_type,
+            entropy,
             md5, 
             sha1, 
             sha256, 
@@ -63,6 +67,7 @@ fn print_log(
             path.to_string(),
             bytes,
             mime_type, 
+            entropy,
             md5, 
             sha1, 
             sha256, 
@@ -84,8 +89,8 @@ pub fn open_file(
 }
 
 
-fn get_mimetype(target_file: &Path) -> io::Result<String> {
-    let mtype = tree_magic::from_filepath(target_file);
+fn get_mimetype(buffer: &Vec<u8>) -> io::Result<String> {
+    let mtype = tree_magic::from_u8(&buffer);
 
     Ok(mtype)
 }
@@ -291,8 +296,7 @@ fn parse_pe_exports(exports: &Vec<goblin::pe::export::Export>) -> io::Result<(Ve
 }
 
 
-fn get_imports(path: &Path) -> io::Result<(Binary)> {
-    let buffer = fs::read(path)?;
+fn get_imports(buffer: &Vec<u8>) -> io::Result<(Binary)> {
     let mut bin = init_bin_struct();
     match Object::parse(&buffer).unwrap() {
         Object::Elf(elf) => {
@@ -317,6 +321,11 @@ fn get_imports(path: &Path) -> io::Result<(Binary)> {
         Object::Unknown(magic) => { println!("unknown magic: {:#x}", magic) }
     }
     Ok(bin)
+}
+
+
+fn get_entropy(buffer: &Vec<u8>) -> io::Result<f32> {
+    Ok(shannon_entropy(buffer))
 }
 
 
@@ -367,16 +376,6 @@ fn get_args() -> io::Result<(String, bool)> {
                 print_help();
             }
             pprint = true;
-        },
-        4 => {
-            if &args[1] == "-p" || &args[1] == "--pretty" {
-                file_path = &args[2];
-            } else if &args[2] == "-p" || &args[2] == "--pretty" {
-                file_path = &args[1];
-            } else {
-                print_help();
-            }
-            pprint = true;
         }
         _ => { print_help() }
     };
@@ -399,15 +398,17 @@ fn main() -> io::Result<()> {
     let mut bytes = file.metadata().unwrap().len();
     let mut bin = init_bin_struct();
     let mut buffer: Vec<u8> = Vec::new();
+    let mut entropy: f32 = 0.0;
     if bytes != 0 {
         buffer = read_file_bytes(&file)?;
+        entropy = shannon_entropy(&buffer);
         ssdeep = get_ssdeep_hash(&buffer)?;
-        mime_type = get_mimetype(&path)?;
+        mime_type = get_mimetype(&buffer)?;
         (md5, sha1, sha256) = get_file_content_info(&file, &buffer)?;
-        bin = get_imports(path)?;
+        bin = get_imports(&buffer)?;
     }
     print_log(timestamp, abs_path, 
-        bytes, mime_type, md5, 
+        bytes, mime_type, entropy, md5, 
         sha1, sha256, ssdeep, 
         bin, pprint)?;
     Ok(())
