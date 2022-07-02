@@ -15,7 +15,6 @@ Usage: fmd <file path> [--pretty | -p]
 Example output:
 ```
 .\fmd.exe --pretty .\fmd.exe
-PS C:\Users\thefl\code\fmd\target\release> .\fmd.exe --pretty .\fmd.exe
 {
   "timestamp": "2022-07-01T17:36:26.575236900+00:00",
   "device_type": "Windows 10.0.22000 (Workstation)",
