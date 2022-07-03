@@ -173,6 +173,10 @@ fn init_bin_struct() -> Binary {
         is_dotnet: false,
         is_lib: false,
         original_filename: String::new(),
+        time_compile: String::new(),
+        time_debug: String::new(),
+        linker_major_version: 0,
+        linker_minor_version: 0,
         imphash: String::new(),
         imphash_sorted: String::new(),
         imphash_ssdeep: String::new(),
@@ -296,6 +300,15 @@ fn parse_pe_exports(exports: &Vec<goblin::pe::export::Export>) -> io::Result<(Ve
 }
 
 
+fn get_date_string(timestamp: u32) -> io::Result<String> {
+    let temp = timestamp as i64;
+    let dt = chrono::NaiveDateTime::from_timestamp_opt(temp, 0).unwrap()
+        .format("%Y-%m-%dT%H:%M:%S")
+        .to_string();
+    Ok(dt)
+}
+
+
 fn get_imports(buffer: &Vec<u8>) -> io::Result<(Binary)> {
     let mut bin = init_bin_struct();
     match Object::parse(&buffer).unwrap() {
@@ -311,6 +324,10 @@ fn get_imports(buffer: &Vec<u8>) -> io::Result<(Binary)> {
             bin.is_lib = pe.is_lib;
             (bin.exports, bin.exports_count) = parse_pe_exports(&pe.exports)?;
             bin.original_filename = pe.name.unwrap_or("").to_string();
+            bin.time_compile = get_date_string(pe.header.coff_header.time_date_stamp)?;
+            bin.time_debug = get_date_string(pe.debug_data.unwrap().image_debug_directory.time_date_stamp)?;
+            bin.linker_major_version = pe.header.optional_header.unwrap().standard_fields.major_linker_version;
+            bin.linker_minor_version = pe.header.optional_header.unwrap().standard_fields.minor_linker_version;
         },
         Object::Mach(mach) => {
             println!("mach: {:#?}", &mach);
