@@ -44,7 +44,8 @@ fn print_log(
                 sha256: String,
                 ssdeep: String,
                 binary: Binary,
-                pprint: bool
+                pprint: bool,
+                strings: Vec<String>
             ) -> io::Result<()> {
     if pprint {
         MetaData::new(
@@ -58,7 +59,8 @@ fn print_log(
             sha1, 
             sha256, 
             ssdeep,
-            binary
+            binary,
+            strings
         ).report_pretty_log();
     } else {
         MetaData::new(
@@ -72,7 +74,8 @@ fn print_log(
             sha1, 
             sha256, 
             ssdeep,
-            binary
+            binary,
+            strings
         ).report_log();
     }
     
@@ -186,8 +189,7 @@ fn init_bin_struct() -> Binary {
         imports: imps,
         exports_count: 0,
         exports: exps,
-        first_128_bytes: String::new(),
-        strings: Vec::new()
+        first_128_bytes: String::new()
     };
     return bin
 }
@@ -344,7 +346,7 @@ fn bin_to_string(bytes: &Vec<u8>) -> io::Result<String> {
 }
 
 
-fn get_imports(buffer: &Vec<u8>, strings: usize) -> io::Result<(Binary)> {
+fn get_imports(buffer: &Vec<u8>) -> io::Result<(Binary)> {
     let mut bin = init_bin_struct();
     match Object::parse(&buffer).unwrap() {
         Object::Elf(elf) => {
@@ -364,7 +366,6 @@ fn get_imports(buffer: &Vec<u8>, strings: usize) -> io::Result<(Binary)> {
             bin.linker_major_version = pe.header.optional_header.unwrap().standard_fields.major_linker_version;
             bin.linker_minor_version = pe.header.optional_header.unwrap().standard_fields.minor_linker_version;
             bin.first_128_bytes = bin_to_string(&buffer)?;
-            if strings > 0 {bin.strings = get_strings(&buffer, strings)?;}
         },
         Object::Mach(mach) => {
             println!("mach: {:#?}", &mach);
@@ -406,7 +407,8 @@ fn print_help() {
         Pull various file metadata.
         Usage: fmd <file path> [--pretty | -p]
         Options:
-            -p, --pretty     Pretty print JSON
+            -p, --pretty        Pretty print JSON
+            -s, --strings #     Look for string of lenght # or longer
     ";
     println!("{}", help);
     process::exit(1)
@@ -437,7 +439,7 @@ fn get_args() -> io::Result<(String, bool, usize)> {
 
 
 fn main() -> io::Result<()> {
-    let (file_path, pprint, strings) = get_args()?;
+    let (file_path, pprint, strings_length) = get_args()?;
     let mut imps = false;
     let timestamp = get_time_iso8601()?;
     let path = convert_to_path(&file_path)?;
@@ -452,17 +454,19 @@ fn main() -> io::Result<()> {
     let mut bin = init_bin_struct();
     let mut buffer: Vec<u8> = Vec::new();
     let mut entropy: f32 = 0.0;
+    let mut strings: Vec<String> = Vec::new();
     if bytes != 0 {
         buffer = read_file_bytes(&file)?;
         entropy = shannon_entropy(&buffer);
         ssdeep = get_ssdeep_hash(&buffer)?;
         mime_type = get_mimetype(&buffer)?;
         (md5, sha1, sha256) = get_file_content_info(&file, &buffer)?;
-        bin = get_imports(&buffer, strings)?;
+        bin = get_imports(&buffer)?;
+        if strings_length > 0 {strings = get_strings(&buffer, strings_length)?;}
     }
     print_log(timestamp, abs_path, 
         bytes, mime_type, entropy, md5, 
         sha1, sha256, ssdeep, 
-        bin, pprint)?;
+        bin, pprint, strings)?;
     Ok(())
 }

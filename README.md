@@ -150,8 +150,8 @@ Example output:
     "exports_count": 0,
     "exports": [],
     "first_128_bytes": "MZ�.\u0003...\u0004...��..�.......@...................................�...\u000e\u001f�\u000e.�\t�!�\u0001L�!This program cannot be run in DOS mode.\r\r\n$......",
-    "strings": []
   }
+  "strings": []
 }
 ```
 

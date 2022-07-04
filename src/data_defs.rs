@@ -67,8 +67,7 @@ pub struct Binary {
     pub imports: Vec<Imports>,
     pub exports_count: u32,
     pub exports: Vec<String>,
-    pub first_128_bytes: String,
-    pub strings: Vec<String>
+    pub first_128_bytes: String
 }
 
 #[derive(Serialize)]
@@ -83,7 +82,8 @@ pub struct MetaData {
     pub sha1: String,
     pub sha256: String,
     pub ssdeep: String,
-    pub binary: Binary
+    pub binary: Binary,
+    pub strings: Vec<String>
 }
 impl MetaData {
     pub fn new(
@@ -97,7 +97,8 @@ impl MetaData {
             sha1: String,
             sha256: String,
             ssdeep: String,
-            binary: Binary) -> MetaData {
+            binary: Binary,
+            strings: Vec<String>) -> MetaData {
         MetaData {
             timestamp,
             device_type,
@@ -109,7 +110,8 @@ impl MetaData {
             sha1,
             sha256,
             ssdeep,
-            binary
+            binary,
+            strings
         }
     }
 
