@@ -16,28 +16,28 @@ Example output:
 ```
 .\fmd.exe --pretty .\fmd.exe
 {
-  "timestamp": "2022-07-03T17:23:22.345124400+00:00",
+  "timestamp": "2022-07-04T20:15:22.450972400+00:00",
   "device_type": "Windows 10.0.22000 (Workstation)",
   "path": "C:\\Users\\thefl\\code\\fmd\\target\\release\\fmd.exe",
-  "bytes": 846848,
+  "bytes": 734720,
   "mime_type": "application/x-executable",
-  "entropy": 6.435221,
-  "md5": "05b10d240eab6cb60b789979d6facbc1",
-  "sha1": "8556dcc5f205a179bebab19055bd2f3686ff4f57",
-  "sha256": "799aadd646cd84f50e49621ef81555914764701759139d8d990d8212fcf66a8f",
-  "ssdeep": "12288:bmnsMMBarICYItEvCfIRThdxi3/lTvHDuMY3NKv3KrCwDillR/0:bmsXBarIsEvGMTJi3/lraX3NKvyDil",
+  "entropy": 6.417216,
+  "md5": "9e89c5e92195de9dc30909c60a1bbea2",
+  "sha1": "203f1bdc4aa819fd17dd5de0e8b164b1f977d52e",
+  "sha256": "91eaf2e4dc114b45c4deadeb4fe9de486f737482fd8d872dbce0be9fd4e7b9b2",
+  "ssdeep": "12288:LF8L6vXa799nT+LPRiGm3hJp4xHUJbyrYlR:SLMKJ9nqLPRib3hJwU9y",
   "binary": {
     "is_64": true,
     "is_dotnet": false,
     "is_lib": false,
     "original_filename": "",
-    "time_compile": "2022-07-03T17:23:18",
-    "time_debug": "2022-07-03T17:23:18",
+    "time_compile": "2022-07-04T20:13:44",
+    "time_debug": "2022-07-04T20:13:44",
     "linker_major_version": 14,
     "linker_minor_version": 32,
-    "imphash": "64bbdb2bb9dca99168c4d17a5cf0e278",
+    "imphash": "cc86782ee04d5c8f4491f3ee99b6c550",
     "imphash_sorted": "4acac28acd517a64e71396eb1c0da9e3",
-    "imphash_ssdeep": "24:fDjDpnOwJ3YrXjD5WlKBMdfjEM5L9QTxXXWkKu9/Kbm1stvxCBc+pljpEOovuRZ/:9OdrXZWvt9QTxnW21stv4Bc+pRlGBFK",
+    "imphash_ssdeep": "24:VjDp3pOwJ3YrXjD5WlKDMdfjEM5L9QTxXXWkKu9/Kbm1stvxCBc+pljpEOovuRZ/:XcdrXZWtt9QTxnW21stv4Bc+pRlGBFK",
     "imphash_ssdeep_sorted": "24:/KW5WkFyFJDCeY9xt1OovbOGMUpnmubu9jveDWDQyl3LLPxQQ8KIKbe07G5u9VJ9:/KW5W6yFhCf9/w3+nmXfhnxQsGvXHlE",
     "imports_lib_count": 2,
     "imports_func_count": 92,
@@ -46,13 +46,10 @@ Example output:
         "lib": "KERNEL32.dll",
         "count": 91,
         "name": [
-          "HeapFree",
-          "GetProcessHeap",
-          "HeapAlloc",
           "LoadLibraryExW",
           "GetProcAddress",
           "FreeLibrary",
-          "HeapReAlloc",
+          "HeapFree",
           "GetCommandLineW",
           "SetLastError",
           "GetModuleFileNameW",
@@ -64,6 +61,9 @@ Example output:
           "SetThreadStackGuarantee",
           "AcquireSRWLockExclusive",
           "ReleaseSRWLockExclusive",
+          "HeapAlloc",
+          "GetProcessHeap",
+          "HeapReAlloc",
           "Sleep",
           "GetModuleHandleA",
           "TryAcquireSRWLockExclusive",
@@ -148,7 +148,9 @@ Example output:
       }
     ],
     "exports_count": 0,
-    "exports": []
+    "exports": [],
+    "first_128_bytes": "MZ�.\u0003...\u0004...��..�.......@...................................�...\u000e\u001f�\u000e.�\t�!�\u0001L�!This program cannot be run in DOS mode.\r\r\n$......",
+    "strings": []
   }
 }
 ```
