@@ -408,7 +408,7 @@ fn print_help() {
         Usage: fmd [--pretty | -p] ([--strings|-s] #) <file path>
         Options:
             -p, --pretty        Pretty print JSON
-            -s, --strings #     Look for string of lenght # or longer
+            -s, --strings #     Look for strings of lenght # or longer
     ";
     println!("{}", help);
     process::exit(1)
