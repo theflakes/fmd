@@ -405,7 +405,7 @@ fn print_help() {
     let help = "
         Author: Brian Kellogg
         Pull various file metadata.
-        Usage: fmd <file path> [--pretty | -p]
+        Usage: fmd [--pretty | -p] ([--strings|-s] #) <file path>
         Options:
             -p, --pretty        Pretty print JSON
             -s, --strings #     Look for string of lenght # or longer
@@ -421,6 +421,7 @@ fn get_args() -> io::Result<(String, bool, usize)> {
     let mut pprint = false;
     let mut strings: usize = 0;
     let mut get_next_arg = false;
+    if args.len() == 1 { print_help(); }
     for arg in args {
         match arg.as_str() {
             "-p" | "--pretty" => pprint = true,
