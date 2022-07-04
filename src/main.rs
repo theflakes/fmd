@@ -185,7 +185,8 @@ fn init_bin_struct() -> Binary {
         imports_func_count: 0,
         imports: imps,
         exports_count: 0,
-        exports: exps
+        exports: exps,
+        first_128_bytes: String::new()
     };
     return bin
 }
@@ -309,6 +310,21 @@ fn get_date_string(timestamp: u32) -> io::Result<String> {
 }
 
 
+fn bin_to_string(bytes: &Vec<u8>) -> io::Result<String> {
+    let mut s = String::new();
+    if bytes.len() >= 128 {
+        s = String::from_utf8_lossy(&bytes[0..127]).into_owned();
+    } else {
+        s = String::from_utf8_lossy(bytes).into_owned();
+    }
+
+    let first_bytes_as_string = s.as_str()
+                                        .replace('\u{0000}', ".")
+                                        .to_string();
+    Ok(first_bytes_as_string)
+}
+
+
 fn get_imports(buffer: &Vec<u8>) -> io::Result<(Binary)> {
     let mut bin = init_bin_struct();
     match Object::parse(&buffer).unwrap() {
@@ -328,6 +344,7 @@ fn get_imports(buffer: &Vec<u8>) -> io::Result<(Binary)> {
             bin.time_debug = get_date_string(pe.debug_data.unwrap().image_debug_directory.time_date_stamp)?;
             bin.linker_major_version = pe.header.optional_header.unwrap().standard_fields.major_linker_version;
             bin.linker_minor_version = pe.header.optional_header.unwrap().standard_fields.minor_linker_version;
+            bin.first_128_bytes = bin_to_string(&buffer)?;
         },
         Object::Mach(mach) => {
             println!("mach: {:#?}", &mach);

@@ -66,7 +66,8 @@ pub struct Binary {
     pub imports_func_count: u32,
     pub imports: Vec<Imports>,
     pub exports_count: u32,
-    pub exports: Vec<String>
+    pub exports: Vec<String>,
+    pub first_128_bytes: String
 }
 
 #[derive(Serialize)]
