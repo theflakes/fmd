@@ -427,9 +427,10 @@ fn get_args() -> io::Result<(String, bool, usize)> {
             "-s" | "--strings" => get_next_arg = true,
             _ => {
                 if get_next_arg {
-                    strings = arg.as_str().parse::<usize>().unwrap()
+                    strings = arg.as_str().parse::<usize>().unwrap();
+                    get_next_arg = false;
                 } else {
-                    file_path = arg.clone()
+                    file_path = arg.clone();
                 }
             }
         }
