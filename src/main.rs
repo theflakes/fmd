@@ -186,7 +186,8 @@ fn init_bin_struct() -> Binary {
         imports: imps,
         exports_count: 0,
         exports: exps,
-        first_128_bytes: String::new()
+        first_128_bytes: String::new(),
+        strings: Vec::new()
     };
     return bin
 }
@@ -310,6 +311,24 @@ fn get_date_string(timestamp: u32) -> io::Result<String> {
 }
 
 
+pub fn get_strings(buffer: &Vec<u8>, length: usize) -> io::Result<Vec<String>> {
+    let mut results: Vec<String> = Vec::new();
+    let mut chars: Vec<u8> = Vec::new();
+    let ascii = 32..126;
+    for b in buffer {
+        if ascii.contains(b) {
+            chars.push(*b);
+        } else {
+            if chars.len() >= length {
+                results.push(String::from_utf8(chars).unwrap());
+            }
+            chars = Vec::new();
+        }
+    }
+    Ok(results)
+}
+
+
 fn bin_to_string(bytes: &Vec<u8>) -> io::Result<String> {
     let mut s = String::new();
     if bytes.len() >= 128 {
@@ -325,7 +344,7 @@ fn bin_to_string(bytes: &Vec<u8>) -> io::Result<String> {
 }
 
 
-fn get_imports(buffer: &Vec<u8>) -> io::Result<(Binary)> {
+fn get_imports(buffer: &Vec<u8>, strings: usize) -> io::Result<(Binary)> {
     let mut bin = init_bin_struct();
     match Object::parse(&buffer).unwrap() {
         Object::Elf(elf) => {
@@ -345,6 +364,7 @@ fn get_imports(buffer: &Vec<u8>) -> io::Result<(Binary)> {
             bin.linker_major_version = pe.header.optional_header.unwrap().standard_fields.major_linker_version;
             bin.linker_minor_version = pe.header.optional_header.unwrap().standard_fields.minor_linker_version;
             bin.first_128_bytes = bin_to_string(&buffer)?;
+            if strings > 0 {bin.strings = get_strings(&buffer, strings)?;}
         },
         Object::Mach(mach) => {
             println!("mach: {:#?}", &mach);
@@ -393,32 +413,31 @@ fn print_help() {
 }
 
 
-fn get_args() -> io::Result<(String, bool)> {
+fn get_args() -> io::Result<(String, bool, usize)> {
     let args: Vec<String> = env::args().collect();
-    let mut file_path = &String::new();
+    let mut file_path = String::new();
     let mut pprint = false;
-    match args.len() {
-        2 => {
-            file_path = &args[1];
-        },
-        3 => {
-            if &args[1] == "-p" || &args[1] == "--pretty" {
-                file_path = &args[2];
-            } else if &args[2] == "-p" || &args[2] == "--pretty" {
-                file_path = &args[1];
-            } else {
-                print_help();
+    let mut strings: usize = 0;
+    let mut get_next_arg = false;
+    for arg in args {
+        match arg.as_str() {
+            "-p" | "--pretty" => pprint = true,
+            "-s" | "--strings" => get_next_arg = true,
+            _ => {
+                if get_next_arg {
+                    strings = arg.as_str().parse::<usize>().unwrap()
+                } else {
+                    file_path = arg.clone()
+                }
             }
-            pprint = true;
         }
-        _ => { print_help() }
-    };
-    Ok((file_path.to_string(), pprint))
+    }
+    Ok((file_path.clone(), pprint, strings))
 }
 
 
 fn main() -> io::Result<()> {
-    let (file_path, pprint) = get_args()?;
+    let (file_path, pprint, strings) = get_args()?;
     let mut imps = false;
     let timestamp = get_time_iso8601()?;
     let path = convert_to_path(&file_path)?;
@@ -439,7 +458,7 @@ fn main() -> io::Result<()> {
         ssdeep = get_ssdeep_hash(&buffer)?;
         mime_type = get_mimetype(&buffer)?;
         (md5, sha1, sha256) = get_file_content_info(&file, &buffer)?;
-        bin = get_imports(&buffer)?;
+        bin = get_imports(&buffer, strings)?;
     }
     print_log(timestamp, abs_path, 
         bytes, mime_type, entropy, md5, 
