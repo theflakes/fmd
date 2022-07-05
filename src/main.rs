@@ -449,6 +449,7 @@ fn start_analysis(file_path: String, pprint: bool, strings_length: usize) -> io:
     let mut imps = false;
     let timestamp = get_time_iso8601()?;
     let path = convert_to_path(&file_path)?;
+    let ftimes = get_file_times(&path)?;
     let abs_path = get_abs_path(path)?.as_path().to_str().unwrap().to_string();
     let file = open_file(&path)?;
     let mut md5 = "d41d8cd98f00b204e9800998ecf8427e".to_string(); // md5 of empty file
@@ -461,7 +462,6 @@ fn start_analysis(file_path: String, pprint: bool, strings_length: usize) -> io:
     let mut buffer: Vec<u8> = Vec::new();
     let mut entropy: f32 = 0.0;
     let mut strings: Vec<String> = Vec::new();
-    let ftimes = get_file_times(&path)?;
     let is_hidden = is_hidden(&path)?;
     if bytes != 0 {
         buffer = read_file_bytes(&file)?;
