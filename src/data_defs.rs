@@ -41,6 +41,15 @@ trait Loggable : Serialize {
 impl<T : ?Sized + Serialize> Loggable for T {}
 
 
+impl Default for Imports {
+    fn default () -> Imports {
+        Imports {
+            lib: String::new(),
+            count: 0,
+            name: Vec::new()
+        }
+    }
+}
 #[derive(Serialize, Clone)]
 pub struct Imports {
     pub lib: String,
@@ -48,14 +57,66 @@ pub struct Imports {
     pub name: Vec<String>
 }
 
+impl Default for FileTimestamps {
+    fn default () -> FileTimestamps {
+        FileTimestamps {
+            access: String::new(),
+            create: String::new(),
+            modify: String::new()
+        }
+    }
+}
+#[derive(Serialize, Clone)]
+pub struct FileTimestamps {
+    pub access: String,
+    pub create: String,
+    pub modify: String
+}
+
+impl Default for BinTimestamps {
+    fn default () -> BinTimestamps {
+        BinTimestamps {
+            compile: String::new(),
+            debug: String::new()
+        }
+    }
+}
+#[derive(Serialize, Clone)]
+pub struct BinTimestamps {
+    pub compile: String,
+    pub debug: String
+}
+
+impl Default for Binary {
+    fn default () -> Binary {
+        Binary {
+            is_64: false,
+            is_dotnet: false,
+            is_lib: false,
+            original_filename: String::new(),
+            timestamps: BinTimestamps::default(),
+            linker_major_version: 0,
+            linker_minor_version: 0,
+            imphash: String::new(),
+            imphash_sorted: String::new(),
+            imphash_ssdeep: String::new(),
+            imphash_ssdeep_sorted: String::new(),
+            imports_lib_count: 0,
+            imports_func_count: 0,
+            imports: Vec::new(),
+            exports_count: 0,
+            exports: Vec::new(),
+            first_128_bytes: String::new()
+        }
+    }
+}
 #[derive(Serialize, Clone)]
 pub struct Binary {
     pub is_64: bool,
     pub is_dotnet: bool,
     pub is_lib: bool,
     pub original_filename: String,
-    pub time_compile: String,
-    pub time_debug: String,
+    pub timestamps: BinTimestamps,
     pub linker_major_version: u8,
     pub linker_minor_version: u8,
     pub imphash: String,
@@ -70,6 +131,7 @@ pub struct Binary {
     pub first_128_bytes: String
 }
 
+
 #[derive(Serialize)]
 pub struct MetaData {
     pub timestamp: String,
@@ -77,6 +139,7 @@ pub struct MetaData {
     pub path: String,
     pub bytes: u64,
     pub mime_type: String,
+    pub timestamps: FileTimestamps,
     pub entropy: f32,
     pub md5: String,
     pub sha1: String,
@@ -92,6 +155,7 @@ impl MetaData {
             path: String,
             bytes: u64,
             mime_type: String,
+            timestamps: FileTimestamps,
             entropy: f32,
             md5: String,
             sha1: String,
@@ -105,6 +169,7 @@ impl MetaData {
             path,
             bytes,
             mime_type,
+            timestamps,
             entropy,
             md5,
             sha1,

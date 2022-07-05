@@ -38,6 +38,7 @@ fn print_log(
                 path: String,
                 bytes: u64,
                 mime_type: String, 
+                timestamps: FileTimestamps,
                 entropy: f32,
                 md5: String,
                 sha1: String,
@@ -54,6 +55,7 @@ fn print_log(
             path.to_string(),
             bytes,
             mime_type,
+            timestamps,
             entropy,
             md5, 
             sha1, 
@@ -69,6 +71,7 @@ fn print_log(
             path.to_string(),
             bytes,
             mime_type, 
+            timestamps,
             entropy,
             md5, 
             sha1, 
@@ -157,44 +160,6 @@ pub fn get_file_content_info(
 }
 
 
-fn init_imports_struct() -> Imports {
-    let imps: Vec<String> = Vec::new();
-    let mut imports = Imports {
-        lib: String::new(),
-        count: 0,
-        name: imps
-    };
-    return imports
-}
-
-
-fn init_bin_struct() -> Binary {
-    let imps: Vec<Imports> = Vec::new();
-    let exps: Vec<String> = Vec::new();
-    let mut bin = Binary {
-        is_64: false,
-        is_dotnet: false,
-        is_lib: false,
-        original_filename: String::new(),
-        time_compile: String::new(),
-        time_debug: String::new(),
-        linker_major_version: 0,
-        linker_minor_version: 0,
-        imphash: String::new(),
-        imphash_sorted: String::new(),
-        imphash_ssdeep: String::new(),
-        imphash_ssdeep_sorted: String::new(),
-        imports_lib_count: 0,
-        imports_func_count: 0,
-        imports: imps,
-        exports_count: 0,
-        exports: exps,
-        first_128_bytes: String::new()
-    };
-    return bin
-}
-
-
 /*
     detects if the binary is a .Net assembly
     .Net assemblies will only have one lib and one function in imports
@@ -217,7 +182,7 @@ fn parse_pe_imports(imports: &Vec<goblin::pe::import::Import>) -> io::Result<(Ve
     for i in imports.iter() {
         if dlls.contains(&i.dll) { continue; }
         dlls.push(i.dll);
-        let mut temp = init_imports_struct();
+        let mut temp = Imports::default();
         temp.lib = i.dll.to_string();
         for m in imports.iter() {
             if i.dll != m.dll { continue; }
@@ -252,6 +217,7 @@ fn check_ordinal(dll: &str, func: &str) -> io::Result<String> {
     }
     Ok(f)
 }
+
 
 fn get_imphashes(imports: &Vec<goblin::pe::import::Import>) 
                         -> io::Result<((String, String, String, String, u32, u32))> {
@@ -347,7 +313,7 @@ fn bin_to_string(bytes: &Vec<u8>) -> io::Result<String> {
 
 
 fn get_imports(buffer: &Vec<u8>) -> io::Result<(Binary)> {
-    let mut bin = init_bin_struct();
+    let mut bin = Binary::default();
     match Object::parse(&buffer).unwrap() {
         Object::Elf(elf) => {
             println!("elf: {:#?}", &elf);
@@ -361,8 +327,8 @@ fn get_imports(buffer: &Vec<u8>) -> io::Result<(Binary)> {
             bin.is_lib = pe.is_lib;
             (bin.exports, bin.exports_count) = parse_pe_exports(&pe.exports)?;
             bin.original_filename = pe.name.unwrap_or("").to_string();
-            bin.time_compile = get_date_string(pe.header.coff_header.time_date_stamp)?;
-            bin.time_debug = get_date_string(pe.debug_data.unwrap().image_debug_directory.time_date_stamp)?;
+            bin.timestamps.compile = get_date_string(pe.header.coff_header.time_date_stamp)?;
+            bin.timestamps.debug = get_date_string(pe.debug_data.unwrap().image_debug_directory.time_date_stamp)?;
             bin.linker_major_version = pe.header.optional_header.unwrap().standard_fields.major_linker_version;
             bin.linker_minor_version = pe.header.optional_header.unwrap().standard_fields.minor_linker_version;
             bin.first_128_bytes = bin_to_string(&buffer)?;
@@ -398,6 +364,11 @@ fn get_time_iso8601() -> io::Result<(String)> {
     let now = SystemTime::now();
     let now: DateTime<Utc> = now.into();
     Ok(now.to_rfc3339())
+}
+
+// get date into the format we need
+pub fn format_date(time: DateTime::<Utc>) -> io::Result<String> {
+    Ok(time.format("%Y-%m-%dT%H:%M:%S.%3f").to_string())
 }
 
 
@@ -440,6 +411,21 @@ fn get_args() -> io::Result<(String, bool, usize)> {
 }
 
 
+fn get_file_times(path: &Path) -> io::Result<FileTimestamps> {
+    let mut ftimes = FileTimestamps::default();
+    let metadata = match fs::metadata(dunce::simplified(&path)) {
+        Ok(m) => m,
+        _ => return Ok(ftimes)
+    };
+    if metadata.created().is_ok() { 
+        ftimes.create = format_date(metadata.created()?.to_owned().into())?;
+    }
+    ftimes.access = format_date(metadata.accessed()?.to_owned().into())?;
+    ftimes.modify = format_date(metadata.modified()?.to_owned().into())?;
+    Ok(ftimes)
+}
+
+
 fn start_analysis(file_path: String, pprint: bool, strings_length: usize) -> io::Result<()> {
     let mut imps = false;
     let timestamp = get_time_iso8601()?;
@@ -452,10 +438,11 @@ fn start_analysis(file_path: String, pprint: bool, strings_length: usize) -> io:
     let mut mime_type = String::new();
     let mut ssdeep = String::new();
     let mut bytes = file.metadata().unwrap().len();
-    let mut bin = init_bin_struct();
+    let mut bin = Binary::default();
     let mut buffer: Vec<u8> = Vec::new();
     let mut entropy: f32 = 0.0;
     let mut strings: Vec<String> = Vec::new();
+    let ftimes = get_file_times(&path)?;
     if bytes != 0 {
         buffer = read_file_bytes(&file)?;
         entropy = shannon_entropy(&buffer);
@@ -466,7 +453,7 @@ fn start_analysis(file_path: String, pprint: bool, strings_length: usize) -> io:
         if strings_length > 0 {strings = get_strings(&buffer, strings_length)?;}
     }
     print_log(timestamp, abs_path, 
-        bytes, mime_type, entropy, md5, 
+        bytes, mime_type, ftimes, entropy, md5, 
         sha1, sha256, ssdeep, 
         bin, pprint, strings)?;
         Ok(())

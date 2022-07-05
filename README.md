@@ -16,23 +16,30 @@ Example output:
 ```
 .\fmd.exe --pretty .\fmd.exe
 {
-  "timestamp": "2022-07-04T20:15:22.450972400+00:00",
+  "timestamp": "2022-07-05T21:18:00.207689500+00:00",
   "device_type": "Windows 10.0.22000 (Workstation)",
   "path": "C:\\Users\\thefl\\code\\fmd\\target\\release\\fmd.exe",
-  "bytes": 734720,
+  "bytes": 739840,
   "mime_type": "application/x-executable",
-  "entropy": 6.417216,
-  "md5": "9e89c5e92195de9dc30909c60a1bbea2",
-  "sha1": "203f1bdc4aa819fd17dd5de0e8b164b1f977d52e",
-  "sha256": "91eaf2e4dc114b45c4deadeb4fe9de486f737482fd8d872dbce0be9fd4e7b9b2",
-  "ssdeep": "12288:LF8L6vXa799nT+LPRiGm3hJp4xHUJbyrYlR:SLMKJ9nqLPRib3hJwU9y",
+  "timestamps": {
+    "access": "2022-07-05T21:18:00.196",
+    "create": "2022-07-04T15:35:43.415",
+    "modify": "2022-07-05T21:17:56.728"
+  },
+  "entropy": 6.4159017,
+  "md5": "9f4743bf72cacd02991356b441d9c186",
+  "sha1": "7728dce9af5567facb98ebe63e52f34e4c0255e0",
+  "sha256": "7b0de7e2e16bc90dabdb127652430fca48105f41208f2c1629edc942e1878e3b",
+  "ssdeep": "12288:TDU7uYoHrzX/5d6qOvLAbJmTL43I9ivVg14lR8t:TDY8H/Xxd6qcLAbJm43JV+Nt",
   "binary": {
     "is_64": true,
     "is_dotnet": false,
     "is_lib": false,
     "original_filename": "",
-    "time_compile": "2022-07-04T20:13:44",
-    "time_debug": "2022-07-04T20:13:44",
+    "timestamps": {
+      "compile": "2022-07-05T21:17:56",
+      "debug": "2022-07-05T21:17:56"
+    },
     "linker_major_version": 14,
     "linker_minor_version": 32,
     "imphash": "cc86782ee04d5c8f4491f3ee99b6c550",
@@ -149,8 +156,8 @@ Example output:
     ],
     "exports_count": 0,
     "exports": [],
-    "first_128_bytes": "MZ�.\u0003...\u0004...��..�.......@...................................�...\u000e\u001f�\u000e.�\t�!�\u0001L�!This program cannot be run in DOS mode.\r\r\n$......",
-  }
+    "first_128_bytes": "MZ�.\u0003...\u0004...��..�.......@...................................�...\u000e\u001f�\u000e.�\t�!�\u0001L�!This program cannot be run in DOS mode.\r\r\n$......"
+  },
   "strings": []
 }
 ```
