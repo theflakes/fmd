@@ -62,7 +62,10 @@ impl Default for FileTimestamps {
         FileTimestamps {
             access: String::new(),
             create: String::new(),
-            modify: String::new()
+            modify: String::new(),
+            fn_access: String::new(),
+            fn_create: String::new(),
+            fn_modify: String::new()
         }
     }
 }
@@ -70,7 +73,10 @@ impl Default for FileTimestamps {
 pub struct FileTimestamps {
     pub access: String,
     pub create: String,
-    pub modify: String
+    pub modify: String,
+    pub fn_access: String,
+    pub fn_create: String,
+    pub fn_modify: String
 }
 
 impl Default for BinTimestamps {
@@ -139,6 +145,7 @@ pub struct MetaData {
     pub path: String,
     pub bytes: u64,
     pub mime_type: String,
+    pub is_hidden: bool,
     pub timestamps: FileTimestamps,
     pub entropy: f32,
     pub md5: String,
@@ -155,6 +162,7 @@ impl MetaData {
             path: String,
             bytes: u64,
             mime_type: String,
+            is_hidden: bool,
             timestamps: FileTimestamps,
             entropy: f32,
             md5: String,
@@ -169,6 +177,7 @@ impl MetaData {
             path,
             bytes,
             mime_type,
+            is_hidden,
             timestamps,
             entropy,
             md5,

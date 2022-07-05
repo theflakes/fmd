@@ -30,6 +30,7 @@ use chrono::prelude::{DateTime, Utc};
 use std::time::SystemTime;
 use goblin::{error, Object};
 use entropy::shannon_entropy;
+use std::os::windows::prelude::*;
 
 
 // report out in json
@@ -38,6 +39,7 @@ fn print_log(
                 path: String,
                 bytes: u64,
                 mime_type: String, 
+                is_hidden: bool,
                 timestamps: FileTimestamps,
                 entropy: f32,
                 md5: String,
@@ -55,6 +57,7 @@ fn print_log(
             path.to_string(),
             bytes,
             mime_type,
+            is_hidden,
             timestamps,
             entropy,
             md5, 
@@ -71,6 +74,7 @@ fn print_log(
             path.to_string(),
             bytes,
             mime_type, 
+            is_hidden,
             timestamps,
             entropy,
             md5, 
@@ -366,6 +370,7 @@ fn get_time_iso8601() -> io::Result<(String)> {
     Ok(now.to_rfc3339())
 }
 
+
 // get date into the format we need
 pub fn format_date(time: DateTime::<Utc>) -> io::Result<String> {
     Ok(time.format("%Y-%m-%dT%H:%M:%S.%3f").to_string())
@@ -411,6 +416,20 @@ fn get_args() -> io::Result<(String, bool, usize)> {
 }
 
 
+// is a file or directory hidden
+pub fn is_hidden(file_path: &Path) -> io::Result<bool> {
+    let metadata = fs::metadata(file_path)?;
+    let attributes = metadata.file_attributes();
+    
+    // see: https://docs.microsoft.com/en-us/windows/win32/fileio/file-attribute-constants
+    if (attributes & 0x2) > 0 {
+        Ok(true)
+    } else {
+        Ok(false)
+    }
+}
+
+
 fn get_file_times(path: &Path) -> io::Result<FileTimestamps> {
     let mut ftimes = FileTimestamps::default();
     let metadata = match fs::metadata(dunce::simplified(&path)) {
@@ -443,6 +462,7 @@ fn start_analysis(file_path: String, pprint: bool, strings_length: usize) -> io:
     let mut entropy: f32 = 0.0;
     let mut strings: Vec<String> = Vec::new();
     let ftimes = get_file_times(&path)?;
+    let is_hidden = is_hidden(&path)?;
     if bytes != 0 {
         buffer = read_file_bytes(&file)?;
         entropy = shannon_entropy(&buffer);
@@ -452,11 +472,11 @@ fn start_analysis(file_path: String, pprint: bool, strings_length: usize) -> io:
         bin = get_imports(&buffer)?;
         if strings_length > 0 {strings = get_strings(&buffer, strings_length)?;}
     }
-    print_log(timestamp, abs_path, 
-        bytes, mime_type, ftimes, entropy, md5, 
-        sha1, sha256, ssdeep, 
-        bin, pprint, strings)?;
-        Ok(())
+    print_log(timestamp, abs_path, bytes, 
+                mime_type, is_hidden, ftimes, 
+                entropy, md5, sha1, sha256, ssdeep, 
+                bin, pprint, strings)?;
+                Ok(())
 }
 
 
