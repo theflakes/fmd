@@ -62,10 +62,7 @@ impl Default for FileTimestamps {
         FileTimestamps {
             access: String::new(),
             create: String::new(),
-            modify: String::new(),
-            fn_access: String::new(),
-            fn_create: String::new(),
-            fn_modify: String::new()
+            modify: String::new()
         }
     }
 }
@@ -73,10 +70,7 @@ impl Default for FileTimestamps {
 pub struct FileTimestamps {
     pub access: String,
     pub create: String,
-    pub modify: String,
-    pub fn_access: String,
-    pub fn_create: String,
-    pub fn_modify: String
+    pub modify: String
 }
 
 impl Default for BinTimestamps {
