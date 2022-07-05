@@ -420,16 +420,16 @@ fn get_args() -> io::Result<(String, bool, usize)> {
     let mut file_path = String::new();
     let mut pprint = false;
     let mut strings: usize = 0;
-    let mut get_next_arg = false;
+    let mut get_strings_length = false;
     if args.len() == 1 { print_help(); }
     for arg in args {
         match arg.as_str() {
             "-p" | "--pretty" => pprint = true,
-            "-s" | "--strings" => get_next_arg = true,
+            "-s" | "--strings" => get_strings_length = true,
             _ => {
-                if get_next_arg {
+                if get_strings_length {
                     strings = arg.as_str().parse::<usize>().unwrap();
-                    get_next_arg = false;
+                    get_strings_length = false;
                 } else {
                     file_path = arg.clone();
                 }
