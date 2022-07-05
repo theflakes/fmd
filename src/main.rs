@@ -440,8 +440,7 @@ fn get_args() -> io::Result<(String, bool, usize)> {
 }
 
 
-fn main() -> io::Result<()> {
-    let (file_path, pprint, strings_length) = get_args()?;
+fn start_analysis(file_path: String, pprint: bool, strings_length: usize) -> io::Result<()> {
     let mut imps = false;
     let timestamp = get_time_iso8601()?;
     let path = convert_to_path(&file_path)?;
@@ -470,5 +469,12 @@ fn main() -> io::Result<()> {
         bytes, mime_type, entropy, md5, 
         sha1, sha256, ssdeep, 
         bin, pprint, strings)?;
+        Ok(())
+}
+
+
+fn main() -> io::Result<()> {
+    let (file_path, pprint, strings_length) = get_args()?;
+    start_analysis(file_path, pprint, strings_length)?;
     Ok(())
 }
