@@ -453,7 +453,7 @@ fn start_analysis(file_path: String, pprint: bool, strings_length: usize) -> io:
     let mut entropy: f32 = 0.0;
     let mut strings: Vec<String> = Vec::new();
     let is_hidden = is_hidden(&path)?;
-    if bytes != 0 {
+    if bytes > 0 {
         buffer = read_file_bytes(&file)?;
         entropy = shannon_entropy(&buffer);
         ssdeep = get_ssdeep_hash(&buffer)?;
