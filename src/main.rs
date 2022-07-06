@@ -91,17 +91,13 @@ fn print_log(
 
 
 // get handle to a file
-pub fn open_file(
-                    file_path: &std::path::Path
-                ) -> std::io::Result<std::fs::File> 
-{
+pub fn open_file(file_path: &std::path::Path) -> std::io::Result<std::fs::File> {
     Ok(File::open(&file_path)?)
 }
 
 
 fn get_mimetype(buffer: &Vec<u8>) -> io::Result<String> {
     let mtype = tree_magic::from_u8(&buffer);
-
     Ok(mtype)
 }
 
@@ -128,10 +124,7 @@ fn convert_to_path(target_file: &str) -> io::Result<&Path> {
 
 
 // read in file as byte vector
-pub fn read_file_bytes(
-                        mut file: &std::fs::File
-                    ) -> std::io::Result<Vec<u8>> 
-{
+pub fn read_file_bytes(mut file: &std::fs::File) -> std::io::Result<Vec<u8>> {
     let mut buffer = Vec::new();
     file.rewind(); // need to reset to beginning of file if file has already been read
     file.read_to_end(&mut buffer)?;
@@ -355,10 +348,7 @@ fn get_entropy(buffer: &Vec<u8>) -> io::Result<f32> {
 
 
 // find the parent directory of a given dir or file
-pub fn get_abs_path(
-                path: &std::path::Path
-            ) -> io::Result<(std::path::PathBuf)> 
-{
+pub fn get_abs_path(path: &std::path::Path) -> io::Result<(std::path::PathBuf)> {
     let abs = PathAbs::new(&path)?;
     Ok(dunce::simplified(&abs.as_path()).into())
 }

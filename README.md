@@ -3,13 +3,12 @@ File metadata / forensic tool.
 fmd = File Metadata
 
 ```
-Author: Brian Kellogg
-Pull various file metadata.
-See: https://docs.rs/tree_magic/latest/tree_magic/
-
-Usage: fmd <file path> [--pretty | -p]
-  Options:
-       -p, --pretty     Pretty print JSON
+        Author: Brian Kellogg
+        Pull various file metadata.
+        Usage: fmd [--pretty | -p] ([--strings|-s] #) <file path>
+        Options:
+            -p, --pretty        Pretty print JSON
+            -s, --strings #     Look for strings of lenght # or longer
 ```
 
 Example output:
