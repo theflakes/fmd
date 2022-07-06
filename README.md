@@ -21,6 +21,7 @@ Example output:
   "path": "C:\\Users\\thefl\\code\\fmd\\target\\release\\fmd.exe",
   "bytes": 739840,
   "mime_type": "application/x-executable",
+  "is_hidden": false,
   "timestamps": {
     "access": "2022-07-05T21:18:00.196",
     "create": "2022-07-04T15:35:43.415",
