@@ -4,7 +4,8 @@ fmd = File Metadata
 
 ```
         Author: Brian Kellogg
-        Pull various file metadata.
+        License: MIT
+        Purpose: Pull various file metadata.
         Usage: fmd [--pretty | -p] ([--strings|-s] #) <file path>
         Options:
             -p, --pretty        Pretty print JSON
