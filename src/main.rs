@@ -443,7 +443,7 @@ fn get_file_times(path: &Path) -> io::Result<FileTimestamps> {
     Ok(ftimes)
 }
 
-
+/*
 fn get_fname(file: &Path) -> io::Result<()> {
     let sr = Ntfs::SectorReader::new(file, 4096)?;
     let mut fs = BufReader::new(sr);
@@ -451,6 +451,7 @@ fn get_fname(file: &Path) -> io::Result<()> {
     ntfs.read_upcase_table(&mut fs)?;
     Ok(())
 }
+*/
 
 fn start_analysis(file_path: String, pprint: bool, strings_length: usize) -> io::Result<()> {
     let mut imps = false;
@@ -471,7 +472,7 @@ fn start_analysis(file_path: String, pprint: bool, strings_length: usize) -> io:
     let mut strings: Vec<String> = Vec::new();
     let mut first_128_bytes = String::new();
     let is_hidden = is_hidden(&path)?;
-    get_fname(path)?;
+    //get_fname(path)?;
     if bytes > 0 {
         first_128_bytes = bin_to_string(&buffer)?;
         buffer = read_file_bytes(&file)?;
