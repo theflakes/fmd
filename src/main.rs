@@ -423,7 +423,7 @@ fn bin_to_string(bytes: &Vec<u8>) -> io::Result<String> {
     }
 
     let first_bytes_as_string = s.as_str()
-                                        .replace('\u{0000}', ".")
+                                        .replace('\u{0}', ".")
                                         .to_string();
     Ok(first_bytes_as_string)
 }
