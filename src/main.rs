@@ -303,21 +303,6 @@ pub fn get_strings(buffer: &Vec<u8>, length: usize) -> io::Result<Vec<String>> {
 }
 
 
-fn bin_to_string(bytes: &Vec<u8>) -> io::Result<String> {
-    let mut s = String::new();
-    if bytes.len() >= 128 {
-        s = String::from_utf8_lossy(&bytes[0..127]).into_owned();
-    } else {
-        s = String::from_utf8_lossy(bytes).into_owned();
-    }
-
-    let first_bytes_as_string = s.as_str()
-                                        .replace('\u{0000}', ".")
-                                        .to_string();
-    Ok(first_bytes_as_string)
-}
-
-
 fn get_imports(buffer: &Vec<u8>) -> io::Result<(Binary)> {
     let mut bin = Binary::default();
     match Object::parse(&buffer).unwrap() {
@@ -429,6 +414,21 @@ pub fn is_hidden(file_path: &Path) -> io::Result<bool> {
 }
 
 
+fn bin_to_string(bytes: &Vec<u8>) -> io::Result<String> {
+    let mut s = String::new();
+    if bytes.len() >= 128 {
+        s = String::from_utf8_lossy(&bytes[0..127]).into_owned();
+    } else {
+        s = String::from_utf8_lossy(bytes).into_owned();
+    }
+
+    let first_bytes_as_string = s.as_str()
+                                        .replace('\u{0000}', ".")
+                                        .to_string();
+    Ok(first_bytes_as_string)
+}
+
+
 fn get_file_times(path: &Path) -> io::Result<FileTimestamps> {
     let mut ftimes = FileTimestamps::default();
     let metadata = match fs::metadata(dunce::simplified(&path)) {
@@ -474,8 +474,8 @@ fn start_analysis(file_path: String, pprint: bool, strings_length: usize) -> io:
     let is_hidden = is_hidden(&path)?;
     //get_fname(path)?;
     if bytes > 0 {
-        first_128_bytes = bin_to_string(&buffer)?;
         buffer = read_file_bytes(&file)?;
+        first_128_bytes = bin_to_string(&buffer)?;
         entropy = shannon_entropy(&buffer);
         ssdeep = get_ssdeep_hash(&buffer)?;
         mime_type = get_mimetype(&buffer)?;
