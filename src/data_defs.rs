@@ -105,8 +105,7 @@ impl Default for Binary {
             imports_func_count: 0,
             imports: Vec::new(),
             exports_count: 0,
-            exports: Vec::new(),
-            first_128_bytes: String::new()
+            exports: Vec::new()
         }
     }
 }
@@ -127,8 +126,7 @@ pub struct Binary {
     pub imports_func_count: u32,
     pub imports: Vec<Imports>,
     pub exports_count: u32,
-    pub exports: Vec<String>,
-    pub first_128_bytes: String
+    pub exports: Vec<String>
 }
 
 
@@ -147,6 +145,7 @@ pub struct MetaData {
     pub sha256: String,
     pub ssdeep: String,
     pub binary: Binary,
+    pub first_128_bytes: String,
     pub strings: Vec<String>
 }
 impl MetaData {
@@ -164,6 +163,7 @@ impl MetaData {
             sha256: String,
             ssdeep: String,
             binary: Binary,
+            first_128_bytes: String,
             strings: Vec<String>) -> MetaData {
         MetaData {
             timestamp,
@@ -179,6 +179,7 @@ impl MetaData {
             sha256,
             ssdeep,
             binary,
+            first_128_bytes,
             strings
         }
     }

@@ -31,6 +31,12 @@ use std::time::SystemTime;
 use goblin::{error, Object};
 use entropy::shannon_entropy;
 use std::os::windows::prelude::*;
+use ntfs::attribute_value::NtfsAttributeValue;
+use ntfs::indexes::NtfsFileNameIndex;
+use ntfs::structured_values::{
+    NtfsAttributeList, NtfsFileName, NtfsFileNamespace, NtfsStandardInformation,
+};
+use ntfs::{Ntfs, NtfsAttribute, NtfsAttributeType, NtfsFile, NtfsReadSeek};
 
 
 // report out in json
@@ -48,6 +54,7 @@ fn print_log(
                 ssdeep: String,
                 binary: Binary,
                 pprint: bool,
+                first_128_bytes: String,
                 strings: Vec<String>
             ) -> io::Result<()> {
     if pprint {
@@ -65,6 +72,7 @@ fn print_log(
             sha256, 
             ssdeep,
             binary,
+            first_128_bytes,
             strings
         ).report_pretty_log();
     } else {
@@ -82,6 +90,7 @@ fn print_log(
             sha256, 
             ssdeep,
             binary,
+            first_128_bytes,
             strings
         ).report_log();
     }
@@ -328,7 +337,6 @@ fn get_imports(buffer: &Vec<u8>) -> io::Result<(Binary)> {
             bin.timestamps.debug = get_date_string(pe.debug_data.unwrap().image_debug_directory.time_date_stamp)?;
             bin.linker_major_version = pe.header.optional_header.unwrap().standard_fields.major_linker_version;
             bin.linker_minor_version = pe.header.optional_header.unwrap().standard_fields.minor_linker_version;
-            bin.first_128_bytes = bin_to_string(&buffer)?;
         },
         Object::Mach(mach) => {
             println!("mach: {:#?}", &mach);
@@ -436,6 +444,14 @@ fn get_file_times(path: &Path) -> io::Result<FileTimestamps> {
 }
 
 
+fn get_fname(file: &Path) -> io::Result<()> {
+    let sr = Ntfs::SectorReader::new(file, 4096)?;
+    let mut fs = BufReader::new(sr);
+    let mut ntfs = Ntfs::new(&mut fs)?;
+    ntfs.read_upcase_table(&mut fs)?;
+    Ok(())
+}
+
 fn start_analysis(file_path: String, pprint: bool, strings_length: usize) -> io::Result<()> {
     let mut imps = false;
     let timestamp = get_time_iso8601()?;
@@ -453,8 +469,11 @@ fn start_analysis(file_path: String, pprint: bool, strings_length: usize) -> io:
     let mut buffer: Vec<u8> = Vec::new();
     let mut entropy: f32 = 0.0;
     let mut strings: Vec<String> = Vec::new();
+    let mut first_128_bytes = String::new();
     let is_hidden = is_hidden(&path)?;
+    get_fname(path)?;
     if bytes > 0 {
+        first_128_bytes = bin_to_string(&buffer)?;
         buffer = read_file_bytes(&file)?;
         entropy = shannon_entropy(&buffer);
         ssdeep = get_ssdeep_hash(&buffer)?;
@@ -465,9 +484,9 @@ fn start_analysis(file_path: String, pprint: bool, strings_length: usize) -> io:
     }
     print_log(timestamp, abs_path, bytes, 
                 mime_type, is_hidden, ftimes, 
-                entropy, md5, sha1, sha256, ssdeep, 
-                bin, pprint, strings)?;
-                Ok(())
+                entropy, md5, sha1, sha256, ssdeep, bin, 
+                pprint, first_128_bytes, strings)?;
+    Ok(())
 }
 
 
