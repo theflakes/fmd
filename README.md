@@ -16,54 +16,58 @@ Example output:
 ```
 .\fmd.exe --pretty .\fmd.exe
 {
-  "timestamp": "2022-07-10T17:18:32.011996400+00:00",
+  "timestamp": "2022-07-10T23:19:33.442566600+00:00",
   "device_type": "Windows 10.0.22000 (Workstation)",
+  "is_admin": true,
   "path": "C:\\Users\\thefl\\code\\fmd\\target\\release\\fmd.exe",
-  "bytes": 740864,
+  "bytes": 764416,
   "mime_type": "application/x-executable",
   "is_hidden": false,
   "timestamps": {
-    "access": "2022-07-10T17:18:31.998",
-    "create": "2022-07-04T15:35:43.415",
-    "modify": "2022-07-10T17:18:30.435"
+    "access_fn": "2022-07-10T20:56:43.873",
+    "access_si": "2022-07-10T23:19:33.537",
+    "create_fn": "2022-07-04T15:35:43.415",
+    "create_si": "2022-07-04T15:35:43.415",
+    "modify_fn": "2022-07-10T20:56:43.873",
+    "modify_si": "2022-07-10T23:19:05.797",
+    "mft_record": "2022-07-10T20:56:44.010"
   },
-  "entropy": 6.41677,
-  "md5": "a51e852bec3d0c45dc193141ba0804b8",
-  "sha1": "b7c17165935800326559d5b251427664f2f6258d",
-  "sha256": "da2504a1202c38dc35af4f600399b1c913fbe7643f74fc4c19bddd5fb47aa408",
-  "ssdeep": "12288:5TFRb/gjkqPnuRUTAjjPJKsQTH7+ML3q0OZdLe6w6lRgDP:55RzsiRVfPJKVTH7+E3EdLfw3",
+  "entropy": 6.405565,
+  "md5": "fb462d5f89b1da7118475f96b8c9e74b",
+  "sha1": "f53a3251ca05d1f5fb671266a5546b1271084019",
+  "sha256": "1dd12e444375c2a58ed2dd9d67cd9d1b1efa3a7cd6d4c9f14a19fe20e3ca0b4e",
+  "ssdeep": "12288:X+Ql+KAPzqfy/qsucPfxS6WOja3mcfOK3Sl:OQAPeq/qDcPfxS6Wr3TOGS",
   "binary": {
     "is_64": true,
     "is_dotnet": false,
     "is_lib": false,
     "original_filename": "",
     "timestamps": {
-      "compile": "2022-07-10T17:18:30",
-      "debug": "2022-07-10T17:18:30"
+      "compile": "2022-07-10T23:19:05",
+      "debug": "2022-07-10T23:19:05"
     },
     "linker_major_version": 14,
     "linker_minor_version": 32,
-    "imphash": "13fb14c8232d2ac85eb75fab1bf53cc5",
-    "imphash_sorted": "4acac28acd517a64e71396eb1c0da9e3",
-    "imphash_ssdeep": "24:VjDp3pOwJ3wrXjD5WlKDMdfjEM5L9kTxXXWkKu9/Kbm1stvxCBc+pljpEOovuRZ/:Xc9rXZWtt9kTxnW21stv4Bc+pRlGBFK",
-    "imphash_ssdeep_sorted": "24:/KW5WkFyFJDCeY9xt1OovbOGMUpnmubu9jveDWDQyl3LLPxQQ8KIKbe07G5u9VJ9:/KW5W6yFhCf9/w3+nmXfhnxQsGvXHlE",
-    "imports_lib_count": 2,
-    "imports_func_count": 92,
+    "imphash": "26c848beee8f7ea16435ac3d90259755",
+    "imphash_sorted": "f34e2030c73d6075a29385f7786a62b6",
+    "imphash_ssdeep": "48:kvrXZWj1p9QTxnWs1stv4Bc+pRlGBPKhK:YrXZWj1pyTxnWs1stv4Bc+pRmd",
+    "imphash_ssdeep_sorted": "48:mb7KW5W6yFhCf9/w3+nmXfhnxQsGvXHlE:UeW5W6YhCf5RnmvhnxQsGvXHlE",
+    "imports_lib_count": 3,
+    "imports_func_count": 94,
     "imports": [
       {
         "lib": "KERNEL32.dll",
         "count": 91,
         "name": [
-          "LoadLibraryExW",
-          "GetProcAddress",
-          "FreeLibrary",
           "HeapFree",
+          "CloseHandle",
+          "SetFilePointerEx",
+          "GetLastError",
+          "GetCurrentProcess",
           "GetCommandLineW",
           "SetLastError",
           "GetModuleFileNameW",
-          "GetLastError",
           "GetSystemTimeAsFileTime",
-          "CloseHandle",
           "AddVectoredExceptionHandler",
           "SetThreadStackGuarantee",
           "AcquireSRWLockExclusive",
@@ -76,12 +80,11 @@ Example output:
           "TryAcquireSRWLockExclusive",
           "GetStdHandle",
           "GetConsoleMode",
-          "WriteConsoleW",
+          "FreeLibrary",
           "GetCurrentDirectoryW",
           "WaitForSingleObjectEx",
           "LoadLibraryA",
           "CreateMutexA",
-          "GetCurrentProcess",
           "ReleaseMutex",
           "RtlLookupFunctionEntry",
           "GetModuleHandleW",
@@ -90,7 +93,6 @@ Example output:
           "CreateFileW",
           "GetFileInformationByHandle",
           "DeviceIoControl",
-          "SetFilePointerEx",
           "ExitProcess",
           "QueryPerformanceCounter",
           "QueryPerformanceFrequency",
@@ -100,6 +102,9 @@ Example output:
           "GetEnvironmentVariableW",
           "ReleaseSRWLockShared",
           "GetFinalPathNameByHandleW",
+          "GetProcAddress",
+          "WriteConsoleW",
+          "LoadLibraryExW",
           "GetCurrentProcessId",
           "GetCurrentThreadId",
           "InitializeSListHead",
@@ -148,6 +153,14 @@ Example output:
         ]
       },
       {
+        "lib": "ADVAPI32.dll",
+        "count": 2,
+        "name": [
+          "OpenProcessToken",
+          "GetTokenInformation"
+        ]
+      },
+      {
         "lib": "bcrypt.dll",
         "count": 1,
         "name": [
@@ -158,7 +171,7 @@ Example output:
     "exports_count": 0,
     "exports": []
   },
-  "first_128_bytes": "MZ�.\u0003...\u0004...��..�.......@...................................�...\u000e\u001f�\u000e.�\t�!�\u0001L�!This program cannot be run in DOS mode.\r\r\n$......",
+  "first_128_bytes": "MZ�.\u0003...\u0004...��..�.......@....................................\u0001..\u000e\u001f�\u000e.�\t�!�\u0001L�!This program cannot be run in DOS mode.\r\r\n$......",
   "strings": []
 }
 ```

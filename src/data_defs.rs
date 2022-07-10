@@ -60,24 +60,24 @@ pub struct Imports {
 impl Default for FileTimestamps {
     fn default () -> FileTimestamps {
         FileTimestamps {
-            access_si: String::new(),
             access_fn: String::new(),
-            modify_si: String::new(),
-            modify_fn: String::new(),
-            create_si: String::new(),
+            access_si: String::new(),
             create_fn: String::new(),
+            create_si: String::new(),
+            modify_fn: String::new(),
+            modify_si: String::new(),
             mft_record: String::new()
         }
     }
 }
 #[derive(Serialize, Clone)]
 pub struct FileTimestamps {
-    pub access_si: String,
     pub access_fn: String,
-    pub modify_si: String,
-    pub modify_fn: String,
-    pub create_si: String,
+    pub access_si: String,
     pub create_fn: String,
+    pub create_si: String,
+    pub modify_fn: String,
+    pub modify_si: String,
     pub mft_record: String
 }
 
