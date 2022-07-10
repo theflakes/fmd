@@ -368,21 +368,6 @@ pub fn format_date(time: DateTime::<Utc>) -> io::Result<String> {
 }
 
 
-fn print_help() {
-    let help = "
-        Author: Brian Kellogg
-        License: MIT
-        Purpose: Pull various file metadata.
-        Usage: fmd [--pretty | -p] ([--strings|-s] #) <file path>
-        Options:
-            -p, --pretty        Pretty print JSON
-            -s, --strings #     Look for strings of length # or longer
-    ";
-    println!("{}", help);
-    process::exit(1)
-}
-
-
 fn get_args() -> io::Result<(String, bool, usize)> {
     let args: Vec<String> = env::args().collect();
     let mut file_path = String::new();
@@ -670,6 +655,23 @@ fn start_analysis(file_path: String, pprint: bool, strings_length: usize) -> io:
     Ok(())
 }
 
+
+fn print_help() {
+    let help = "
+        Author: Brian Kellogg
+        License: MIT
+        Purpose: Pull various file metadata.
+        Usage: fmd [--pretty | -p] ([--strings|-s] #) <file path>
+        Options:
+            -p, --pretty        Pretty print JSON
+            -s, --strings #     Look for strings of length # or longer
+
+        NOTE: Harvesting $FILE_NAME timestamps can only be done by running this tool elevated.
+              The 'is_admin' field shows if the tool was run elevated.
+    ";
+    println!("{}", help);
+    process::exit(1)
+}
 
 fn main() -> io::Result<()> {
     let (file_path, pprint, strings_length) = get_args()?;
