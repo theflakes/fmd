@@ -12,17 +12,18 @@ extern crate entropy;
 
 mod data_defs;
 mod ordinals;
+mod sector_reader;
 
 use data_defs::*;
 use fuzzyhash::FuzzyHash;
 use goblin::pe::PE;
+use std::mem::replace;
 use std::path::Path;
 use std::ptr::null;
 use std::{io, str};
 use std::env;
 use std::process;
 use std::borrow::Cow;
-use std::io::{Read, Seek};
 use crypto::digest::Digest;
 use std::fs::{self, File};
 use path_abs::{PathAbs, PathInfo};
@@ -36,12 +37,18 @@ use ntfs::indexes::NtfsFileNameIndex;
 use ntfs::structured_values::{
     NtfsAttributeList, NtfsFileName, NtfsFileNamespace, NtfsStandardInformation,
 };
-use ntfs::{Ntfs, NtfsAttribute, NtfsAttributeType, NtfsFile, NtfsReadSeek};
+use ntfs::{Ntfs, NtfsAttribute, NtfsAttributeType, NtfsFile, NtfsReadSeek, NtfsTime};
+use std::io::{BufReader, Read, Seek, Write};
+use sector_reader::SectorReader;
+use anyhow::{anyhow, bail, Context, Result};
+use epochs::windows_file;
+use is_elevated::is_elevated;
 
 
 // report out in json
 fn print_log(
                 timestamp: String,
+                is_admin: bool,
                 path: String,
                 bytes: u64,
                 mime_type: String, 
@@ -61,6 +68,7 @@ fn print_log(
         MetaData::new(
             timestamp,
             DEVICE_TYPE.to_string(),
+            is_admin,
             path.to_string(),
             bytes,
             mime_type,
@@ -79,6 +87,7 @@ fn print_log(
         MetaData::new(
             timestamp,
             DEVICE_TYPE.to_string(),
+            is_admin,
             path.to_string(),
             bytes,
             mime_type, 
@@ -276,9 +285,8 @@ fn parse_pe_exports(exports: &Vec<goblin::pe::export::Export>) -> io::Result<(Ve
 }
 
 
-fn get_date_string(timestamp: u32) -> io::Result<String> {
-    let temp = timestamp as i64;
-    let dt = chrono::NaiveDateTime::from_timestamp_opt(temp, 0).unwrap()
+fn get_date_string(timestamp: i64) -> io::Result<String> {
+    let dt = chrono::NaiveDateTime::from_timestamp_opt(timestamp, 0).unwrap()
         .format("%Y-%m-%dT%H:%M:%S")
         .to_string();
     Ok(dt)
@@ -307,7 +315,7 @@ fn get_imports(buffer: &Vec<u8>) -> io::Result<(Binary)> {
     let mut bin = Binary::default();
     match Object::parse(&buffer).unwrap() {
         Object::Elf(elf) => {
-            println!("elf: {:#?}", &elf);
+            println!("Elf binary");
         },
         Object::PE(pe) => {
             (bin.imports, bin.is_dotnet) = parse_pe_imports(&pe.imports)?;
@@ -318,16 +326,16 @@ fn get_imports(buffer: &Vec<u8>) -> io::Result<(Binary)> {
             bin.is_lib = pe.is_lib;
             (bin.exports, bin.exports_count) = parse_pe_exports(&pe.exports)?;
             bin.original_filename = pe.name.unwrap_or("").to_string();
-            bin.timestamps.compile = get_date_string(pe.header.coff_header.time_date_stamp)?;
-            bin.timestamps.debug = get_date_string(pe.debug_data.unwrap().image_debug_directory.time_date_stamp)?;
+            bin.timestamps.compile = get_date_string(pe.header.coff_header.time_date_stamp as i64)?;
+            bin.timestamps.debug = get_date_string(pe.debug_data.unwrap().image_debug_directory.time_date_stamp as i64)?;
             bin.linker_major_version = pe.header.optional_header.unwrap().standard_fields.major_linker_version;
             bin.linker_minor_version = pe.header.optional_header.unwrap().standard_fields.minor_linker_version;
         },
         Object::Mach(mach) => {
-            println!("mach: {:#?}", &mach);
+            println!("Mach binary");
         },
         Object::Archive(archive) => {
-            println!("archive: {:#?}", &archive);
+            println!("Archive file");
         },
         Object::Unknown(magic) => { println!("unknown magic: {:#x}", magic) }
     }
@@ -429,37 +437,209 @@ fn bin_to_string(bytes: &Vec<u8>) -> io::Result<String> {
 }
 
 
-fn get_file_times(path: &Path) -> io::Result<FileTimestamps> {
-    let mut ftimes = FileTimestamps::default();
+fn get_file_times<'a>(path: &Path, mut ftimes: FileTimestamps) -> io::Result<FileTimestamps> {
     let metadata = match fs::metadata(dunce::simplified(&path)) {
         Ok(m) => m,
         _ => return Ok(ftimes)
     };
     if metadata.created().is_ok() { 
-        ftimes.create = format_date(metadata.created()?.to_owned().into())?;
+        ftimes.create_si = format_date(metadata.created()?.to_owned().into())?;
     }
-    ftimes.access = format_date(metadata.accessed()?.to_owned().into())?;
-    ftimes.modify = format_date(metadata.modified()?.to_owned().into())?;
+    ftimes.access_si = format_date(metadata.accessed()?.to_owned().into())?;
+    ftimes.modify_si = format_date(metadata.modified()?.to_owned().into())?;
     Ok(ftimes)
 }
 
-/*
-fn get_fname(file: &Path) -> io::Result<()> {
-    let sr = Ntfs::SectorReader::new(file, 4096)?;
+struct CommandInfo<'n, T>
+where
+    T: Read + Seek,
+{
+    current_directory: Vec<NtfsFile<'n>>,
+    current_directory_string: String,
+    fs: T,
+    ntfs: &'n Ntfs,
+}
+
+fn fileinfo_filename<T>(info: &mut CommandInfo<T>, attribute: NtfsAttribute) -> io::Result<(FileTimestamps)>
+where
+    T: Read + Seek,
+{
+    let mut ftimes = FileTimestamps::default();
+    let file_name = attribute.structured_value::<_, NtfsFileName>(&mut info.fs)?;
+    ftimes.access_fn = windows_file(file_name.access_time().nt_timestamp() as i64).unwrap().format("%Y-%m-%dT%H:%M:%S.%3f").to_string();
+    ftimes.create_fn = windows_file(file_name.creation_time().nt_timestamp() as i64).unwrap().format("%Y-%m-%dT%H:%M:%S.%3f").to_string();
+    ftimes.modify_fn = windows_file(file_name.modification_time().nt_timestamp() as i64).unwrap().format("%Y-%m-%dT%H:%M:%S.%3f").to_string();
+    ftimes.mft_record = windows_file(file_name.mft_record_modification_time().nt_timestamp() as i64).unwrap().format("%Y-%m-%dT%H:%M:%S.%3f").to_string();
+    Ok(ftimes)
+}
+
+
+fn get_fname(file_path: &String) -> Result<(FileTimestamps, bool)> {
+    let mut ftimes = FileTimestamps::default();
+    if !is_elevated() { return Ok((ftimes, false)) }
+    let temp: Vec<&str> = file_path.split(":").collect();
+    let dirs = temp[1].split("\\");
+    let filename = file_path.split("\\").last().unwrap();
+    let root = r"\\.\".to_owned() + temp[0] + r":";
+    let f = File::open(root)?;
+    let sr = SectorReader::new(f, 4096)?;
     let mut fs = BufReader::new(sr);
     let mut ntfs = Ntfs::new(&mut fs)?;
     ntfs.read_upcase_table(&mut fs)?;
+    let current_directory = vec![ntfs.root_directory(&mut fs)?];
+    let mut info = CommandInfo {
+        current_directory,
+        current_directory_string: String::new(),
+        fs,
+        ntfs: &ntfs,
+    };
+    for dir in dirs {
+        cd(dir, &mut info);
+    }
+    let file = parse_file_arg(filename, &mut info)?;
+    let mut attributes = file.attributes();
+    while let Some(attribute_item) = attributes.next(&mut info.fs) {
+        let attribute_item = attribute_item?;
+        let attribute = attribute_item.to_attribute();
+
+        match attribute.ty() {
+            Ok(NtfsAttributeType::StandardInformation) => continue,
+            Ok(NtfsAttributeType::FileName) => {
+                ftimes = fileinfo_filename(&mut info, attribute)?;
+                break;
+            },
+            Ok(NtfsAttributeType::Data) => continue,
+            _ => continue,
+        }
+    }
+    Ok((ftimes, true))
+}
+
+
+fn cd<T>(arg: &str, info: &mut CommandInfo<T>) -> Result<()>
+where
+    T: Read + Seek,
+{
+    let index = info
+        .current_directory
+        .last()
+        .unwrap()
+        .directory_index(&mut info.fs)?;
+    let mut finder = index.finder();
+    let maybe_entry = NtfsFileNameIndex::find(&mut finder, info.ntfs, &mut info.fs, arg);
+
+    if maybe_entry.is_none() {
+        return Ok(());
+    }
+
+    let entry = maybe_entry.unwrap()?;
+    let file_name = entry
+        .key()
+        .expect("key must exist for a found Index Entry")?;
+
+    if !file_name.is_directory() {
+        return Ok(());
+    }
+
+    let file = entry.to_file(info.ntfs, &mut info.fs)?;
+    let file_name = best_file_name(
+        info,
+        &file,
+        info.current_directory.last().unwrap().file_record_number(),
+    )?;
+    if !info.current_directory_string.is_empty() {
+        info.current_directory_string += "\\";
+    }
+    info.current_directory_string += &file_name.name().to_string_lossy();
+
+    info.current_directory.push(file);
+
     Ok(())
 }
-*/
+
+
+fn best_file_name<T>(
+    info: &mut CommandInfo<T>,
+    file: &NtfsFile,
+    parent_record_number: u64,
+) -> Result<NtfsFileName>
+where
+    T: Read + Seek,
+{
+    // Try to find a long filename (Win32) first.
+    // If we don't find one, the file may only have a single short name (Win32AndDos).
+    // If we don't find one either, go with any namespace. It may still be a Dos or Posix name then.
+    let priority = [
+        Some(NtfsFileNamespace::Win32),
+        Some(NtfsFileNamespace::Win32AndDos),
+        None,
+    ];
+
+    for match_namespace in priority {
+        if let Some(file_name) =
+            file.name(&mut info.fs, match_namespace, Some(parent_record_number))
+        {
+            let file_name = file_name?;
+            return Ok(file_name);
+        }
+    }
+
+    bail!(
+        "Found no FileName attribute for File Record {:#x}",
+        file.file_record_number()
+    )
+}
+
+
+fn parse_file_arg<'n, T>(arg: &str, info: &mut CommandInfo<'n, T>) -> Result<NtfsFile<'n>>
+where
+    T: Read + Seek,
+{
+    if arg.is_empty() {
+        bail!("Missing argument!");
+    }
+
+    if let Some(record_number_arg) = arg.strip_prefix("/") {
+        let record_number = match record_number_arg.strip_prefix("0x") {
+            Some(hex_record_number_arg) => u64::from_str_radix(hex_record_number_arg, 16),
+            None => u64::from_str_radix(record_number_arg, 10),
+        };
+
+        if let Ok(record_number) = record_number {
+            let file = info.ntfs.file(&mut info.fs, record_number)?;
+            Ok(file)
+        } else {
+            bail!(
+                "Cannot parse record number argument \"{}\"",
+                record_number_arg
+            )
+        }
+    } else {
+        let index = info
+            .current_directory
+            .last()
+            .unwrap()
+            .directory_index(&mut info.fs)?;
+        let mut finder = index.finder();
+
+        if let Some(entry) = NtfsFileNameIndex::find(&mut finder, info.ntfs, &mut info.fs, arg) {
+            let entry = entry?;
+            let file = entry.to_file(info.ntfs, &mut info.fs)?;
+            Ok(file)
+        } else {
+            bail!("No such file or directory \"{}\".", arg)
+        }
+    }
+}
 
 
 fn start_analysis(file_path: String, pprint: bool, strings_length: usize) -> io::Result<()> {
     let mut imps = false;
     let timestamp = get_time_iso8601()?;
     let path = convert_to_path(&file_path)?;
-    let ftimes = get_file_times(&path)?;
     let abs_path = get_abs_path(path)?.as_path().to_str().unwrap().to_string();
+    let (mut ftimes, is_admin) = get_fname(&abs_path).unwrap();
+    ftimes = get_file_times(&path, ftimes)?;
     let file = open_file(&path)?;
     let mut md5 = "d41d8cd98f00b204e9800998ecf8427e".to_string(); // md5 of empty file
     let mut sha1 = "da39a3ee5e6b4b0d3255bfef95601890afd80709".to_string(); // sha1 of empty file
@@ -473,7 +653,6 @@ fn start_analysis(file_path: String, pprint: bool, strings_length: usize) -> io:
     let mut strings: Vec<String> = Vec::new();
     let mut first_128_bytes = String::new();
     let is_hidden = is_hidden(&path)?;
-    //get_fname(path)?;
     if bytes > 0 {
         buffer = read_file_bytes(&file)?;
         first_128_bytes = bin_to_string(&buffer)?;
@@ -484,8 +663,8 @@ fn start_analysis(file_path: String, pprint: bool, strings_length: usize) -> io:
         bin = get_imports(&buffer)?;
         if strings_length > 0 {strings = get_strings(&buffer, strings_length)?;}
     }
-    print_log(timestamp, abs_path, bytes, 
-                mime_type, is_hidden, ftimes, 
+    print_log(timestamp, is_admin, abs_path, bytes, 
+                mime_type, is_hidden, ftimes.clone(), 
                 entropy, md5, sha1, sha256, ssdeep, bin, 
                 pprint, first_128_bytes, strings)?;
     Ok(())

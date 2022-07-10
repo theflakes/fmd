@@ -21,6 +21,9 @@ whoami = "*"
 goblin = "*"
 entropy = "*"
 ntfs = "*"
+anyhow = "*"
+epochs = "*"
+is_elevated = "*"
 
 [profile.release]
 lto = true
