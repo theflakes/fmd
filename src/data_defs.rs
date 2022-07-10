@@ -142,7 +142,7 @@ pub struct Binary {
 pub struct MetaData {
     pub timestamp: String,
     pub device_type: String,
-    pub is_admin: bool,
+    pub run_as_admin: bool,
     pub path: String,
     pub bytes: u64,
     pub mime_type: String,
@@ -161,7 +161,7 @@ impl MetaData {
     pub fn new(
             timestamp: String,
             device_type: String,
-            is_admin: bool,
+            run_as_admin: bool,
             path: String,
             bytes: u64,
             mime_type: String,
@@ -178,7 +178,7 @@ impl MetaData {
         MetaData {
             timestamp,
             device_type,
-            is_admin,
+            run_as_admin,
             path,
             bytes,
             mime_type,

@@ -48,7 +48,7 @@ use is_elevated::is_elevated;
 // report out in json
 fn print_log(
                 timestamp: String,
-                is_admin: bool,
+                run_as_admin: bool,
                 path: String,
                 bytes: u64,
                 mime_type: String, 
@@ -68,7 +68,7 @@ fn print_log(
         MetaData::new(
             timestamp,
             DEVICE_TYPE.to_string(),
-            is_admin,
+            run_as_admin,
             path.to_string(),
             bytes,
             mime_type,
@@ -87,7 +87,7 @@ fn print_log(
         MetaData::new(
             timestamp,
             DEVICE_TYPE.to_string(),
-            is_admin,
+            run_as_admin,
             path.to_string(),
             bytes,
             mime_type, 
@@ -623,7 +623,7 @@ fn start_analysis(file_path: String, pprint: bool, strings_length: usize) -> io:
     let timestamp = get_time_iso8601()?;
     let path = convert_to_path(&file_path)?;
     let abs_path = get_abs_path(path)?.as_path().to_str().unwrap().to_string();
-    let (mut ftimes, is_admin) = get_fname(&abs_path).unwrap();
+    let (mut ftimes, run_as_admin) = get_fname(&abs_path).unwrap();
     ftimes = get_file_times(&path, ftimes)?;
     let file = open_file(&path)?;
     let mut md5 = "d41d8cd98f00b204e9800998ecf8427e".to_string(); // md5 of empty file
@@ -648,7 +648,7 @@ fn start_analysis(file_path: String, pprint: bool, strings_length: usize) -> io:
         bin = get_imports(&buffer)?;
         if strings_length > 0 {strings = get_strings(&buffer, strings_length)?;}
     }
-    print_log(timestamp, is_admin, abs_path, bytes, 
+    print_log(timestamp, run_as_admin, abs_path, bytes, 
                 mime_type, is_hidden, ftimes.clone(), 
                 entropy, md5, sha1, sha256, ssdeep, bin, 
                 pprint, first_128_bytes, strings)?;
@@ -667,7 +667,7 @@ fn print_help() {
             -s, --strings #     Look for strings of length # or longer
 
         NOTE: Harvesting $FILE_NAME timestamps can only be aquired by running this tool elevated.
-              The 'is_admin' field shows if the tool was run elevated.
+              The 'run_as_admin' field shows if the tool was run elevated.
     ";
     println!("{}", help);
     process::exit(1)
