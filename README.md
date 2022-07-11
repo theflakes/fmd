@@ -21,7 +21,7 @@ Example output:
 {
   "timestamp": "2022-07-10T23:19:33.442566600+00:00",
   "device_type": "Windows 10.0.22000 (Workstation)",
-  "is_admin": true,
+  "run_as_admin": true,
   "path": "C:\\Users\\thefl\\code\\fmd\\target\\release\\fmd.exe",
   "bytes": 764416,
   "mime_type": "application/x-executable",
