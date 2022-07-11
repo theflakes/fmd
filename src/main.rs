@@ -484,6 +484,7 @@ fn get_args() -> io::Result<(String, bool, usize)> {
     Ok((file_path.clone(), pprint, strings))
 }
 
+
 fn main() -> io::Result<()> {
     let (file_path, pprint, strings_length) = get_args()?;
     start_analysis(file_path, pprint, strings_length)?;

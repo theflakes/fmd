@@ -28,7 +28,7 @@ trait Loggable : Serialize {
             .map_or("<failed to serialize>".into(), Into::into)
     }
     
-    /// convert struct to json and report it out
+    // convert struct to json and report it out
     fn write_log (self: &'_ Self)
     {
         println!("{}", self.to_log());
