@@ -11,7 +11,7 @@ fmd = File Metadata
             -p, --pretty        Pretty print JSON
             -s, --strings #     Look for strings of length # or longer
 
-        NOTE: Harvesting $FILE_NAME timestamps can only be aquired by running this tool elevated.
+        NOTE: Harvesting $FILE_NAME timestamps can only be acquired by running this tool elevated.
               The 'is_admin' field shows if the tool was run elevated.
 ```
 
