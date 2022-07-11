@@ -46,7 +46,11 @@ pub fn get_fname(file_path: &String) -> Result<(FileTimestamps, bool)> {
     let dirs = temp[1].split("\\");
     let filename = file_path.split("\\").last().unwrap();
     let root = r"\\.\".to_owned() + temp[0] + r":";
-    let f = File::open(root)?;
+    // if we are not accessing an NTFS filesystem lets retrun gracefully
+    let f = match File::open(root) {
+        Ok(it) => it,
+        Err(err) => return Ok((ftimes, true)),
+    };
     let sr = SectorReader::new(f, 4096)?;
     let mut fs = BufReader::new(sr);
     let mut ntfs = Ntfs::new(&mut fs)?;
