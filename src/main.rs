@@ -37,7 +37,6 @@ use entropy::shannon_entropy;
 use std::os::windows::prelude::*;
 
 
-
 // report out in json
 fn print_log(
                 timestamp: String,
