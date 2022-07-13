@@ -389,7 +389,8 @@ fn bin_to_string(bytes: &Vec<u8>) -> io::Result<String> {
 }
 
 
-fn get_file_times<'a>(path: &Path, mut ftimes: FileTimestamps) -> io::Result<FileTimestamps> {
+fn get_file_times<'a>(path: &Path) -> io::Result<FileTimestamps> {
+    let mut ftimes = FileTimestamps::default();
     let metadata = match fs::metadata(dunce::simplified(&path)) {
         Ok(m) => m,
         _ => return Ok(ftimes)
@@ -405,11 +406,12 @@ fn get_file_times<'a>(path: &Path, mut ftimes: FileTimestamps) -> io::Result<Fil
 
 fn start_analysis(file_path: String, pprint: bool, strings_length: usize) -> io::Result<()> {
     let mut imps = false;
+    let mut run_as_admin = false;
     let timestamp = get_time_iso8601()?;
     let path = convert_to_path(&file_path)?;
     let abs_path = get_abs_path(path)?.as_path().to_str().unwrap().to_string();
-    let (mut ftimes, run_as_admin) = get_fname(&abs_path).unwrap();
-    ftimes = get_file_times(&path, ftimes)?;
+    let mut ftimes = get_file_times(&path)?;
+    (ftimes, run_as_admin) = get_fname(&abs_path, ftimes).unwrap();
     let file = open_file(&path)?;
     let mut md5 = "d41d8cd98f00b204e9800998ecf8427e".to_string(); // md5 of empty file
     let mut sha1 = "da39a3ee5e6b4b0d3255bfef95601890afd80709".to_string(); // sha1 of empty file
@@ -452,7 +454,8 @@ fn print_help() {
             -s, --strings #     Look for strings of length # or longer
 
         NOTE: Harvesting $FILE_NAME timestamps can only be acquired by running this tool elevated.
-              The 'run_as_admin' field shows if the tool was run elevated.
+              The 'run_as_admin' field shows if the tool was run elevated. If the MFT can be accessed,
+              its STANDARD_INFORMATION dates are preferred.
     ";
     println!("{}", help);
     process::exit(1)
