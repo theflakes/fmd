@@ -25,7 +25,9 @@ where
     ntfs: &'n Ntfs,
 }
 
-
+/*
+    Harvest MFT $FILE_NAME and $STANDARD_INFORMATION dates
+*/
 fn fileinfo_filename<T>(info: &mut CommandInfo<T>, attribute: NtfsAttribute) -> io::Result<(FileTimestamps)>
 where
     T: Read + Seek,
