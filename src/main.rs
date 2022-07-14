@@ -333,7 +333,7 @@ fn get_imports(buffer: &Vec<u8>) -> io::Result<(Binary)> {
             bin.linker_minor_version = match pe.header.optional_header {
                 Some(d) => d.standard_fields.minor_linker_version,
                 None => 0
-            }
+            };
         },
         Object::Mach(mach) => {
             //println!("Mach binary");
