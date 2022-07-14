@@ -89,7 +89,6 @@ pub fn get_fname(file_path: &String, mut ftimes: FileTimestamps) -> Result<(File
     while let Some(attribute_item) = attributes.next(&mut info.fs) {
         let attribute_item = attribute_item?;
         let attribute = attribute_item.to_attribute();
-
         match attribute.ty() {
             Ok(NtfsAttributeType::StandardInformation) => continue,
             Ok(NtfsAttributeType::FileName) => {
