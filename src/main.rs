@@ -154,8 +154,7 @@ fn get_sha1(buffer: &Vec<u8>) -> std::io::Result<(String)> {
 pub fn get_file_content_info(
                                 file: &std::fs::File,
                                 mut buffer: &Vec<u8>
-                            ) -> std::io::Result<(String, String, String)> 
-{
+                            ) -> std::io::Result<(String, String, String)> {
     let mut md5 = String::new();
     let mut sha1 = String::new();
     let mut sha256 = String::new();
@@ -278,9 +277,10 @@ fn parse_pe_exports(exports: &Vec<goblin::pe::export::Export>) -> io::Result<(Ve
 
 
 fn get_date_string(timestamp: i64) -> io::Result<String> {
-    let dt = chrono::NaiveDateTime::from_timestamp_opt(timestamp, 0).unwrap()
-        .format("%Y-%m-%dT%H:%M:%S")
-        .to_string();
+    let dt = match chrono::NaiveDateTime::from_timestamp_opt(timestamp, 0) {
+            Some(s) => s.format("%Y-%m-%dT%H:%M:%S").to_string(),
+            None => "NONE".to_string()
+        };
     Ok(dt)
 }
 
@@ -294,7 +294,10 @@ pub fn get_strings(buffer: &Vec<u8>, length: usize) -> io::Result<Vec<String>> {
             chars.push(*b);
         } else {
             if chars.len() >= length {
-                results.push(String::from_utf8(chars).unwrap());
+                results.push(match String::from_utf8(chars){
+                    Ok(s) => s,
+                    _ => "".to_string(),
+                });
             }
             chars = Vec::new();
         }
@@ -319,9 +322,20 @@ fn get_imports(buffer: &Vec<u8>) -> io::Result<(Binary)> {
             (bin.exports, bin.exports_count) = parse_pe_exports(&pe.exports)?;
             bin.original_filename = pe.name.unwrap_or("").to_string();
             bin.timestamps.compile = get_date_string(pe.header.coff_header.time_date_stamp as i64)?;
-            bin.timestamps.debug = get_date_string(pe.debug_data.unwrap().image_debug_directory.time_date_stamp as i64)?;
+            bin.timestamps.debug = match pe.debug_data {
+                Some(d) => get_date_string(d.image_debug_directory.time_date_stamp as i64)?,
+                None => "NONE".to_string()
+            };
             bin.linker_major_version = pe.header.optional_header.unwrap().standard_fields.major_linker_version;
+            bin.linker_major_version = match pe.header.optional_header {
+                Some(d) => d.standard_fields.major_linker_version,
+                None => 0
+            };
             bin.linker_minor_version = pe.header.optional_header.unwrap().standard_fields.minor_linker_version;
+            bin.linker_minor_version = match pe.header.optional_header {
+                Some(d) => d.standard_fields.minor_linker_version,
+                None => 0
+            }
         },
         Object::Mach(mach) => {
             //println!("Mach binary");
