@@ -421,7 +421,7 @@ fn start_analysis(file_path: String, pprint: bool, strings_length: usize) -> io:
     let mut run_as_admin = false;
     let timestamp = get_time_iso8601()?;
     let path = convert_to_path(&file_path)?;
-    let abs_path = get_abs_path(path)?.as_path().to_str().unwrap().to_string();
+    let abs_path = get_abs_path(path)?.as_path().to_str().unwrap_or("").to_string();
     let mut ftimes = get_file_times(&path)?;
     (ftimes, run_as_admin) = get_fname(&abs_path, ftimes).unwrap();
     let file = open_file(&path)?;
@@ -487,7 +487,7 @@ fn get_args() -> io::Result<(String, bool, usize)> {
             "-s" | "--strings" => get_strings_length = true,
             _ => {
                 if get_strings_length {
-                    strings = arg.as_str().parse::<usize>().unwrap();
+                    strings = arg.as_str().parse::<usize>().unwrap_or(50);
                     get_strings_length = false;
                 } else {
                     file_path = arg.clone();

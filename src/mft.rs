@@ -34,20 +34,34 @@ where
 {
     let mut ftimes = FileTimestamps::default();
     let file_name = attribute.structured_value::<_, NtfsFileName>(&mut info.fs)?;
-    ftimes.access_fn = windows_file(file_name.access_time().nt_timestamp() as i64)
-        .unwrap().format("%Y-%m-%dT%H:%M:%S.%3f").to_string();
-    ftimes.access_si = windows_file(file_name.access_time().nt_timestamp() as i64)
-        .unwrap().format("%Y-%m-%dT%H:%M:%S.%3f").to_string();
-    ftimes.create_fn = windows_file(file_name.creation_time().nt_timestamp() as i64)
-        .unwrap().format("%Y-%m-%dT%H:%M:%S.%3f").to_string();
-    ftimes.create_si = windows_file(file_name.creation_time().nt_timestamp() as i64)
-        .unwrap().format("%Y-%m-%dT%H:%M:%S.%3f").to_string();
-    ftimes.modify_fn = windows_file(file_name.modification_time().nt_timestamp() as i64)
-        .unwrap().format("%Y-%m-%dT%H:%M:%S.%3f").to_string();
-    ftimes.modify_si = windows_file(file_name.modification_time().nt_timestamp() as i64)
-        .unwrap().format("%Y-%m-%dT%H:%M:%S.%3f").to_string();
-    ftimes.mft_record = windows_file(file_name.mft_record_modification_time().nt_timestamp() as i64)
-        .unwrap().format("%Y-%m-%dT%H:%M:%S.%3f").to_string();
+    ftimes.access_fn = match windows_file(file_name.access_time().nt_timestamp() as i64) {
+        Some(d) => d.format("%Y-%m-%dT%H:%M:%S.%3f").to_string(),
+        None => ftimes.access_fn
+        };
+    ftimes.access_si = match windows_file(file_name.access_time().nt_timestamp() as i64) {
+        Some(d) => d.format("%Y-%m-%dT%H:%M:%S.%3f").to_string(),
+        None => ftimes.access_si
+        };
+    ftimes.create_fn = match windows_file(file_name.creation_time().nt_timestamp() as i64) {
+        Some(d) => d.format("%Y-%m-%dT%H:%M:%S.%3f").to_string(),
+        None => ftimes.create_fn
+        };
+    ftimes.create_si = match windows_file(file_name.creation_time().nt_timestamp() as i64) {
+        Some(d) => d.format("%Y-%m-%dT%H:%M:%S.%3f").to_string(),
+        None => ftimes.create_si
+        };
+    ftimes.modify_fn = match windows_file(file_name.modification_time().nt_timestamp() as i64) {
+        Some(d) => d.format("%Y-%m-%dT%H:%M:%S.%3f").to_string(),
+        None => ftimes.modify_fn
+        };
+    ftimes.modify_si = match windows_file(file_name.modification_time().nt_timestamp() as i64) {
+        Some(d) => d.format("%Y-%m-%dT%H:%M:%S.%3f").to_string(),
+        None => ftimes.modify_si
+        };
+    ftimes.mft_record = match windows_file(file_name.mft_record_modification_time().nt_timestamp() as i64) {
+        Some(d) => d.format("%Y-%m-%dT%H:%M:%S.%3f").to_string(),
+        None => "".to_string()
+        };
     Ok(ftimes)
 }
 
@@ -56,7 +70,7 @@ pub fn get_fname(file_path: &String, mut ftimes: FileTimestamps) -> Result<(File
     if !is_elevated() { return Ok((ftimes, false)) }
     let temp: Vec<&str> = file_path.split(":").collect();
     let dirs = temp[1].split("\\");
-    let filename = file_path.split("\\").last().unwrap();
+    let filename = file_path.split("\\").last().unwrap_or("");
     let root = r"\\.\".to_owned() + temp[0] + r":";
     // if we are not accessing an NTFS filesystem lets retrun gracefully
     let f = match File::open(root) {
