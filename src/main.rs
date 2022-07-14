@@ -467,7 +467,7 @@ fn print_help() {
 
         NOTE: Harvesting $FILE_NAME timestamps can only be acquired by running this tool elevated.
               The 'run_as_admin' field shows if the tool was run elevated. If the MFT can be accessed,
-              its STANDARD_INFORMATION dates are preferred.
+              its $STANDARD_INFORMATION dates are preferred.
     ";
     println!("{}", help);
     process::exit(1)
