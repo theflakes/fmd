@@ -324,16 +324,13 @@ fn get_imports(buffer: &Vec<u8>) -> io::Result<(Binary)> {
             bin.timestamps.compile = get_date_string(pe.header.coff_header.time_date_stamp as i64)?;
             bin.timestamps.debug = match pe.debug_data {
                 Some(d) => get_date_string(d.image_debug_directory.time_date_stamp as i64)?,
-                None => "".to_string()
-            };
+                None => "".to_string()};
             bin.linker_major_version = match pe.header.optional_header {
                 Some(d) => d.standard_fields.major_linker_version,
-                None => 0
-            };
+                None => 0};
             bin.linker_minor_version = match pe.header.optional_header {
                 Some(d) => d.standard_fields.minor_linker_version,
-                None => 0
-            };
+                None => 0};
         },
         Object::Mach(mach) => {
             //println!("Mach binary");
