@@ -101,7 +101,7 @@ fn print_log(
 
 
 // get handle to a file
-pub fn open_file(file_path: &std::path::Path) -> std::io::Result<std::fs::File> {
+fn open_file(file_path: &std::path::Path) -> std::io::Result<std::fs::File> {
     Ok(File::open(&file_path)?)
 }
 
@@ -134,7 +134,7 @@ fn convert_to_path(target_file: &str) -> io::Result<&Path> {
 
 
 // read in file as byte vector
-pub fn read_file_bytes(mut file: &File) -> std::io::Result<Vec<u8>> {
+fn read_file_bytes(mut file: &File) -> std::io::Result<Vec<u8>> {
     let mut buffer = Vec::new();
     file.rewind(); // need to reset to beginning of file if file has already been read
     file.read_to_end(&mut buffer)?;
@@ -151,7 +151,7 @@ fn get_sha1(buffer: &Vec<u8>) -> std::io::Result<(String)> {
 
 
 // get metadata for the file's content (md5, sha1, ...)
-pub fn get_file_content_info(
+fn get_file_content_info(
                                 file: &std::fs::File,
                                 mut buffer: &Vec<u8>
                             ) -> std::io::Result<(String, String, String)> {
@@ -285,7 +285,7 @@ fn get_date_string(timestamp: i64) -> io::Result<String> {
 }
 
 
-pub fn get_strings(buffer: &Vec<u8>, length: usize) -> io::Result<Vec<String>> {
+fn get_strings(buffer: &Vec<u8>, length: usize) -> io::Result<Vec<String>> {
     let mut results: Vec<String> = Vec::new();
     let mut chars: Vec<u8> = Vec::new();
     let ascii = 32..126;
@@ -308,6 +308,7 @@ pub fn get_strings(buffer: &Vec<u8>, length: usize) -> io::Result<Vec<String>> {
 
 fn get_imports(buffer: &Vec<u8>) -> io::Result<(Binary)> {
     let mut bin = Binary::default();
+    if buffer.len() < 97 { return Ok(bin) } // smallest possible PE size, errors with smaller buffer size
     match Object::parse(&buffer).unwrap() {
         Object::Elf(elf) => {
             //println!("Elf binary");
@@ -350,7 +351,7 @@ fn get_entropy(buffer: &Vec<u8>) -> io::Result<f32> {
 
 
 // find the parent directory of a given dir or file
-pub fn get_abs_path(path: &std::path::Path) -> io::Result<(std::path::PathBuf)> {
+fn get_abs_path(path: &std::path::Path) -> io::Result<(std::path::PathBuf)> {
     let abs = PathAbs::new(&path)?;
     Ok(dunce::simplified(&abs.as_path()).into())
 }
@@ -364,13 +365,13 @@ fn get_time_iso8601() -> io::Result<(String)> {
 
 
 // get date into the format we need
-pub fn format_date(time: DateTime::<Utc>) -> io::Result<String> {
+fn format_date(time: DateTime::<Utc>) -> io::Result<String> {
     Ok(time.format("%Y-%m-%dT%H:%M:%S.%3f").to_string())
 }
 
 
 // is a file or directory hidden
-pub fn is_hidden(file_path: &Path) -> io::Result<bool> {
+fn is_hidden(file_path: &Path) -> io::Result<bool> {
     let metadata = fs::metadata(file_path)?;
     let attributes = metadata.file_attributes();
     
