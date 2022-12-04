@@ -152,9 +152,9 @@ fn get_sha1(buffer: &Vec<u8>) -> std::io::Result<(String)> {
 
 // get metadata for the file's content (md5, sha1, ...)
 fn get_file_content_info(
-                                file: &std::fs::File,
-                                mut buffer: &Vec<u8>
-                            ) -> std::io::Result<(String, String, String)> {
+                            file: &std::fs::File,
+                            mut buffer: &Vec<u8>
+                        ) -> std::io::Result<(String, String, String)> {
     let mut md5 = String::new();
     let mut sha1 = String::new();
     let mut sha256 = String::new();
