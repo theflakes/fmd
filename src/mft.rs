@@ -1,12 +1,14 @@
-use crate::{data_defs, sector_reader};
+use crate::data_defs::DataRun;
+use crate::{data_defs, sector_reader, bin_to_string};
 
 use std::{io, str};
-use ntfs::attribute_value::NtfsAttributeValue;
+use ntfs::attribute_value::{NtfsAttributeValue, NtfsResidentAttributeValue};
 use ntfs::indexes::NtfsFileNameIndex;
 use ntfs::structured_values::{
-    NtfsAttributeList, NtfsFileName, NtfsFileNamespace, NtfsStandardInformation,
+    NtfsAttributeList, NtfsFileName, NtfsFileNamespace, NtfsStandardInformation, NtfsStructuredValueFromResidentAttributeValue
 };
-use ntfs::{Ntfs, NtfsAttribute, NtfsAttributeType, NtfsFile, NtfsReadSeek, NtfsTime};
+use ntfs::{Ntfs, NtfsAttribute, NtfsAttributeType, NtfsFile, NtfsReadSeek, NtfsTime,};
+use serde::de::Error;
 use std::io::{BufReader, Read, Seek, Write};
 use sector_reader::SectorReader;
 use data_defs::FileTimestamps;
@@ -28,7 +30,7 @@ where
 /*
     Harvest MFT $FILE_NAME and $STANDARD_INFORMATION dates
 */
-fn fileinfo_filename<T>(info: &mut CommandInfo<T>, attribute: NtfsAttribute) -> io::Result<(FileTimestamps)>
+fn fileinfo_filename<T>(info: &mut CommandInfo<T>, attribute: NtfsAttribute) -> io::Result<FileTimestamps>
 where
     T: Read + Seek,
 {
@@ -59,19 +61,28 @@ where
 }
 
 
-pub fn get_fname(file_path: &String, mut ftimes: FileTimestamps) -> Result<(FileTimestamps, bool)> {
-    if !is_elevated() { return Ok((ftimes, false)) }
+fn get_fs(file_path: &String, root: String) -> Result<(BufReader<SectorReader<File>>), io::Error> {
+    let f = match File::open(root) {
+        Ok(it) => it,
+        Err(e) => return Err(e),
+    };
+    let sr = SectorReader::new(f, 4096)?;
+    let mut fs = BufReader::new(sr);
+    Ok(fs)
+}
+
+
+pub fn get_fname(file_path: &String, mut ftimes: FileTimestamps) -> Result<(FileTimestamps, Vec<DataRun>, bool)> {
+    let mut ads: Vec<DataRun> = Vec::new();
+    if !is_elevated() { return Ok((ftimes, ads, false)) }
     let temp: Vec<&str> = file_path.split(":").collect();
     let dirs = temp[1].split("\\");
     let filename = file_path.split("\\").last().unwrap_or("");
     let root = r"\\.\".to_owned() + temp[0] + r":";
-    // if we are not accessing an NTFS filesystem lets retrun gracefully
-    let f = match File::open(root) {
-        Ok(it) => it,
-        Err(err) => return Ok((ftimes, true)),
+    let mut fs = match get_fs(file_path, root.clone()) {
+        Ok(f) => f,
+        _ => return Ok((ftimes, ads, true))
     };
-    let sr = SectorReader::new(f, 4096)?;
-    let mut fs = BufReader::new(sr);
     let mut ntfs = Ntfs::new(&mut fs)?;
     ntfs.read_upcase_table(&mut fs)?;
     let current_directory = vec![ntfs.root_directory(&mut fs)?];
@@ -85,6 +96,13 @@ pub fn get_fname(file_path: &String, mut ftimes: FileTimestamps) -> Result<(File
         cd(dir, &mut info);
     }
     let file = parse_file_arg(filename, &mut info)?;
+
+    let mut fs = match get_fs(file_path, root) {
+        Ok(f) => f,
+        _ => return Ok((ftimes, ads, true))
+    };
+    ads = get_ads(filename, &mut info, &mut fs)?;
+
     let mut attributes = file.attributes();
     while let Some(attribute_item) = attributes.next(&mut info.fs) {
         let attribute_item = attribute_item?;
@@ -99,7 +117,7 @@ pub fn get_fname(file_path: &String, mut ftimes: FileTimestamps) -> Result<(File
             _ => continue,
         }
     }
-    Ok((ftimes, true))
+    Ok((ftimes, ads, true))
 }
 
 
@@ -217,4 +235,33 @@ where
             bail!("No such file or directory \"{}\".", arg)
         }
     }
+}
+
+
+fn get_ads<T>(arg: &str, info: &mut CommandInfo<T>, fs: &mut BufReader<SectorReader<File>>) -> Result<Vec<DataRun>>
+where
+    T: Read + Seek,
+{
+    let file = parse_file_arg(arg, info)?;
+
+    let attributes = file.attributes_raw();
+    let mut ads: Vec<DataRun> = Vec::new();
+    let mut data: DataRun = DataRun::default();
+    //let mut buf = Vec::new();
+
+    for attribute in attributes {
+        let ty = attribute.ty()?;
+        if ty == NtfsAttributeType::Data {
+            let stream = NtfsAttributeValue::from(attribute.value(fs)?);
+            
+    
+            println!("{:?}", stream);
+            data.name = attribute.name()?.to_string();
+            data.bytes = attribute.value_length();
+            
+            ads.push(data.to_owned());
+        }
+    }
+
+    Ok(ads)
 }

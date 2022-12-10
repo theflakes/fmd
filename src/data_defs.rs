@@ -137,6 +137,21 @@ pub struct Binary {
     pub exports: Vec<String>
 }
 
+impl Default for DataRun {
+    fn default () -> DataRun {
+        DataRun {
+            name: String::new(),
+            bytes: 0,
+            first_128_bytes: String::new()
+        }
+    }
+}
+#[derive(Serialize, Clone, Debug)]
+pub struct DataRun {
+    pub name: String,
+    pub bytes: u64,
+    pub first_128_bytes: String
+}
 
 #[derive(Serialize)]
 pub struct MetaData {
@@ -153,6 +168,7 @@ pub struct MetaData {
     pub sha1: String,
     pub sha256: String,
     pub ssdeep: String,
+    pub ads: Vec<DataRun>,
     pub binary: Binary,
     pub first_128_bytes: String,
     pub strings: Vec<String>
@@ -172,6 +188,7 @@ impl MetaData {
             sha1: String,
             sha256: String,
             ssdeep: String,
+            ads: Vec<DataRun>,
             binary: Binary,
             first_128_bytes: String,
             strings: Vec<String>) -> MetaData {
@@ -189,6 +206,7 @@ impl MetaData {
             sha1,
             sha256,
             ssdeep,
+            ads,
             binary,
             first_128_bytes,
             strings

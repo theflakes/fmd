@@ -51,6 +51,7 @@ fn print_log(
                 sha1: String,
                 sha256: String,
                 ssdeep: String,
+                ads: Vec<DataRun>,
                 binary: Binary,
                 pprint: bool,
                 first_128_bytes: String,
@@ -71,6 +72,7 @@ fn print_log(
             sha1, 
             sha256, 
             ssdeep,
+            ads,
             binary,
             first_128_bytes,
             strings
@@ -90,6 +92,7 @@ fn print_log(
             sha1, 
             sha256, 
             ssdeep,
+            ads,
             binary,
             first_128_bytes,
             strings
@@ -142,7 +145,7 @@ fn read_file_bytes(mut file: &File) -> std::io::Result<Vec<u8>> {
 }
 
 
-fn get_sha1(buffer: &Vec<u8>) -> std::io::Result<(String)> {
+fn get_sha1(buffer: &Vec<u8>) -> std::io::Result<String> {
     let mut hasher = crypto::sha1::Sha1::new();
     hasher.input(buffer);
     let sha1 = hasher.result_str();
@@ -226,7 +229,7 @@ fn check_ordinal(dll: &str, func: &str) -> io::Result<String> {
 
 
 fn get_imphashes(imports: &Vec<goblin::pe::import::Import>) 
-                        -> io::Result<((String, String, String, String, u32, u32))> {
+                        -> io::Result<(String, String, String, String, u32, u32)> {
     let mut imphash_array: Vec<String> = Vec::new();    // store in array for calculating imphash on sorted
     let mut imphash_text = String::new();       // text imphash for imports in bin natural order
     let mut total_dlls = 0;
@@ -306,7 +309,7 @@ fn get_strings(buffer: &Vec<u8>, length: usize) -> io::Result<Vec<String>> {
 }
 
 
-fn get_imports(buffer: &Vec<u8>) -> io::Result<(Binary)> {
+fn get_imports(buffer: &Vec<u8>) -> io::Result<Binary> {
     let mut bin = Binary::default();
     if buffer.len() < 97 { return Ok(bin) } // smallest possible PE size, errors with smaller buffer size
     match Object::parse(&buffer).unwrap() {
@@ -351,13 +354,13 @@ fn get_entropy(buffer: &Vec<u8>) -> io::Result<f32> {
 
 
 // find the parent directory of a given dir or file
-fn get_abs_path(path: &std::path::Path) -> io::Result<(std::path::PathBuf)> {
+fn get_abs_path(path: &std::path::Path) -> io::Result<std::path::PathBuf> {
     let abs = PathAbs::new(&path)?;
     Ok(dunce::simplified(&abs.as_path()).into())
 }
 
 
-fn get_time_iso8601() -> io::Result<(String)> {
+fn get_time_iso8601() -> io::Result<String> {
     let now = SystemTime::now();
     let now: DateTime<Utc> = now.into();
     Ok(now.to_rfc3339())
@@ -421,7 +424,8 @@ fn start_analysis(file_path: String, pprint: bool, strings_length: usize) -> io:
     let path = convert_to_path(&file_path)?;
     let abs_path = get_abs_path(path)?.as_path().to_str().unwrap_or("").to_string();
     let mut ftimes = get_file_times(&path)?;
-    (ftimes, run_as_admin) = get_fname(&abs_path, ftimes).unwrap();
+    let mut ads: Vec<DataRun> = Vec::new();
+    (ftimes, ads, run_as_admin) = get_fname(&abs_path, ftimes).unwrap();
     let file = open_file(&path)?;
     let mut md5 = "d41d8cd98f00b204e9800998ecf8427e".to_string(); // md5 of empty file
     let mut sha1 = "da39a3ee5e6b4b0d3255bfef95601890afd80709".to_string(); // sha1 of empty file
@@ -447,7 +451,7 @@ fn start_analysis(file_path: String, pprint: bool, strings_length: usize) -> io:
     }
     print_log(timestamp, run_as_admin, abs_path, bytes, 
                 mime_type, is_hidden, ftimes.clone(), 
-                entropy, md5, sha1, sha256, ssdeep, bin, 
+                entropy, md5, sha1, sha256, ssdeep, ads, bin, 
                 pprint, first_128_bytes, strings)?;
     Ok(())
 }
