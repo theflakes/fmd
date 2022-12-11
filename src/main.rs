@@ -299,7 +299,7 @@ fn get_strings(buffer: &Vec<u8>, length: usize) -> io::Result<Vec<String>> {
             if chars.len() >= length {
                 results.push(match String::from_utf8(chars){
                     Ok(s) => s,
-                    _ => "".to_string(),
+                    Err(_e) => "".to_string(),
                 });
             }
             chars = Vec::new();
@@ -406,7 +406,7 @@ fn get_file_times<'a>(path: &Path) -> io::Result<FileTimestamps> {
     let mut ftimes = FileTimestamps::default();
     let metadata = match fs::metadata(dunce::simplified(&path)) {
         Ok(m) => m,
-        _ => return Ok(ftimes)
+        Err(_e) => return Ok(ftimes)
     };
     if metadata.created().is_ok() { 
         ftimes.create_si = format_date(metadata.created()?.to_owned().into())?;

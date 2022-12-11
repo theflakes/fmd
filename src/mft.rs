@@ -81,7 +81,7 @@ pub fn get_fname(file_path: &String, mut ftimes: FileTimestamps) -> Result<(File
     let root = r"\\.\".to_owned() + temp[0] + r":";
     let mut fs = match get_fs(file_path, root.clone()) {
         Ok(f) => f,
-        _ => return Ok((ftimes, ads, true))
+        Err(_e) => return Ok((ftimes, ads, true))
     };
     let mut ntfs = Ntfs::new(&mut fs)?;
     ntfs.read_upcase_table(&mut fs)?;
@@ -99,7 +99,7 @@ pub fn get_fname(file_path: &String, mut ftimes: FileTimestamps) -> Result<(File
 
     let mut fs = match get_fs(file_path, root) {
         Ok(f) => f,
-        _ => return Ok((ftimes, ads, true))
+        Err(_e) => return Ok((ftimes, ads, true))
     };
     ads = get_ads(filename, &mut info, &mut fs)?;
 
