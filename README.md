@@ -54,22 +54,22 @@ C:\temp>fmd -p RunAsService.exe
     {
       "name": "",
       "bytes": 23552,
-      "first_128_bytes": "MZ�.\u0003...\u0004...��..�.......@...................................�...\u000e\u001f�\u000e.�\t�!�\u0001L�!This program cannot be run in DOS mode.\r\r\n$.......PE..L\u0001\u0003.B��Y........�.\u0002\u0001\u000b\u00010..P...\n......�o... ...�....@.. ...\u0002..\u0004.......\u0004........�...\u0002......\u0003.@�..\u0010..\u0010....\u0010..\u0010......\u0010.........."
+      "first_256_bytes": "MZ�.\u0003...\u0004...��..�.......@...................................�...\u000e\u001f�\u000e.�\t�!�\u0001L�!This program cannot be run in DOS mode.\r\r\n$.......PE..L\u0001\u0003.B��Y........�.\u0002\u0001\u000b\u00010..P...\n......�o... ...�....@.. ...\u0002..\u0004.......\u0004........�...\u0002......\u0003.@�..\u0010..\u0010....\u0010..\u0010......\u0010.........."
     },
     {
       "name": "evil",
       "bytes": 17,
-      "first_128_bytes": "\"this is evil\" \r\n"
+      "first_256_bytes": "\"this is evil\" \r\n"
     },
     {
       "name": "SmartScreen",
       "bytes": 7,
-      "first_128_bytes": "Anaheim"
+      "first_256_bytes": "Anaheim"
     },
     {
       "name": "Zone.Identifier",
       "bytes": 123,
-      "first_128_bytes": "[ZoneTransfer]\r\nZoneId=3\r\nReferrerUrl=http://runasservice.com/\r\nHostUrl=http://runasservice.com/Download/RunAsService.exe\r\n"
+      "first_256_bytes": "[ZoneTransfer]\r\nZoneId=3\r\nReferrerUrl=http://runasservice.com/\r\nHostUrl=http://runasservice.com/Download/RunAsService.exe\r\n"
     }
   ],
   "binary": {
