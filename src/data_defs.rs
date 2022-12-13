@@ -142,7 +142,7 @@ impl Default for DataRun {
         DataRun {
             name: String::new(),
             bytes: 0,
-            first_128_bytes: String::new()
+            first_256_bytes: String::new()
         }
     }
 }
@@ -150,7 +150,7 @@ impl Default for DataRun {
 pub struct DataRun {
     pub name: String,
     pub bytes: u64,
-    pub first_128_bytes: String
+    pub first_256_bytes: String
 }
 
 #[derive(Serialize)]

@@ -273,7 +273,7 @@ where
             data.name = attribute.name()?.to_string();
             data.bytes = attribute.value_length();
             let bytes_read = attribute.value(fs)?.read(fs, &mut buf)?;
-            data.first_128_bytes = bytes_to_string(&buf[..bytes_read].to_vec())?;
+            data.first_256_bytes = bytes_to_string(&buf[..bytes_read].to_vec())?;
             
             ads.push(data.to_owned());
         }
