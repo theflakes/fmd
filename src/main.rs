@@ -54,7 +54,6 @@ fn print_log(
                 ads: Vec<DataRun>,
                 binary: Binary,
                 pprint: bool,
-                first_128_bytes: String,
                 strings: Vec<String>
             ) -> io::Result<()> {
     if pprint {
@@ -74,7 +73,6 @@ fn print_log(
             ssdeep,
             ads,
             binary,
-            first_128_bytes,
             strings
         ).report_pretty_log();
     } else {
@@ -94,7 +92,6 @@ fn print_log(
             ssdeep,
             ads,
             binary,
-            first_128_bytes,
             strings
         ).report_log();
     }
@@ -387,21 +384,6 @@ fn is_hidden(file_path: &Path) -> io::Result<bool> {
 }
 
 
-fn bin_to_string(bytes: &Vec<u8>) -> io::Result<String> {
-    let mut s = String::new();
-    if bytes.len() >= 128 {
-        s = String::from_utf8_lossy(&bytes[0..127]).into_owned();
-    } else {
-        s = String::from_utf8_lossy(bytes).into_owned();
-    }
-
-    let first_bytes_as_string = s.as_str()
-                                        .replace('\u{0}', ".")
-                                        .to_string();
-    Ok(first_bytes_as_string)
-}
-
-
 fn get_file_times<'a>(path: &Path) -> io::Result<FileTimestamps> {
     let mut ftimes = FileTimestamps::default();
     let metadata = match fs::metadata(dunce::simplified(&path)) {
@@ -437,11 +419,9 @@ fn start_analysis(file_path: String, pprint: bool, strings_length: usize) -> io:
     let mut buffer: Vec<u8> = Vec::new();
     let mut entropy: f32 = 0.0;
     let mut strings: Vec<String> = Vec::new();
-    let mut first_128_bytes = String::new();
     let is_hidden = is_hidden(&path)?;
     if bytes > 0 {
         buffer = read_file_bytes(&file)?;
-        first_128_bytes = bin_to_string(&buffer)?;
         entropy = shannon_entropy(&buffer);
         ssdeep = get_ssdeep_hash(&buffer)?;
         mime_type = get_mimetype(&buffer)?;
@@ -452,7 +432,7 @@ fn start_analysis(file_path: String, pprint: bool, strings_length: usize) -> io:
     print_log(timestamp, run_as_admin, abs_path, bytes, 
                 mime_type, is_hidden, ftimes.clone(), 
                 entropy, md5, sha1, sha256, ssdeep, ads, bin, 
-                pprint, first_128_bytes, strings)?;
+                pprint, strings)?;
     Ok(())
 }
 

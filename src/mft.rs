@@ -1,5 +1,5 @@
 use crate::data_defs::DataRun;
-use crate::{data_defs, sector_reader, bin_to_string};
+use crate::{data_defs, sector_reader};
 
 use std::{io, str};
 use ntfs::attribute_value::{NtfsAttributeValue, NtfsResidentAttributeValue};
@@ -16,6 +16,7 @@ use anyhow::{anyhow, bail, Context, Result};
 use epochs::windows_file;
 use is_elevated::is_elevated;
 use std::fs::{self, File};
+
 
 struct CommandInfo<'n, T>
 where
@@ -238,6 +239,21 @@ where
 }
 
 
+fn bytes_to_string(bytes: &Vec<u8>) -> io::Result<String> {
+    let mut s = String::new();
+    if bytes.len() >= 128 {
+        s = String::from_utf8_lossy(&bytes[0..255]).into_owned();
+    } else {
+        s = String::from_utf8_lossy(bytes).into_owned();
+    }
+
+    let first_bytes_as_string = s.as_str()
+                                        .replace('\u{0}', ".")
+                                        .to_string();
+    Ok(first_bytes_as_string)
+}
+
+
 fn get_ads<T>(arg: &str, info: &mut CommandInfo<T>, fs: &mut BufReader<SectorReader<File>>) -> Result<Vec<DataRun>>
 where
     T: Read + Seek,
@@ -247,17 +263,17 @@ where
     let attributes = file.attributes_raw();
     let mut ads: Vec<DataRun> = Vec::new();
     let mut data: DataRun = DataRun::default();
-    //let mut buf = Vec::new();
+    let mut buf = [0u8; 4096];
 
     for attribute in attributes {
         let ty = attribute.ty()?;
         if ty == NtfsAttributeType::Data {
             let stream = NtfsAttributeValue::from(attribute.value(fs)?);
-            
-    
-            println!("{:?}", stream);
+
             data.name = attribute.name()?.to_string();
             data.bytes = attribute.value_length();
+            let bytes_read = attribute.value(fs)?.read(fs, &mut buf)?;
+            data.first_128_bytes = bytes_to_string(&buf[..bytes_read].to_vec())?;
             
             ads.push(data.to_owned());
         }

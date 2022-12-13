@@ -170,7 +170,6 @@ pub struct MetaData {
     pub ssdeep: String,
     pub ads: Vec<DataRun>,
     pub binary: Binary,
-    pub first_128_bytes: String,
     pub strings: Vec<String>
 }
 impl MetaData {
@@ -190,7 +189,6 @@ impl MetaData {
             ssdeep: String,
             ads: Vec<DataRun>,
             binary: Binary,
-            first_128_bytes: String,
             strings: Vec<String>) -> MetaData {
         MetaData {
             timestamp,
@@ -208,7 +206,6 @@ impl MetaData {
             ssdeep,
             ads,
             binary,
-            first_128_bytes,
             strings
         }
     }

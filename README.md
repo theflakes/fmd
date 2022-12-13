@@ -2,6 +2,15 @@
 File metadata / forensic tool.  
 fmd = File Metadata
 
+
+To compile; install Rust and the MSVC 32 and/or 64 bit environment:
+```
+    x32:        cargo build --release --target i686-pc-windows-msvc
+    x64:        cargo build --release --target x86_64-pc-windows-msvc
+    Linux x64:  sudo apt update && sudo apt install mingw-w64
+                cargo build --release --target x86_64-pc-windows-gnu
+```
+
 ```
         Author: Brian Kellogg
         License: MIT
@@ -18,164 +27,80 @@ fmd = File Metadata
 
 Example output:
 ```
-.\fmd.exe --pretty .\fmd.exe
+C:\temp>fmd -p RunAsService.exe
 {
-  "timestamp": "2022-07-10T23:19:33.442566600+00:00",
-  "device_type": "Windows 10.0.22000 (Workstation)",
+  "timestamp": "2022-12-13T02:49:09.718219500+00:00",
+  "device_type": "Windows 10.0.19045 (Workstation)",
   "run_as_admin": true,
-  "path": "C:\\Users\\thefl\\code\\fmd\\target\\release\\fmd.exe",
-  "bytes": 764416,
+  "path": "C:\\temp\\RunAsService.exe",
+  "bytes": 23552,
   "mime_type": "application/x-executable",
   "is_hidden": false,
   "timestamps": {
-    "access_fn": "2022-07-10T20:56:43.873",
-    "access_si": "2022-07-10T23:19:33.537",
-    "create_fn": "2022-07-04T15:35:43.415",
-    "create_si": "2022-07-04T15:35:43.415",
-    "modify_fn": "2022-07-10T20:56:43.873",
-    "modify_si": "2022-07-10T23:19:05.797",
-    "mft_record": "2022-07-10T20:56:44.010"
+    "access_fn": "2022-11-19T16:00:21.900",
+    "access_si": "2022-11-19T16:00:21.900",
+    "create_fn": "2022-11-19T16:00:21.900",
+    "create_si": "2022-11-19T16:00:21.900",
+    "modify_fn": "2022-11-19T16:00:21.900",
+    "modify_si": "2022-11-19T16:00:21.900",
+    "mft_record": "2022-11-19T16:00:21.900"
   },
-  "entropy": 6.405565,
-  "md5": "fb462d5f89b1da7118475f96b8c9e74b",
-  "sha1": "f53a3251ca05d1f5fb671266a5546b1271084019",
-  "sha256": "1dd12e444375c2a58ed2dd9d67cd9d1b1efa3a7cd6d4c9f14a19fe20e3ca0b4e",
-  "ssdeep": "12288:X+Ql+KAPzqfy/qsucPfxS6WOja3mcfOK3Sl:OQAPeq/qDcPfxS6Wr3TOGS",
+  "entropy": 4.623817,
+  "md5": "4b92bd03d0c1e1f793ed1b499534211b",
+  "sha1": "2574c324fe47119fcd91708451257db00ce4684b",
+  "sha256": "09fafb5296afed2324c773acf178552045933995e60c2b81cd66400ccf46a00e",
+  "ssdeep": "384:rcuNDlF9VtDZsb10+zMKMU4MjnNJcCWT80T2:rcuZlWb1irMJcUX",
+  "ads": [
+    {
+      "name": "",
+      "bytes": 23552,
+      "first_128_bytes": "MZ�.\u0003...\u0004...��..�.......@...................................�...\u000e\u001f�\u000e.�\t�!�\u0001L�!This program cannot be run in DOS mode.\r\r\n$.......PE..L\u0001\u0003.B��Y........�.\u0002\u0001\u000b\u00010..P...\n......�o... ...�....@.. ...\u0002..\u0004.......\u0004........�...\u0002......\u0003.@�..\u0010..\u0010....\u0010..\u0010......\u0010.........."
+    },
+    {
+      "name": "evil",
+      "bytes": 17,
+      "first_128_bytes": "\"this is evil\" \r\n"
+    },
+    {
+      "name": "SmartScreen",
+      "bytes": 7,
+      "first_128_bytes": "Anaheim"
+    },
+    {
+      "name": "Zone.Identifier",
+      "bytes": 123,
+      "first_128_bytes": "[ZoneTransfer]\r\nZoneId=3\r\nReferrerUrl=http://runasservice.com/\r\nHostUrl=http://runasservice.com/Download/RunAsService.exe\r\n"
+    }
+  ],
   "binary": {
-    "is_64": true,
-    "is_dotnet": false,
+    "is_64": false,
+    "is_dotnet": true,
     "is_lib": false,
     "original_filename": "",
     "timestamps": {
-      "compile": "2022-07-10T23:19:05",
-      "debug": "2022-07-10T23:19:05"
+      "compile": "2017-10-05T22:25:06",
+      "debug": "2017-10-05T22:25:06"
     },
-    "linker_major_version": 14,
-    "linker_minor_version": 32,
-    "imphash": "26c848beee8f7ea16435ac3d90259755",
-    "imphash_sorted": "f34e2030c73d6075a29385f7786a62b6",
-    "imphash_ssdeep": "48:kvrXZWj1p9QTxnWs1stv4Bc+pRlGBPKhK:YrXZWj1pyTxnWs1stv4Bc+pRmd",
-    "imphash_ssdeep_sorted": "48:mb7KW5W6yFhCf9/w3+nmXfhnxQsGvXHlE:UeW5W6YhCf5RnmvhnxQsGvXHlE",
-    "imports_lib_count": 3,
-    "imports_func_count": 94,
+    "linker_major_version": 48,
+    "linker_minor_version": 0,
+    "imphash": "f34d5f2d4577ed6d9ceec516c1f5a744",
+    "imphash_sorted": "f34d5f2d4577ed6d9ceec516c1f5a744",
+    "imphash_ssdeep": "3:rGsLdAIEK:tf",
+    "imphash_ssdeep_sorted": "3:rGsLdAIEK:tf",
+    "imports_lib_count": 1,
+    "imports_func_count": 1,
     "imports": [
       {
-        "lib": "KERNEL32.dll",
-        "count": 91,
-        "name": [
-          "HeapFree",
-          "CloseHandle",
-          "SetFilePointerEx",
-          "GetLastError",
-          "GetCurrentProcess",
-          "GetCommandLineW",
-          "SetLastError",
-          "GetModuleFileNameW",
-          "GetSystemTimeAsFileTime",
-          "AddVectoredExceptionHandler",
-          "SetThreadStackGuarantee",
-          "AcquireSRWLockExclusive",
-          "ReleaseSRWLockExclusive",
-          "HeapAlloc",
-          "GetProcessHeap",
-          "HeapReAlloc",
-          "Sleep",
-          "GetModuleHandleA",
-          "TryAcquireSRWLockExclusive",
-          "GetStdHandle",
-          "GetConsoleMode",
-          "FreeLibrary",
-          "GetCurrentDirectoryW",
-          "WaitForSingleObjectEx",
-          "LoadLibraryA",
-          "CreateMutexA",
-          "ReleaseMutex",
-          "RtlLookupFunctionEntry",
-          "GetModuleHandleW",
-          "FormatMessageW",
-          "GetFullPathNameW",
-          "CreateFileW",
-          "GetFileInformationByHandle",
-          "DeviceIoControl",
-          "ExitProcess",
-          "QueryPerformanceCounter",
-          "QueryPerformanceFrequency",
-          "GetCurrentThread",
-          "RtlCaptureContext",
-          "AcquireSRWLockShared",
-          "GetEnvironmentVariableW",
-          "ReleaseSRWLockShared",
-          "GetFinalPathNameByHandleW",
-          "GetProcAddress",
-          "WriteConsoleW",
-          "LoadLibraryExW",
-          "GetCurrentProcessId",
-          "GetCurrentThreadId",
-          "InitializeSListHead",
-          "RtlVirtualUnwind",
-          "IsDebuggerPresent",
-          "UnhandledExceptionFilter",
-          "SetUnhandledExceptionFilter",
-          "GetStartupInfoW",
-          "IsProcessorFeaturePresent",
-          "RtlUnwindEx",
-          "EncodePointer",
-          "RaiseException",
-          "EnterCriticalSection",
-          "LeaveCriticalSection",
-          "DeleteCriticalSection",
-          "InitializeCriticalSectionAndSpinCount",
-          "TlsAlloc",
-          "TlsGetValue",
-          "TlsSetValue",
-          "TlsFree",
-          "RtlPcToFileHeader",
-          "WriteFile",
-          "TerminateProcess",
-          "GetModuleHandleExW",
-          "GetCommandLineA",
-          "FindClose",
-          "FindFirstFileExW",
-          "FindNextFileW",
-          "IsValidCodePage",
-          "GetACP",
-          "GetOEMCP",
-          "GetCPInfo",
-          "MultiByteToWideChar",
-          "WideCharToMultiByte",
-          "GetEnvironmentStringsW",
-          "FreeEnvironmentStringsW",
-          "SetEnvironmentVariableW",
-          "SetStdHandle",
-          "GetFileType",
-          "GetStringTypeW",
-          "CompareStringW",
-          "LCMapStringW",
-          "HeapSize",
-          "FlushFileBuffers",
-          "GetConsoleOutputCP"
-        ]
-      },
-      {
-        "lib": "ADVAPI32.dll",
-        "count": 2,
-        "name": [
-          "OpenProcessToken",
-          "GetTokenInformation"
-        ]
-      },
-      {
-        "lib": "bcrypt.dll",
+        "lib": "mscoree.dll",
         "count": 1,
         "name": [
-          "BCryptGenRandom"
+          "_CorExeMain"
         ]
       }
     ],
     "exports_count": 0,
     "exports": []
   },
-  "first_128_bytes": "MZ�.\u0003...\u0004...��..�.......@....................................\u0001..\u000e\u001f�\u000e.�\t�!�\u0001L�!This program cannot be run in DOS mode.\r\r\n$......",
   "strings": []
 }
 ```
