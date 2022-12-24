@@ -1,6 +1,6 @@
 [package]
 name = "fmd"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -12,7 +12,6 @@ serde_json = "*"
 md5 = "*"
 rust-crypto = "*"
 sha256 = "*"
-pelite ="*"
 dunce = "*"
 path_abs = "*"
 chrono = "*"
