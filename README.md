@@ -84,7 +84,7 @@ C:\temp>fmd -p RunAsService.exe
       "product_name": "RunAsService",
       "company_name": "Evil Corp",
       "internal_name": "RunAsService.exe",
-      "legal_copyright": "I wil pwn your stuff!!!"
+      "legal_copyright": "I will pwn your stuff!!!"
     },
     "timestamps": {
       "compile": "2017-10-05T22:25:06",
