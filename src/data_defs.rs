@@ -95,13 +95,39 @@ pub struct BinTimestamps {
     pub debug: String
 }
 
+impl Default for PeFileInfo {
+    fn default () -> PeFileInfo {
+        PeFileInfo {
+            product_version: String::new(),
+            original_filename: String::new(),
+            file_description: String::new(),
+            file_version: String::new(),
+            product_name: String::new(),
+            company_name: String::new(),
+            internal_name: String::new(),
+            legal_copyright: String::new()
+        }
+    }
+}
+#[derive(Serialize, Clone)]
+pub struct PeFileInfo {
+    pub product_version: String,
+    pub original_filename: String,
+    pub file_description: String,
+    pub file_version: String,
+    pub product_name: String,
+    pub company_name: String,
+    pub internal_name: String,
+    pub legal_copyright: String
+}
+
 impl Default for Binary {
     fn default () -> Binary {
         Binary {
             is_64: false,
             is_dotnet: false,
             is_lib: false,
-            original_filename: String::new(),
+            pe_info: PeFileInfo::default(),
             timestamps: BinTimestamps::default(),
             linker_major_version: 0,
             linker_minor_version: 0,
@@ -122,7 +148,7 @@ pub struct Binary {
     pub is_64: bool,
     pub is_dotnet: bool,
     pub is_lib: bool,
-    pub original_filename: String,
+    pub pe_info: PeFileInfo,
     pub timestamps: BinTimestamps,
     pub linker_major_version: u8,
     pub linker_minor_version: u8,

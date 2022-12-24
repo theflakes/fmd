@@ -76,7 +76,16 @@ C:\temp>fmd -p RunAsService.exe
     "is_64": false,
     "is_dotnet": true,
     "is_lib": false,
-    "original_filename": "",
+    "pe_info": {
+      "product_version": "10.0.22621.674",
+      "original_filename": "RunAsService.exe",
+      "file_description": "RunAsService.exe",
+      "file_version": "10.0.22621.674 (WinBuild.160101.0800)",
+      "product_name": "RunAsService",
+      "company_name": "Evil Corp",
+      "internal_name": "RunAsService.exe",
+      "legal_copyright": "I wil pwn your stuff!!!"
+    },
     "timestamps": {
       "compile": "2017-10-05T22:25:06",
       "debug": "2017-10-05T22:25:06"
@@ -106,6 +115,7 @@ C:\temp>fmd -p RunAsService.exe
 ```
 
 See:  
+https://github.com/frank2  
 https://docs.rs/fuzzyhash/latest/fuzzyhash/  
 https://dfir.science/2017/07/How-To-Fuzzy-Hashing-with-SSDEEP-(similarity-matching).html  
 https://docs.rs/tree_magic/latest/tree_magic/  

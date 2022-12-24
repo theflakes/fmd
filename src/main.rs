@@ -7,6 +7,7 @@ extern crate dunce;
 extern crate chrono;
 extern crate goblin;
 extern crate entropy;
+extern crate exe;
 
 #[macro_use] extern crate lazy_static;
 
@@ -35,6 +36,7 @@ use std::time::SystemTime;
 use goblin::{error, Object};
 use entropy::shannon_entropy;
 use std::os::windows::prelude::*;
+use std::collections::HashMap;
 
 
 // report out in json
@@ -306,7 +308,55 @@ fn get_strings(buffer: &Vec<u8>, length: usize) -> io::Result<Vec<String>> {
 }
 
 
-fn get_imports(buffer: &Vec<u8>) -> io::Result<Binary> {
+/*
+    See: https://github.com/frank2/exe-rs/blob/main/src/tests.rs
+
+    The Goblin PE parser doesn't support parsing this PE structure, therefore using exe-rs
+    Is not parsing .Net file info
+*/
+fn get_pe_file_info(file_path: String) -> io::Result<PeFileInfo> {
+    let mut file_info = PeFileInfo::default();
+    let pefile = match exe::VecPE::from_disk_file(file_path) {
+        Ok(p) => p,
+        Err(_e) => return Ok(file_info),
+    };
+    let vs_version_check = match exe::VSVersionInfo::parse(&pefile) {
+        Ok(p) => p,
+        Err(_e) => return Ok(file_info),
+    };
+    let vs_version = vs_version_check;
+    if let Some(string_file_info) = vs_version.string_file_info {
+        let string_map = string_file_info.children[0].string_map();
+        if string_map.contains_key("ProductVersion") {
+            file_info.product_version = string_map.get("ProductVersion").unwrap().to_string();
+        }
+        if string_map.contains_key("OriginalFilename") {
+            file_info.original_filename = string_map.get("OriginalFilename").unwrap().to_string();
+        }
+        if string_map.contains_key("FileDescription") {
+            file_info.file_description = string_map.get("FileDescription").unwrap().to_string();
+        }
+        if string_map.contains_key("FileVersion") {
+            file_info.file_version = string_map.get("FileVersion").unwrap().to_string();
+        }
+        if string_map.contains_key("ProductName") {
+            file_info.product_name = string_map.get("ProductName").unwrap().to_string();
+        }
+        if string_map.contains_key("CompanyName") {
+            file_info.company_name = string_map.get("CompanyName").unwrap().to_string();
+        }
+        if string_map.contains_key("InternalName") {
+            file_info.internal_name = string_map.get("InternalName").unwrap().to_string();
+        }
+        if string_map.contains_key("LegalCopyright") {
+            file_info.legal_copyright = string_map.get("LegalCopyright").unwrap().to_string();
+        }
+    }
+    Ok(file_info)
+}
+
+
+fn get_imports(file_path: String, buffer: &Vec<u8>) -> io::Result<Binary> {
     let mut bin = Binary::default();
     if buffer.len() < 97 { return Ok(bin) } // smallest possible PE size, errors with smaller buffer size
     match Object::parse(&buffer).unwrap() {
@@ -321,7 +371,7 @@ fn get_imports(buffer: &Vec<u8>) -> io::Result<Binary> {
             bin.is_64 = pe.is_64;
             bin.is_lib = pe.is_lib;
             (bin.exports, bin.exports_count) = parse_pe_exports(&pe.exports)?;
-            bin.original_filename = pe.name.unwrap_or("").to_string();
+            bin.pe_info = get_pe_file_info(file_path)?;
             bin.timestamps.compile = get_date_string(pe.header.coff_header.time_date_stamp as i64)?;
             bin.timestamps.debug = match pe.debug_data {
                 Some(d) => get_date_string(d.image_debug_directory.time_date_stamp as i64)?,
@@ -426,7 +476,7 @@ fn start_analysis(file_path: String, pprint: bool, strings_length: usize) -> io:
         ssdeep = get_ssdeep_hash(&buffer)?;
         mime_type = get_mimetype(&buffer)?;
         (md5, sha1, sha256) = get_file_content_info(&file, &buffer)?;
-        bin = get_imports(&buffer)?;
+        bin = get_imports(file_path, &buffer)?;
         if strings_length > 0 {strings = get_strings(&buffer, strings_length)?;}
     }
     print_log(timestamp, run_as_admin, abs_path, bytes, 
