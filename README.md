@@ -34,6 +34,13 @@ NOTE: Harvesting $FILE_NAME timestamps can only be acquired by running this tool
 
       'runtime_env' stores information on the device that this tool was run on.
 
+      PE Sections:
+      - 'total_sections' reports how many PE sections are found after the PE headers.
+      - 'total_raw_bytes' cumulative of all raw, on disk, sections.
+      - 'total_virt_bytes' cumulative of all virtual, in memory, sections.
+      - if 'total_virt_bytes' is much larger than 'total_raw_bytes', this can indicate
+        a packed binary.
+
       Certain forensic information can only be harvested when the file is analyzed on
       the filesystem of origin. 
       - e.g. timestamps and alternate data streams are lost when the file is moved 
