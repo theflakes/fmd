@@ -128,16 +128,19 @@ C:\temp>fmd -p evil.exe
       "sections": [
         {
           "name": ".text",
+          "virt_address": "0x2000",
           "raw_size": 20480,
           "virt_size": 20420
         },
         {
           "name": ".rsrc",
+          "virt_address": "0x8000",
           "raw_size": 2048,
           "virt_size": 1888
         },
         {
           "name": ".reloc",
+          "virt_address": "0xa000",
           "raw_size": 512,
           "virt_size": 12
         }
