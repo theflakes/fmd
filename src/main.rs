@@ -40,7 +40,6 @@ use chrono::{DateTime, Utc};
 
 // report out in json
 fn print_log(
-                runtime_env: RunTimeEnv,
                 path: String,
                 bytes: u64,
                 mime_type: String, 
@@ -53,6 +52,7 @@ fn print_log(
                 pprint: bool,
                 strings: Vec<String>
             ) -> io::Result<()> {
+    let runtime_env = RunTimeEnv::default();
     if pprint {
         MetaData::new(
             runtime_env,
@@ -438,8 +438,7 @@ fn start_analysis(file_path: String, pprint: bool, strings_length: usize) -> io:
     let abs_path = get_abs_path(path)?.as_path().to_str().unwrap_or("").to_string();
     let mut ftimes = get_file_times(&path)?;
     let mut ads: Vec<DataRun> = Vec::new();
-    let mut runtime_env = RunTimeEnv::default();
-    (ftimes, ads, runtime_env.run_as_admin) = get_fname(&abs_path, ftimes).unwrap();
+    (ftimes, ads) = get_fname(&abs_path, ftimes).unwrap();
     let file = open_file(&path)?;
     let mut bytes = file.metadata().unwrap().len();
     let is_hidden = is_hidden(&path)?;
@@ -450,9 +449,9 @@ fn start_analysis(file_path: String, pprint: bool, strings_length: usize) -> io:
     let bin = get_pe(file_path, &buffer)?;
     let mut strings: Vec<String> = Vec::new();
     if strings_length > 0 {strings = get_strings(&buffer, strings_length)?;}
-    print_log(runtime_env, abs_path, bytes, mime_type, 
-        is_hidden, ftimes.clone(), entropy, 
-        hashes, ads, bin, 
+    print_log(abs_path, bytes, mime_type, 
+        is_hidden, ftimes.clone(), 
+        entropy, hashes, ads, bin, 
         pprint, strings)?;
     Ok(())
 }
@@ -472,7 +471,16 @@ fn print_help() {
               The 'run_as_admin' field shows if the tool was run elevated. If the MFT can be accessed,
               its $STANDARD_INFORMATION dates are preferred.
 
+              Harvesting Alternate Data Stream (ADS) information can only be acquired by running 
+              this tool elevated. ADS information is acquired by directly accessing the NTFS which
+              requires elevation.
+
               'runtime_env' stores information on the device that this tool was run on.
+
+              Certain forensic information can only be harvested when the file is analyzed on
+              the filesystem of origin. 
+              - e.g. timestamps and alternate data streams are lost when the file is moved 
+                off of the filesystem of origin.
     ";
     println!("{}", help);
     process::exit(1)

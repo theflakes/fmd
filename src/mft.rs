@@ -73,16 +73,15 @@ fn get_fs(file_path: &String, root: String) -> Result<(BufReader<SectorReader<Fi
 }
 
 
-pub fn get_fname(file_path: &String, mut ftimes: FileTimestamps) -> Result<(FileTimestamps, Vec<DataRun>, bool)> {
+pub fn get_fname(file_path: &String, mut ftimes: FileTimestamps) -> Result<(FileTimestamps, Vec<DataRun>)> {
     let mut ads: Vec<DataRun> = Vec::new();
-    if !is_elevated() { return Ok((ftimes, ads, false)) }
     let temp: Vec<&str> = file_path.split(":").collect();
     let dirs = temp[1].split("\\");
     let filename = file_path.split("\\").last().unwrap_or("");
     let root = r"\\.\".to_owned() + temp[0] + r":";
     let mut fs = match get_fs(file_path, root.clone()) {
         Ok(f) => f,
-        Err(_e) => return Ok((ftimes, ads, true))
+        Err(_e) => return Ok((ftimes, ads))
     };
     let mut ntfs = Ntfs::new(&mut fs)?;
     ntfs.read_upcase_table(&mut fs)?;
@@ -100,7 +99,7 @@ pub fn get_fname(file_path: &String, mut ftimes: FileTimestamps) -> Result<(File
 
     let mut fs = match get_fs(file_path, root) {
         Ok(f) => f,
-        Err(_e) => return Ok((ftimes, ads, true))
+        Err(_e) => return Ok((ftimes, ads))
     };
     ads = get_ads(filename, &mut info, &mut fs)?;
 
@@ -118,7 +117,7 @@ pub fn get_fname(file_path: &String, mut ftimes: FileTimestamps) -> Result<(File
             _ => continue,
         }
     }
-    Ok((ftimes, ads, true))
+    Ok((ftimes, ads))
 }
 
 

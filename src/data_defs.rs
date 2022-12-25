@@ -5,6 +5,7 @@ extern crate whoami;
 use chrono::{DateTime, Utc};
 use serde::Serialize;
 use std::{env, time::SystemTime, io};
+use is_elevated::is_elevated;
 
 
 lazy_static! { 
@@ -275,7 +276,7 @@ impl Default for RunTimeEnv {
         RunTimeEnv {
             timestamp: get_time_iso8601().unwrap(),
             device_type: DEVICE_TYPE.to_string(),
-            run_as_admin: false,
+            run_as_admin: is_elevated(),
         }
     }
 }

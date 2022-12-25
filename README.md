@@ -28,7 +28,16 @@ NOTE: Harvesting $FILE_NAME timestamps can only be acquired by running this tool
       The 'run_as_admin' field shows if the tool was run elevated. If the MFT can be accessed,
       its $STANDARD_INFORMATION dates are preferred.
 
+      Harvesting Alternate Data Stream (ADS) information can only be acquired by running 
+      this tool elevated. ADS information is acquired by directly accessing the NTFS which
+      requires elevation.
+
       'runtime_env' stores information on the device that this tool was run on.
+
+      Certain forensic information can only be harvested when the file is analyzed on
+      the filesystem of origin. 
+      - e.g. timestamps and alternate data streams are lost when the file is moved 
+        off of the filesystem of origin.
 ```
 
 Example output:
