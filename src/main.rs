@@ -479,8 +479,8 @@ fn print_help() {
 
               PE Sections:
               - 'total_sections' reports how many PE sections are found after the PE headers.
-              - 'total_raw_bytes' cumulative of all raw, on disk, sections.
-              - 'total_virt_bytes' cumulative of all virtual, in memory, sections.
+              - 'total_raw_bytes' cumulative size in bytes of all raw, on disk, sections.
+              - 'total_virt_bytes' cumulative size in bytes of all virtual, in memory, sections.
               - if 'total_virt_bytes' is much larger than 'total_raw_bytes', this can indicate
                 a packed binary.
 
