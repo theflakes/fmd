@@ -466,11 +466,11 @@ fn start_analysis(file_path: String, pprint: bool, strings_length: usize) -> io:
     let mut strings: Vec<String> = Vec::new();
     let is_hidden = is_hidden(&path)?;
     let mut hashes = Hashes::default();
+    hashes = get_file_content_info(&file, &buffer)?;
     if bytes > 0 {
         buffer = read_file_bytes(&file)?;
         entropy = shannon_entropy(&buffer);
         mime_type = get_mimetype(&buffer)?;
-        hashes = get_file_content_info(&file, &buffer)?;
         bin = get_pe(file_path, &buffer)?;
         if strings_length > 0 {strings = get_strings(&buffer, strings_length)?;}
     }
