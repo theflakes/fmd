@@ -22,6 +22,7 @@ use goblin::pe::PE;
 use std::mem::replace;
 use std::path::Path;
 use std::ptr::null;
+use std::str::from_utf8;
 use std::{io, str};
 use std::env;
 use std::process;
@@ -336,13 +337,18 @@ fn get_pe_file_info(file_path: String) -> io::Result<PeFileInfo> {
 
 
 fn get_sections(pex: &PE) -> io::Result<BinSections>{
-    let mut bs = BinSections::default();
+    let mut bss = BinSections::default();
     for s in pex.sections.iter() {
-        bs.total_sections += 1;
-        bs.total_raw_bytes += s.size_of_raw_data;
-        bs.total_virt_bytes += s.virtual_size;
+        bss.total_sections += 1;
+        bss.total_raw_bytes += s.size_of_raw_data;
+        bss.total_virt_bytes += s.virtual_size;
+        let mut bs: BinSection = BinSection::default();
+        bs.name = s.name().unwrap_or("").to_string();
+        bs.raw_size = s.size_of_raw_data;
+        bs.virt_size = s.virtual_size;
+        bss.sections.push(bs);
     }
-    Ok(bs)
+    Ok(bss)
 }
 
 
@@ -355,6 +361,7 @@ fn get_pe(file_path: String, buffer: &Vec<u8>) -> io::Result<Binary> {
         },
         Object::PE(pex) => {
             (bin.imports, bin.is_dotnet) = parse_pe_imports(&pex.imports)?;
+            bin.entry_point = format!("0x{:02x}", pex.entry);
             bin.sections = get_sections(&pex)?;
             (bin.import_hashes, bin.imports.lib_count, bin.imports.func_count) = get_imphashes(&pex.imports)?;
             bin.is_64 = pex.is_64;

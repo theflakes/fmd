@@ -145,12 +145,29 @@ pub struct PeFileInfo {
     pub legal_copyright: String
 }
 
+impl Default for BinSection {
+    fn default () -> BinSection {
+        BinSection {
+            name: String::new(),
+            raw_size: 0,
+            virt_size: 0
+        }
+    }
+}
+#[derive(Serialize, Clone)]
+pub struct BinSection {
+    pub name: String,
+    pub raw_size: u32,
+    pub virt_size: u32
+}
+
 impl Default for BinSections {
     fn default () -> BinSections {
         BinSections {
             total_sections: 0,
             total_raw_bytes: 0,
-            total_virt_bytes: 0
+            total_virt_bytes: 0,
+            sections: Vec::new()
         }
     }
 }
@@ -158,7 +175,8 @@ impl Default for BinSections {
 pub struct BinSections {
     pub total_sections: u16,
     pub total_raw_bytes: u32,
-    pub total_virt_bytes: u32
+    pub total_virt_bytes: u32,
+    pub sections: Vec<BinSection>
 }
 
 impl Default for ImpHashes {
@@ -213,6 +231,7 @@ impl Default for Binary {
             is_64: false,
             is_dotnet: false,
             is_lib: false,
+            entry_point: String::new(),
             pe_info: PeFileInfo::default(),
             timestamps: BinTimestamps::default(),
             sections: BinSections::default(),
@@ -228,6 +247,7 @@ pub struct Binary {
     pub is_64: bool,
     pub is_dotnet: bool,
     pub is_lib: bool,
+    pub entry_point: String,
     pub pe_info: PeFileInfo,
     pub timestamps: BinTimestamps,
     pub linker: BinLinker,

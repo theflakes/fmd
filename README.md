@@ -102,6 +102,7 @@ C:\temp>fmd -p evil.exe
     "is_64": false,
     "is_dotnet": true,
     "is_lib": false,
+    "entry_point": "0x6fbe",
     "pe_info": {
       "product_version": "6.6.6",
       "original_filename": "evil.exe",
@@ -123,7 +124,24 @@ C:\temp>fmd -p evil.exe
     "sections": {
       "total_sections": 3,
       "total_raw_bytes": 23040,
-      "total_virt_bytes": 22320
+      "total_virt_bytes": 22320,
+      "sections": [
+        {
+          "name": ".text",
+          "raw_size": 20480,
+          "virt_size": 20420
+        },
+        {
+          "name": ".rsrc",
+          "raw_size": 2048,
+          "virt_size": 1888
+        },
+        {
+          "name": ".reloc",
+          "raw_size": 512,
+          "virt_size": 12
+        }
+      ]
     },
     "import_hashes": {
       "hash": "f34d5f2d4577ed6d9ceec516c1f5a744",
