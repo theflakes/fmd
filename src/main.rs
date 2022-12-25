@@ -49,10 +49,7 @@ fn print_log(
                 is_hidden: bool,
                 timestamps: FileTimestamps,
                 entropy: f32,
-                md5: String,
-                sha1: String,
-                sha256: String,
-                ssdeep: String,
+                hashes: Hashes,
                 ads: Vec<DataRun>,
                 binary: Binary,
                 pprint: bool,
@@ -69,10 +66,7 @@ fn print_log(
             is_hidden,
             timestamps,
             entropy,
-            md5, 
-            sha1, 
-            sha256, 
-            ssdeep,
+            hashes,
             ads,
             binary,
             strings
@@ -88,10 +82,7 @@ fn print_log(
             is_hidden,
             timestamps,
             entropy,
-            md5, 
-            sha1, 
-            sha256, 
-            ssdeep,
+            hashes,
             ads,
             binary,
             strings
@@ -156,15 +147,14 @@ fn get_sha1(buffer: &Vec<u8>) -> std::io::Result<String> {
 fn get_file_content_info(
                             file: &std::fs::File,
                             mut buffer: &Vec<u8>
-                        ) -> std::io::Result<(String, String, String)> {
-    let mut md5 = String::new();
-    let mut sha1 = String::new();
-    let mut sha256 = String::new();
-    md5 = format!("{:x}", md5::compute(buffer)).to_lowercase();
-    sha1 = get_sha1(buffer)?;
-    sha256 = sha256::digest_bytes(buffer);
+                        ) -> std::io::Result<Hashes> {
+    let mut hashes = Hashes::default();
+    hashes.md5 = format!("{:x}", md5::compute(buffer)).to_lowercase();
+    hashes.sha1 = get_sha1(buffer)?;
+    hashes.sha256 = sha256::digest_bytes(buffer);
+    hashes.ssdeep = get_ssdeep_hash(&buffer)?;
     drop(buffer);
-    Ok((md5, sha1, sha256))
+    Ok(hashes)
 }
 
 
@@ -228,7 +218,7 @@ fn check_ordinal(dll: &str, func: &str) -> io::Result<String> {
 
 
 fn get_imphashes(imports: &Vec<goblin::pe::import::Import>) 
-                        -> io::Result<(String, String, String, String, u32, u32)> {
+                        -> io::Result<(ImpHashes, u32, u32)> {
     let mut imphash_array: Vec<String> = Vec::new();    // store in array for calculating imphash on sorted
     let mut imphash_text = String::new();       // text imphash for imports in bin natural order
     let mut total_dlls = 0;
@@ -252,18 +242,17 @@ fn get_imphashes(imports: &Vec<goblin::pe::import::Import>)
         total_funcs += 1;
         track_dll = i.dll.to_string();
     }
+    let mut imphashes = ImpHashes::default();
     imphash_text = imphash_text.trim_end_matches(",").to_string();
-    let imphash = format!("{:x}", md5::compute(imphash_text.clone())).to_lowercase();
-    let (imphash_text_sorted, imphash_sorted) = get_imphash_sorted(&mut imphash_array)?;
+    imphashes.imphash = format!("{:x}", md5::compute(imphash_text.clone())).to_lowercase();
+    let mut imphash_text_sorted = String::new();
+    (imphash_text_sorted, imphashes.imphash_sorted) = get_imphash_sorted(&mut imphash_array)?;
     let imphash_bytes: Vec<u8> = imphash_text.as_bytes().to_vec();
     let imphash_bytes_ordered: Vec<u8> = imphash_text_sorted.as_bytes().to_vec();
-    let imphash_ssdeep = get_ssdeep_hash(&imphash_bytes)?;
-    let imphash_ssdeep_sorted = get_ssdeep_hash(&imphash_bytes_ordered)?;
+    imphashes.ssdeep = get_ssdeep_hash(&imphash_bytes)?;
+    imphashes.ssdeep_sorted = get_ssdeep_hash(&imphash_bytes_ordered)?;
     
-    Ok((
-        imphash, imphash_sorted, imphash_ssdeep, 
-        imphash_ssdeep_sorted, total_dlls, total_funcs
-    ))
+    Ok((imphashes, total_dlls, total_funcs))
 }
 
 
@@ -356,30 +345,40 @@ fn get_pe_file_info(file_path: String) -> io::Result<PeFileInfo> {
 }
 
 
-fn get_imports(file_path: String, buffer: &Vec<u8>) -> io::Result<Binary> {
+fn get_sections(pex: &PE) -> io::Result<BinSections>{
+    let mut bs = BinSections::default();
+    for s in pex.sections.iter() {
+        bs.total_sections += 1;
+        bs.total_raw_size += s.size_of_raw_data;
+        bs.total_virt_size += s.virtual_size;
+    }
+    Ok(bs)
+}
+
+
+fn get_pe(file_path: String, buffer: &Vec<u8>) -> io::Result<Binary> {
     let mut bin = Binary::default();
     if buffer.len() < 97 { return Ok(bin) } // smallest possible PE size, errors with smaller buffer size
     match Object::parse(&buffer).unwrap() {
         Object::Elf(elf) => {
             //println!("Elf binary");
         },
-        Object::PE(pe) => {
-            (bin.imports, bin.is_dotnet) = parse_pe_imports(&pe.imports)?;
-            (bin.imphash, bin.imphash_sorted, 
-                bin.imphash_ssdeep, bin.imphash_ssdeep_sorted,
-                bin.imports_lib_count, bin.imports_func_count) = get_imphashes(&pe.imports)?;
-            bin.is_64 = pe.is_64;
-            bin.is_lib = pe.is_lib;
-            (bin.exports, bin.exports_count) = parse_pe_exports(&pe.exports)?;
+        Object::PE(pex) => {
+            (bin.imports, bin.is_dotnet) = parse_pe_imports(&pex.imports)?;
+            bin.sections = get_sections(&pex)?;
+            (bin.imphashes, bin.imports_lib_count, bin.imports_func_count) = get_imphashes(&pex.imports)?;
+            bin.is_64 = pex.is_64;
+            bin.is_lib = pex.is_lib;
+            (bin.exports, bin.exports_count) = parse_pe_exports(&pex.exports)?;
             bin.pe_info = get_pe_file_info(file_path)?;
-            bin.timestamps.compile = get_date_string(pe.header.coff_header.time_date_stamp as i64)?;
-            bin.timestamps.debug = match pe.debug_data {
+            bin.timestamps.compile = get_date_string(pex.header.coff_header.time_date_stamp as i64)?;
+            bin.timestamps.debug = match pex.debug_data {
                 Some(d) => get_date_string(d.image_debug_directory.time_date_stamp as i64)?,
                 None => "".to_string()};
-            bin.linker_major_version = match pe.header.optional_header {
+            bin.linker_major_version = match pex.header.optional_header {
                 Some(d) => d.standard_fields.major_linker_version,
                 None => 0};
-            bin.linker_minor_version = match pe.header.optional_header {
+            bin.linker_minor_version = match pex.header.optional_header {
                 Some(d) => d.standard_fields.minor_linker_version,
                 None => 0};
         },
@@ -459,29 +458,25 @@ fn start_analysis(file_path: String, pprint: bool, strings_length: usize) -> io:
     let mut ads: Vec<DataRun> = Vec::new();
     (ftimes, ads, run_as_admin) = get_fname(&abs_path, ftimes).unwrap();
     let file = open_file(&path)?;
-    let mut md5 = "d41d8cd98f00b204e9800998ecf8427e".to_string(); // md5 of empty file
-    let mut sha1 = "da39a3ee5e6b4b0d3255bfef95601890afd80709".to_string(); // sha1 of empty file
-    let mut sha256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855".to_string(); // sha256 or empty file
     let mut mime_type = String::new();
-    let mut ssdeep = String::new();
     let mut bytes = file.metadata().unwrap().len();
     let mut bin = Binary::default();
     let mut buffer: Vec<u8> = Vec::new();
     let mut entropy: f32 = 0.0;
     let mut strings: Vec<String> = Vec::new();
     let is_hidden = is_hidden(&path)?;
+    let mut hashes = Hashes::default();
     if bytes > 0 {
         buffer = read_file_bytes(&file)?;
         entropy = shannon_entropy(&buffer);
-        ssdeep = get_ssdeep_hash(&buffer)?;
         mime_type = get_mimetype(&buffer)?;
-        (md5, sha1, sha256) = get_file_content_info(&file, &buffer)?;
-        bin = get_imports(file_path, &buffer)?;
+        hashes = get_file_content_info(&file, &buffer)?;
+        bin = get_pe(file_path, &buffer)?;
         if strings_length > 0 {strings = get_strings(&buffer, strings_length)?;}
     }
     print_log(timestamp, run_as_admin, abs_path, bytes, 
                 mime_type, is_hidden, ftimes.clone(), 
-                entropy, md5, sha1, sha256, ssdeep, ads, bin, 
+                entropy, hashes, ads, bin, 
                 pprint, strings)?;
     Ok(())
 }

@@ -121,6 +121,40 @@ pub struct PeFileInfo {
     pub legal_copyright: String
 }
 
+impl Default for BinSections {
+    fn default () -> BinSections {
+        BinSections {
+            total_sections: u16::default(),
+            total_raw_size: u32::default(),
+            total_virt_size: u32::default()
+        }
+    }
+}
+#[derive(Serialize, Clone)]
+pub struct BinSections {
+    pub total_sections: u16,
+    pub total_raw_size: u32,
+    pub total_virt_size: u32
+}
+
+impl Default for ImpHashes {
+    fn default () -> ImpHashes {
+        ImpHashes {
+            imphash: String::new(),
+            imphash_sorted: String::new(),
+            ssdeep: String::new(),
+            ssdeep_sorted: String::new()
+        }
+    }
+}
+#[derive(Serialize, Clone)]
+pub struct ImpHashes {
+    pub imphash: String,
+    pub imphash_sorted: String,
+    pub ssdeep: String,
+    pub ssdeep_sorted: String
+}
+
 impl Default for Binary {
     fn default () -> Binary {
         Binary {
@@ -129,12 +163,10 @@ impl Default for Binary {
             is_lib: false,
             pe_info: PeFileInfo::default(),
             timestamps: BinTimestamps::default(),
+            sections: BinSections::default(),
             linker_major_version: 0,
             linker_minor_version: 0,
-            imphash: String::new(),
-            imphash_sorted: String::new(),
-            imphash_ssdeep: String::new(),
-            imphash_ssdeep_sorted: String::new(),
+            imphashes: ImpHashes::default(),
             imports_lib_count: 0,
             imports_func_count: 0,
             imports: Vec::new(),
@@ -152,15 +184,31 @@ pub struct Binary {
     pub timestamps: BinTimestamps,
     pub linker_major_version: u8,
     pub linker_minor_version: u8,
-    pub imphash: String,
-    pub imphash_sorted: String,
-    pub imphash_ssdeep: String,
-    pub imphash_ssdeep_sorted: String,
+    pub sections: BinSections,
+    pub imphashes: ImpHashes,
     pub imports_lib_count: u32,
     pub imports_func_count: u32,
     pub imports: Vec<Imports>,
     pub exports_count: u32,
     pub exports: Vec<String>
+}
+
+impl Default for Hashes {
+    fn default () -> Hashes {
+        Hashes {
+            md5: String::new(),
+            sha1: String::new(),
+            sha256: String::new(),
+            ssdeep: String::new()
+        }
+    }
+}
+#[derive(Serialize, Clone, Debug)]
+pub struct Hashes {
+    pub md5: String,
+    pub sha1: String,
+    pub sha256: String,
+    pub ssdeep: String
 }
 
 impl Default for DataRun {
@@ -190,10 +238,7 @@ pub struct MetaData {
     pub is_hidden: bool,
     pub timestamps: FileTimestamps,
     pub entropy: f32,
-    pub md5: String,
-    pub sha1: String,
-    pub sha256: String,
-    pub ssdeep: String,
+    pub hashes: Hashes,
     pub ads: Vec<DataRun>,
     pub binary: Binary,
     pub strings: Vec<String>
@@ -209,10 +254,7 @@ impl MetaData {
             is_hidden: bool,
             timestamps: FileTimestamps,
             entropy: f32,
-            md5: String,
-            sha1: String,
-            sha256: String,
-            ssdeep: String,
+            hashes: Hashes,
             ads: Vec<DataRun>,
             binary: Binary,
             strings: Vec<String>) -> MetaData {
@@ -226,10 +268,7 @@ impl MetaData {
             is_hidden,
             timestamps,
             entropy,
-            md5,
-            sha1,
-            sha256,
-            ssdeep,
+            hashes,
             ads,
             binary,
             strings
