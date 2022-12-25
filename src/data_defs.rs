@@ -2,12 +2,19 @@ extern crate serde;             // needed for json serialization
 extern crate serde_json;        // needed for json serialization
 extern crate whoami;
 
+use chrono::{DateTime, Utc};
 use serde::Serialize;
-use std::env;
+use std::{env, time::SystemTime, io};
 
 
 lazy_static! { 
     pub static ref DEVICE_TYPE: String = whoami::distro();
+}
+
+fn get_time_iso8601() -> io::Result<String> {
+    let now = SystemTime::now();
+    let now: DateTime<Utc> = now.into();
+    Ok(now.to_rfc3339())
 }
 
 /*
@@ -41,20 +48,36 @@ trait Loggable : Serialize {
 impl<T : ?Sized + Serialize> Loggable for T {}
 
 
+impl Default for Import {
+    fn default () -> Import {
+        Import {
+            lib: String::new(),
+            count: 0,
+            names: Vec::new()
+        }
+    }
+}
+#[derive(Serialize, Clone)]
+pub struct Import {
+    pub lib: String,
+    pub count: u32,
+    pub names: Vec<String>
+}
+
 impl Default for Imports {
     fn default () -> Imports {
         Imports {
-            lib: String::new(),
-            count: 0,
-            name: Vec::new()
+            lib_count: 0,
+            func_count: 0,
+            imports: Vec::new()
         }
     }
 }
 #[derive(Serialize, Clone)]
 pub struct Imports {
-    pub lib: String,
-    pub count: u32,
-    pub name: Vec<String>
+    pub lib_count: u32,
+    pub func_count: u32,
+    pub imports: Vec<Import>
 }
 
 impl Default for FileTimestamps {
@@ -124,9 +147,9 @@ pub struct PeFileInfo {
 impl Default for BinSections {
     fn default () -> BinSections {
         BinSections {
-            total_sections: u16::default(),
-            total_raw_size: u32::default(),
-            total_virt_size: u32::default()
+            total_sections: 0,
+            total_raw_size: 0,
+            total_virt_size: 0
         }
     }
 }
@@ -140,8 +163,8 @@ pub struct BinSections {
 impl Default for ImpHashes {
     fn default () -> ImpHashes {
         ImpHashes {
-            imphash: String::new(),
-            imphash_sorted: String::new(),
+            hash: String::new(),
+            hash_sorted: String::new(),
             ssdeep: String::new(),
             ssdeep_sorted: String::new()
         }
@@ -149,10 +172,38 @@ impl Default for ImpHashes {
 }
 #[derive(Serialize, Clone)]
 pub struct ImpHashes {
-    pub imphash: String,
-    pub imphash_sorted: String,
+    pub hash: String,
+    pub hash_sorted: String,
     pub ssdeep: String,
     pub ssdeep_sorted: String
+}
+
+impl Default for BinLinker {
+    fn default () -> BinLinker {
+        BinLinker {
+            major_version: 0,
+            minor_version: 0
+        }
+    }
+}
+#[derive(Serialize, Clone)]
+pub struct BinLinker {
+    pub major_version: u8,
+    pub minor_version: u8
+}
+
+impl Default for Exports {
+    fn default () -> Exports {
+        Exports {
+            count: 0,
+            names: Vec::new()
+        }
+    }
+}
+#[derive(Serialize, Clone)]
+pub struct Exports {
+    pub count: u8,
+    pub names: Vec<String>
 }
 
 impl Default for Binary {
@@ -164,14 +215,10 @@ impl Default for Binary {
             pe_info: PeFileInfo::default(),
             timestamps: BinTimestamps::default(),
             sections: BinSections::default(),
-            linker_major_version: 0,
-            linker_minor_version: 0,
-            imphashes: ImpHashes::default(),
-            imports_lib_count: 0,
-            imports_func_count: 0,
-            imports: Vec::new(),
-            exports_count: 0,
-            exports: Vec::new()
+            linker: BinLinker::default(),
+            import_hashes: ImpHashes::default(),
+            imports: Imports::default(),
+            exports: Exports::default()
         }
     }
 }
@@ -182,15 +229,11 @@ pub struct Binary {
     pub is_lib: bool,
     pub pe_info: PeFileInfo,
     pub timestamps: BinTimestamps,
-    pub linker_major_version: u8,
-    pub linker_minor_version: u8,
+    pub linker: BinLinker,
     pub sections: BinSections,
-    pub imphashes: ImpHashes,
-    pub imports_lib_count: u32,
-    pub imports_func_count: u32,
-    pub imports: Vec<Imports>,
-    pub exports_count: u32,
-    pub exports: Vec<String>
+    pub import_hashes: ImpHashes,
+    pub imports: Imports,
+    pub exports: Exports
 }
 
 impl Default for Hashes {
@@ -227,11 +270,25 @@ pub struct DataRun {
     pub first_256_bytes: String
 }
 
-#[derive(Serialize)]
-pub struct MetaData {
+impl Default for RunTimeEnv {
+    fn default () -> RunTimeEnv {
+        RunTimeEnv {
+            timestamp: get_time_iso8601().unwrap(),
+            device_type: DEVICE_TYPE.to_string(),
+            run_as_admin: false,
+        }
+    }
+}
+#[derive(Serialize, Clone, Debug)]
+pub struct RunTimeEnv {
     pub timestamp: String,
     pub device_type: String,
     pub run_as_admin: bool,
+}
+
+#[derive(Serialize)]
+pub struct MetaData {
+    pub runtime_env: RunTimeEnv,
     pub path: String,
     pub bytes: u64,
     pub mime_type: String,
@@ -245,9 +302,7 @@ pub struct MetaData {
 }
 impl MetaData {
     pub fn new(
-            timestamp: String,
-            device_type: String,
-            run_as_admin: bool,
+            runtime_env: RunTimeEnv,
             path: String,
             bytes: u64,
             mime_type: String,
@@ -259,9 +314,7 @@ impl MetaData {
             binary: Binary,
             strings: Vec<String>) -> MetaData {
         MetaData {
-            timestamp,
-            device_type,
-            run_as_admin,
+            runtime_env,
             path,
             bytes,
             mime_type,

@@ -2,55 +2,63 @@
 File metadata / forensic tool.  
 fmd = File Metadata
 
-
+##### Understanding MS PE analysis
+http://www.hacktohell.org/2012/04/analysing-pe-files.ht  
+https://upload.wikimedia.org/wikipedia/commons/1/1b/Portable_Executable_32_bit_Structure_in_SVG_fixed.svg  
+https://0xrick.github.io/win-internals/pe5/  
+  
 To compile; install Rust and the MSVC 32 and/or 64 bit environment:
 ```
-    x32:        cargo build --release --target i686-pc-windows-msvc
-    x64:        cargo build --release --target x86_64-pc-windows-msvc
-    Linux x64:  sudo apt update && sudo apt install mingw-w64
-                cargo build --release --target x86_64-pc-windows-gnu
+x32:        cargo build --release --target i686-pc-windows-msvc
+x64:        cargo build --release --target x86_64-pc-windows-msvc
+Linux x64:  sudo apt update && sudo apt install mingw-w64
+            cargo build --release --target x86_64-pc-windows-gnu
 ```
 
 ```
-        Author: Brian Kellogg
-        License: MIT
-        Purpose: Pull various file metadata.
-        Usage: fmd [--pretty | -p] ([--strings|-s] #) <file path>
-        Options:
-            -p, --pretty        Pretty print JSON
-            -s, --strings #     Look for strings of length # or longer
+Author: Brian Kellogg
+License: MIT
+Purpose: Pull various file metadata.
+Usage: fmd [--pretty | -p] ([--strings|-s] #) <file path>
+Options:
+    -p, --pretty        Pretty print JSON
+    -s, --strings #     Look for strings of length # or longer
 
-        NOTE: Harvesting $FILE_NAME timestamps can only be acquired by running this tool elevated.
-              The 'run_as_admin' field shows if the tool was run elevated. If the MFT can be accessed,
-              its $STANDARD_INFORMATION dates are preferred.
+NOTE: Harvesting $FILE_NAME timestamps can only be acquired by running this tool elevated.
+      The 'run_as_admin' field shows if the tool was run elevated. If the MFT can be accessed,
+      its $STANDARD_INFORMATION dates are preferred.
+
+      'runtime_env' stores information on the device that this tool was run on.
 ```
 
 Example output:
 ```
-C:\temp>fmd -p RunAsService.exe
+C:\temp>fmd -p evil.exe
 {
-  "timestamp": "2022-12-13T02:49:09.718219500+00:00",
-  "device_type": "Windows 10.0.19045 (Workstation)",
-  "run_as_admin": true,
-  "path": "C:\\temp\\RunAsService.exe",
+  "runtime_env": {
+    "timestamp": "2022-12-25T16:29:14.152784800+00:00",
+    "device_type": "Windows 10.0.22621 (Workstation)",
+    "run_as_admin": true
+  },
+  "path": "C:\\temp\\evil.exe",
   "bytes": 23552,
   "mime_type": "application/x-executable",
   "is_hidden": false,
   "timestamps": {
-    "access_fn": "2022-11-19T16:00:21.900",
-    "access_si": "2022-11-19T16:00:21.900",
-    "create_fn": "2022-11-19T16:00:21.900",
-    "create_si": "2022-11-19T16:00:21.900",
-    "modify_fn": "2022-11-19T16:00:21.900",
-    "modify_si": "2022-11-19T16:00:21.900",
-    "mft_record": "2022-11-19T16:00:21.900"
+    "access_fn": "2022-12-25T16:26:41.936",
+    "access_si": "2022-12-25T16:26:41.936",
+    "create_fn": "2022-12-25T16:26:41.936",
+    "create_si": "2022-12-25T16:26:41.936",
+    "modify_fn": "2022-12-25T16:26:41.936",
+    "modify_si": "2022-12-25T16:26:41.936",
+    "mft_record": "2022-12-25T16:26:41.936"
   },
   "entropy": 4.623817,
   "hashes": {
     "md5": "4b92bd03d0c1e1f793ed1b499534211b",
     "sha1": "2574c324fe47119fcd91708451257db00ce4684b",
     "sha256": "09fafb5296afed2324c773acf178552045933995e60c2b81cd66400ccf46a00e",
-    "ssdeep": "384:rcuNDlF9VtDZsb10+zMKMU4MjnNJcCWT80T2:rcuZlWb1irMJcUX",
+    "ssdeep": "384:rcuNDlF9VtDZsb10+zMKMU4MjnNJcCWT80T2:rcuZlWb1irMJcUX"
   },
   "ads": [
     {
@@ -60,8 +68,8 @@ C:\temp>fmd -p RunAsService.exe
     },
     {
       "name": "evil",
-      "bytes": 17,
-      "first_256_bytes": "\"this is evil\" \r\n"
+      "bytes": 34,
+      "first_256_bytes": "\"this is hiding info in an ADS\" \r\n"
     },
     {
       "name": "SmartScreen",
@@ -71,7 +79,7 @@ C:\temp>fmd -p RunAsService.exe
     {
       "name": "Zone.Identifier",
       "bytes": 123,
-      "first_256_bytes": "[ZoneTransfer]\r\nZoneId=3\r\nReferrerUrl=http://runasservice.com/\r\nHostUrl=http://runasservice.com/Download/RunAsService.exe\r\n"
+      "first_256_bytes": "[ZoneTransfer]\r\nZoneId=3\r\nReferrerUrl=http://evil.com/\r\nHostUrl=http://evil.com/Download/evil.exe\r\n"
     }
   ],
   "binary": {
@@ -79,45 +87,51 @@ C:\temp>fmd -p RunAsService.exe
     "is_dotnet": true,
     "is_lib": false,
     "pe_info": {
-      "product_version": "10.0.22621.674",
-      "original_filename": "RunAsService.exe",
-      "file_description": "RunAsService.exe",
-      "file_version": "10.0.22621.674 (WinBuild.160101.0800)",
-      "product_name": "RunAsService",
-      "company_name": "Evil Corp",
-      "internal_name": "RunAsService.exe",
-      "legal_copyright": "I will pwn your stuff!!!"
+      "product_version": "6.6.6",
+      "original_filename": "evil.exe",
+      "file_description": "Not evil",
+      "file_version": "6.6.6",
+      "product_name": "NotEvil",
+      "company_name": "UnEvil",
+      "internal_name": "notevil",
+      "legal_copyright": "@ UnEvil Corp"
     },
     "timestamps": {
       "compile": "2017-10-05T22:25:06",
       "debug": "2017-10-05T22:25:06"
     },
-    "linker_major_version": 48,
-    "linker_minor_version": 0,
+    "linker": {
+      "major_version": 48,
+      "minor_version": 0
+    },
     "sections": {
-      "total_sections": 6,
-      "total_raw_size": 800768,
-      "total_virt_size": 804182
+      "total_sections": 3,
+      "total_raw_size": 23040,
+      "total_virt_size": 22320
     },
-    "imphashes": {
-      "imphash": "71ada8b6fef05e5667e085b649b0980a",
-      "imphash_sorted": "4fe4aca2d812d10bd82df0b28536dd62",
-      "ssdeep": "48:UGErX5P9rWwTxrWy1stv4Bc+pRlDE0Kh/7R7K:UzrX5PlWwTxrWy1stv4Bc+pRDINW",
-      "ssdeep_sorted": "48:mb7R7g/9W5W6yFQCc9/w3+nmPfhnxQsGvXHlB:UN+9W5W6YQCc5RnmXhnxQsGvXHlB"
+    "import_hashes": {
+      "hash": "f34d5f2d4577ed6d9ceec516c1f5a744",
+      "hash_sorted": "f34d5f2d4577ed6d9ceec516c1f5a744",
+      "ssdeep": "3:rGsLdAIEK:tf",
+      "ssdeep_sorted": "3:rGsLdAIEK:tf"
     },
-    "imports_lib_count": 1,
-    "imports_func_count": 1,
-    "imports": [
-      {
-        "lib": "mscoree.dll",
-        "count": 1,
-        "name": [
-          "_CorExeMain"
-        ]
-      }
-    ],
-    "exports_count": 0,
-    "exports": []
+    "imports": {
+      "lib_count": 1,
+      "func_count": 1,
+      "imports": [
+        {
+          "lib": "mscoree.dll",
+          "count": 1,
+          "names": [
+            "_CorExeMain"
+          ]
+        }
+      ]
+    },
+    "exports": {
+      "count": 0,
+      "names": []
+    }
   },
   "strings": []
 }

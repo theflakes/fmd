@@ -4,7 +4,6 @@ extern crate sha256;
 extern crate crypto;
 extern crate path_abs;
 extern crate dunce;
-extern crate chrono;
 extern crate goblin;
 extern crate entropy;
 extern crate exe;
@@ -31,18 +30,17 @@ use crypto::digest::Digest;
 use std::fs::{self, File};
 use std::io::{BufReader, Read, Seek, Write};
 use path_abs::{PathAbs, PathInfo};
-use chrono::prelude::{DateTime, Utc};
 use std::time::SystemTime;
 use goblin::{error, Object};
 use entropy::shannon_entropy;
 use std::os::windows::prelude::*;
 use std::collections::HashMap;
+use chrono::{DateTime, Utc};
 
 
 // report out in json
 fn print_log(
-                timestamp: String,
-                run_as_admin: bool,
+                runtime_env: RunTimeEnv,
                 path: String,
                 bytes: u64,
                 mime_type: String, 
@@ -57,9 +55,7 @@ fn print_log(
             ) -> io::Result<()> {
     if pprint {
         MetaData::new(
-            timestamp,
-            DEVICE_TYPE.to_string(),
-            run_as_admin,
+            runtime_env,
             path.to_string(),
             bytes,
             mime_type,
@@ -73,9 +69,7 @@ fn print_log(
         ).report_pretty_log();
     } else {
         MetaData::new(
-            timestamp,
-            DEVICE_TYPE.to_string(),
-            run_as_admin,
+            runtime_env,
             path.to_string(),
             bytes,
             mime_type, 
@@ -144,10 +138,7 @@ fn get_sha1(buffer: &Vec<u8>) -> std::io::Result<String> {
 
 
 // get metadata for the file's content (md5, sha1, ...)
-fn get_file_content_info(
-                            file: &std::fs::File,
-                            mut buffer: &Vec<u8>
-                        ) -> std::io::Result<Hashes> {
+fn get_file_hashes(buffer: &Vec<u8>) -> std::io::Result<Hashes> {
     let mut hashes = Hashes::default();
     hashes.md5 = format!("{:x}", md5::compute(buffer)).to_lowercase();
     hashes.sha1 = get_sha1(buffer)?;
@@ -162,11 +153,11 @@ fn get_file_content_info(
     detects if the binary is a .Net assembly
     .Net assemblies will only have one lib and one function in imports
 */
-fn is_dotnet(imps: &Vec<Imports>) -> io::Result<bool> {
-    if imps.len() == 1 {
-        if imps[0].count ==1 
-            && imps[0].lib == "mscoree.dll" 
-            && imps[0].name[0] == "_CorExeMain" {
+fn is_dotnet(imps: &Imports) -> io::Result<bool> {
+    if imps.imports.len() == 1 {
+        if imps.imports[0].count ==1 
+            && imps.imports[0].lib == "mscoree.dll" 
+            && imps.imports[0].names[0] == "_CorExeMain" {
             return Ok(true);
         }
     }
@@ -174,20 +165,20 @@ fn is_dotnet(imps: &Vec<Imports>) -> io::Result<bool> {
 }
 
 
-fn parse_pe_imports(imports: &Vec<goblin::pe::import::Import>) -> io::Result<(Vec<Imports>, bool)> {
+fn parse_pe_imports(imports: &Vec<goblin::pe::import::Import>) -> io::Result<(Imports, bool)> {
     let mut dlls:Vec<&str> = Vec::new();
-    let mut imps: Vec<Imports> = Vec::new();
+    let mut imps: Imports = Imports::default();
     for i in imports.iter() {
         if dlls.contains(&i.dll) { continue; }
         dlls.push(i.dll);
-        let mut temp = Imports::default();
+        let mut temp = Import::default();
         temp.lib = i.dll.to_string();
         for m in imports.iter() {
             if i.dll != m.dll { continue; }
             temp.count += 1;
-            temp.name.push(m.name.to_string());
+            temp.names.push(m.name.to_string());
         }
-        imps.push(temp);
+        imps.imports.push(temp);
     }
     let is_dot_net = is_dotnet(&imps)?;
     Ok((imps, is_dot_net))
@@ -244,9 +235,9 @@ fn get_imphashes(imports: &Vec<goblin::pe::import::Import>)
     }
     let mut imphashes = ImpHashes::default();
     imphash_text = imphash_text.trim_end_matches(",").to_string();
-    imphashes.imphash = format!("{:x}", md5::compute(imphash_text.clone())).to_lowercase();
+    imphashes.hash = format!("{:x}", md5::compute(imphash_text.clone())).to_lowercase();
     let mut imphash_text_sorted = String::new();
-    (imphash_text_sorted, imphashes.imphash_sorted) = get_imphash_sorted(&mut imphash_array)?;
+    (imphash_text_sorted, imphashes.hash_sorted) = get_imphash_sorted(&mut imphash_array)?;
     let imphash_bytes: Vec<u8> = imphash_text.as_bytes().to_vec();
     let imphash_bytes_ordered: Vec<u8> = imphash_text_sorted.as_bytes().to_vec();
     imphashes.ssdeep = get_ssdeep_hash(&imphash_bytes)?;
@@ -256,14 +247,13 @@ fn get_imphashes(imports: &Vec<goblin::pe::import::Import>)
 }
 
 
-fn parse_pe_exports(exports: &Vec<goblin::pe::export::Export>) -> io::Result<(Vec<String>, u32)>{
-    let mut exps:Vec<String> = Vec::new();
-    let mut exports_count = 0;
+fn parse_pe_exports(exports: &Vec<goblin::pe::export::Export>) -> io::Result<Exports> {
+    let mut exps = Exports::default();
     for e in exports.iter() {
-        exps.push(e.name.unwrap_or("").to_string());
-        exports_count += 1;
+        exps.names.push(e.name.unwrap_or("").to_string());
+        exps.count += 1;
     }
-    Ok((exps, exports_count))
+    Ok(exps)
 }
 
 
@@ -366,19 +356,19 @@ fn get_pe(file_path: String, buffer: &Vec<u8>) -> io::Result<Binary> {
         Object::PE(pex) => {
             (bin.imports, bin.is_dotnet) = parse_pe_imports(&pex.imports)?;
             bin.sections = get_sections(&pex)?;
-            (bin.imphashes, bin.imports_lib_count, bin.imports_func_count) = get_imphashes(&pex.imports)?;
+            (bin.import_hashes, bin.imports.lib_count, bin.imports.func_count) = get_imphashes(&pex.imports)?;
             bin.is_64 = pex.is_64;
             bin.is_lib = pex.is_lib;
-            (bin.exports, bin.exports_count) = parse_pe_exports(&pex.exports)?;
+            bin.exports = parse_pe_exports(&pex.exports)?;
             bin.pe_info = get_pe_file_info(file_path)?;
             bin.timestamps.compile = get_date_string(pex.header.coff_header.time_date_stamp as i64)?;
             bin.timestamps.debug = match pex.debug_data {
                 Some(d) => get_date_string(d.image_debug_directory.time_date_stamp as i64)?,
                 None => "".to_string()};
-            bin.linker_major_version = match pex.header.optional_header {
+            bin.linker.major_version = match pex.header.optional_header {
                 Some(d) => d.standard_fields.major_linker_version,
                 None => 0};
-            bin.linker_minor_version = match pex.header.optional_header {
+            bin.linker.minor_version = match pex.header.optional_header {
                 Some(d) => d.standard_fields.minor_linker_version,
                 None => 0};
         },
@@ -403,13 +393,6 @@ fn get_entropy(buffer: &Vec<u8>) -> io::Result<f32> {
 fn get_abs_path(path: &std::path::Path) -> io::Result<std::path::PathBuf> {
     let abs = PathAbs::new(&path)?;
     Ok(dunce::simplified(&abs.as_path()).into())
-}
-
-
-fn get_time_iso8601() -> io::Result<String> {
-    let now = SystemTime::now();
-    let now: DateTime<Utc> = now.into();
-    Ok(now.to_rfc3339())
 }
 
 
@@ -451,33 +434,26 @@ fn get_file_times<'a>(path: &Path) -> io::Result<FileTimestamps> {
 fn start_analysis(file_path: String, pprint: bool, strings_length: usize) -> io::Result<()> {
     let mut imps = false;
     let mut run_as_admin = false;
-    let timestamp = get_time_iso8601()?;
     let path = convert_to_path(&file_path)?;
     let abs_path = get_abs_path(path)?.as_path().to_str().unwrap_or("").to_string();
     let mut ftimes = get_file_times(&path)?;
     let mut ads: Vec<DataRun> = Vec::new();
-    (ftimes, ads, run_as_admin) = get_fname(&abs_path, ftimes).unwrap();
+    let mut runtime_env = RunTimeEnv::default();
+    (ftimes, ads, runtime_env.run_as_admin) = get_fname(&abs_path, ftimes).unwrap();
     let file = open_file(&path)?;
-    let mut mime_type = String::new();
     let mut bytes = file.metadata().unwrap().len();
-    let mut bin = Binary::default();
-    let mut buffer: Vec<u8> = Vec::new();
-    let mut entropy: f32 = 0.0;
-    let mut strings: Vec<String> = Vec::new();
     let is_hidden = is_hidden(&path)?;
-    let mut hashes = Hashes::default();
-    hashes = get_file_content_info(&file, &buffer)?;
-    if bytes > 0 {
-        buffer = read_file_bytes(&file)?;
-        entropy = shannon_entropy(&buffer);
-        mime_type = get_mimetype(&buffer)?;
-        bin = get_pe(file_path, &buffer)?;
-        if strings_length > 0 {strings = get_strings(&buffer, strings_length)?;}
-    }
-    print_log(timestamp, run_as_admin, abs_path, bytes, 
-                mime_type, is_hidden, ftimes.clone(), 
-                entropy, hashes, ads, bin, 
-                pprint, strings)?;
+    let buffer = read_file_bytes(&file)?;
+    let entropy = shannon_entropy(&buffer);
+    let mime_type = get_mimetype(&buffer)?;
+    let hashes = get_file_hashes(&buffer)?;
+    let bin = get_pe(file_path, &buffer)?;
+    let mut strings: Vec<String> = Vec::new();
+    if strings_length > 0 {strings = get_strings(&buffer, strings_length)?;}
+    print_log(runtime_env, abs_path, bytes, mime_type, 
+        is_hidden, ftimes.clone(), entropy, 
+        hashes, ads, bin, 
+        pprint, strings)?;
     Ok(())
 }
 
@@ -495,6 +471,8 @@ fn print_help() {
         NOTE: Harvesting $FILE_NAME timestamps can only be acquired by running this tool elevated.
               The 'run_as_admin' field shows if the tool was run elevated. If the MFT can be accessed,
               its $STANDARD_INFORMATION dates are preferred.
+
+              'runtime_env' stores information on the device that this tool was run on.
     ";
     println!("{}", help);
     process::exit(1)
