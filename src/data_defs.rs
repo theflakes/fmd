@@ -149,6 +149,7 @@ impl Default for BinSection {
     fn default () -> BinSection {
         BinSection {
             name: String::new(),
+            virt_address: String::new(),
             raw_size: 0,
             virt_size: 0
         }
@@ -157,6 +158,7 @@ impl Default for BinSection {
 #[derive(Serialize, Clone)]
 pub struct BinSection {
     pub name: String,
+    pub virt_address: String,
     pub raw_size: u32,
     pub virt_size: u32
 }

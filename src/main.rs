@@ -344,6 +344,7 @@ fn get_sections(pex: &PE) -> io::Result<BinSections>{
         bss.total_virt_bytes += s.virtual_size;
         let mut bs: BinSection = BinSection::default();
         bs.name = s.name().unwrap_or("").to_string();
+        bs.virt_address = format!("0x{:02x}", s.virtual_address);
         bs.raw_size = s.size_of_raw_data;
         bs.virt_size = s.virtual_size;
         bss.sections.push(bs);
