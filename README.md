@@ -46,10 +46,12 @@ C:\temp>fmd -p RunAsService.exe
     "mft_record": "2022-11-19T16:00:21.900"
   },
   "entropy": 4.623817,
-  "md5": "4b92bd03d0c1e1f793ed1b499534211b",
-  "sha1": "2574c324fe47119fcd91708451257db00ce4684b",
-  "sha256": "09fafb5296afed2324c773acf178552045933995e60c2b81cd66400ccf46a00e",
-  "ssdeep": "384:rcuNDlF9VtDZsb10+zMKMU4MjnNJcCWT80T2:rcuZlWb1irMJcUX",
+  "hashes": {
+    "md5": "4b92bd03d0c1e1f793ed1b499534211b",
+    "sha1": "2574c324fe47119fcd91708451257db00ce4684b",
+    "sha256": "09fafb5296afed2324c773acf178552045933995e60c2b81cd66400ccf46a00e",
+    "ssdeep": "384:rcuNDlF9VtDZsb10+zMKMU4MjnNJcCWT80T2:rcuZlWb1irMJcUX",
+  },
   "ads": [
     {
       "name": "",
@@ -92,10 +94,17 @@ C:\temp>fmd -p RunAsService.exe
     },
     "linker_major_version": 48,
     "linker_minor_version": 0,
-    "imphash": "f34d5f2d4577ed6d9ceec516c1f5a744",
-    "imphash_sorted": "f34d5f2d4577ed6d9ceec516c1f5a744",
-    "imphash_ssdeep": "3:rGsLdAIEK:tf",
-    "imphash_ssdeep_sorted": "3:rGsLdAIEK:tf",
+    "sections": {
+      "total_sections": 6,
+      "total_raw_size": 800768,
+      "total_virt_size": 804182
+    },
+    "imphashes": {
+      "imphash": "71ada8b6fef05e5667e085b649b0980a",
+      "imphash_sorted": "4fe4aca2d812d10bd82df0b28536dd62",
+      "ssdeep": "48:UGErX5P9rWwTxrWy1stv4Bc+pRlDE0Kh/7R7K:UzrX5PlWwTxrWy1stv4Bc+pRDINW",
+      "ssdeep_sorted": "48:mb7R7g/9W5W6yFQCc9/w3+nmPfhnxQsGvXHlB:UN+9W5W6YQCc5RnmXhnxQsGvXHlB"
+    },
     "imports_lib_count": 1,
     "imports_func_count": 1,
     "imports": [
