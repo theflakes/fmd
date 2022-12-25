@@ -148,16 +148,16 @@ impl Default for BinSections {
     fn default () -> BinSections {
         BinSections {
             total_sections: 0,
-            total_raw_size: 0,
-            total_virt_size: 0
+            total_raw_bytes: 0,
+            total_virt_bytes: 0
         }
     }
 }
 #[derive(Serialize, Clone)]
 pub struct BinSections {
     pub total_sections: u16,
-    pub total_raw_size: u32,
-    pub total_virt_size: u32
+    pub total_raw_bytes: u32,
+    pub total_virt_bytes: u32
 }
 
 impl Default for ImpHashes {

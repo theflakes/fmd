@@ -339,8 +339,8 @@ fn get_sections(pex: &PE) -> io::Result<BinSections>{
     let mut bs = BinSections::default();
     for s in pex.sections.iter() {
         bs.total_sections += 1;
-        bs.total_raw_size += s.size_of_raw_data;
-        bs.total_virt_size += s.virtual_size;
+        bs.total_raw_bytes += s.size_of_raw_data;
+        bs.total_virt_bytes += s.virtual_size;
     }
     Ok(bs)
 }
