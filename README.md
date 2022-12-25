@@ -106,8 +106,8 @@ C:\temp>fmd -p evil.exe
     },
     "sections": {
       "total_sections": 3,
-      "total_raw_size": 23040,
-      "total_virt_size": 22320
+      "total_raw_bytes": 23040,
+      "total_virt_bytes": 22320
     },
     "import_hashes": {
       "hash": "f34d5f2d4577ed6d9ceec516c1f5a744",
