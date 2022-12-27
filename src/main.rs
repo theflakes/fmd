@@ -288,6 +288,18 @@ fn get_strings(buffer: &Vec<u8>, length: usize) -> io::Result<Vec<String>> {
 }
 
 
+fn get_hashmap_value(
+                    string_map: &HashMap<String, String>, 
+                    value_name: &str
+                    ) -> io::Result<String> 
+{
+    let _v = match string_map.get(value_name) {
+        Some(v) => return Ok(v.to_string()),
+        None => return Ok("".to_string())
+    };
+}
+
+
 /*
     See: https://github.com/frank2/exe-rs/blob/main/src/tests.rs
 
@@ -307,30 +319,14 @@ fn get_pe_file_info(file_path: String) -> io::Result<PeFileInfo> {
     let vs_version = vs_version_check;
     if let Some(string_file_info) = vs_version.string_file_info {
         let string_map = string_file_info.children[0].string_map();
-        if string_map.contains_key("ProductVersion") {
-            file_info.product_version = string_map.get("ProductVersion").unwrap().to_string();
-        }
-        if string_map.contains_key("OriginalFilename") {
-            file_info.original_filename = string_map.get("OriginalFilename").unwrap().to_string();
-        }
-        if string_map.contains_key("FileDescription") {
-            file_info.file_description = string_map.get("FileDescription").unwrap().to_string();
-        }
-        if string_map.contains_key("FileVersion") {
-            file_info.file_version = string_map.get("FileVersion").unwrap().to_string();
-        }
-        if string_map.contains_key("ProductName") {
-            file_info.product_name = string_map.get("ProductName").unwrap().to_string();
-        }
-        if string_map.contains_key("CompanyName") {
-            file_info.company_name = string_map.get("CompanyName").unwrap().to_string();
-        }
-        if string_map.contains_key("InternalName") {
-            file_info.internal_name = string_map.get("InternalName").unwrap().to_string();
-        }
-        if string_map.contains_key("LegalCopyright") {
-            file_info.legal_copyright = string_map.get("LegalCopyright").unwrap().to_string();
-        }
+        file_info.product_version = get_hashmap_value(&string_map, "ProductVersion")?;
+        file_info.original_filename = get_hashmap_value(&string_map, "ProductVersion")?;
+        file_info.file_description = get_hashmap_value(&string_map, "FileDescription")?;
+        file_info.file_version = get_hashmap_value(&string_map, "FileVersion")?;
+        file_info.product_name = get_hashmap_value(&string_map, "ProductName")?;
+        file_info.company_name = get_hashmap_value(&string_map, "CompanyName")?;
+        file_info.internal_name = get_hashmap_value(&string_map, "InternalName")?;
+        file_info.legal_copyright = get_hashmap_value(&string_map, "LegalCopyright")?;
     }
     Ok(file_info)
 }
