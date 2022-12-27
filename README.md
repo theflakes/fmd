@@ -4,6 +4,7 @@ fmd = File Metadata
 
 #### Understanding MS PE analysis
 http://www.hacktohell.org/2012/04/analysing-pe-files.html  
+https://tstillz.medium.com/basic-static-analysis-part-1-9c24497790b6  
 https://upload.wikimedia.org/wikipedia/commons/1/1b/Portable_Executable_32_bit_Structure_in_SVG_fixed.svg  
 https://0xrick.github.io/win-internals/pe5/  
   
@@ -61,11 +62,11 @@ C:\temp>fmd -p evil.exe
   "is_hidden": false,
   "timestamps": {
     "access_fn": "2022-12-25T16:26:41.936",
-    "access_si": "2022-12-25T16:26:41.936",
+    "access_si": "2022-12-27T16:11:06.289",
     "create_fn": "2022-12-25T16:26:41.936",
     "create_si": "2022-12-25T16:26:41.936",
     "modify_fn": "2022-12-25T16:26:41.936",
-    "modify_si": "2022-12-25T16:26:41.936",
+    "modify_si": "2022-12-25T16:28:00.754",
     "mft_record": "2022-12-25T16:26:41.936"
   },
   "entropy": 4.623817,
@@ -120,25 +121,30 @@ C:\temp>fmd -p evil.exe
       "major_version": 48,
       "minor_version": 0
     },
-    "sections": {
-      "total_sections": 3,
-      "total_raw_bytes": 23040,
-      "total_virt_bytes": 22320,
       "sections": [
         {
           "name": ".text",
+          "entropy": 4.7316236,
+          "md5": "5b1cc17d6f1a0bcffda1bc6f451c14a0",
+          "ssdeep": "192:Pu/f5epBk4pkW8KUnm9VtD0wsbNL0+zM+LMU4MjnNVWcA/4bsJji+v:PcuNDlF9VtDZsb10+zMKMU4MjnNJc",
           "virt_address": "0x2000",
           "raw_size": 20480,
           "virt_size": 20420
         },
         {
           "name": ".rsrc",
+          "entropy": 4.3263397,
+          "md5": "8b4b0e26afa8d786659a9cedf2f6db46",
+          "ssdeep": "24:eGDR4QymZWBFhZhNmCkWXUcnY3agPN8qPt/dq3ojZ8PAlEbNFjMyiipW3:e4imZWBFhlopa4FPtlq3ojZ8JbNtmMa",
           "virt_address": "0x8000",
           "raw_size": 2048,
           "virt_size": 1888
         },
         {
           "name": ".reloc",
+          "entropy": 0.081539415,
+          "md5": "e310468da4f5b84f36265d8270c41588",
+          "ssdeep": "3:0:",
           "virt_address": "0xa000",
           "raw_size": 512,
           "virt_size": 12

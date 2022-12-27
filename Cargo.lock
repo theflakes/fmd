@@ -231,7 +231,7 @@ checksum = "37ab347416e802de484e4d03c7316c48f1ecb56574dfd4a46a80f173ce1de04d"
 
 [[package]]
 name = "fmd"
-version = "0.5.1"
+version = "0.6.0"
 dependencies = [
  "anyhow",
  "chrono",
@@ -246,6 +246,7 @@ dependencies = [
  "md5",
  "ntfs",
  "path_abs",
+ "rand 0.3.23",
  "rust-crypto",
  "serde",
  "serde_json",

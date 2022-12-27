@@ -7,6 +7,7 @@ extern crate dunce;
 extern crate goblin;
 extern crate entropy;
 extern crate exe;
+extern crate rand;
 
 #[macro_use] extern crate lazy_static;
 
@@ -29,7 +30,7 @@ use std::process;
 use std::borrow::Cow;
 use crypto::digest::Digest;
 use std::fs::{self, File};
-use std::io::{BufReader, Read, Seek, Write};
+use std::io::{BufReader, Read, Seek, Write, SeekFrom};
 use path_abs::{PathAbs, PathInfo};
 use std::time::SystemTime;
 use goblin::{error, Object};
@@ -37,6 +38,7 @@ use entropy::shannon_entropy;
 use std::os::windows::prelude::*;
 use std::collections::HashMap;
 use chrono::{DateTime, Utc};
+use rand::distributions::{ChiSquared, IndependentSample, Sample};
 
 
 // report out in json
@@ -332,7 +334,16 @@ fn get_pe_file_info(file_path: String) -> io::Result<PeFileInfo> {
 }
 
 
-fn get_sections(pex: &PE) -> io::Result<BinSections>{
+fn read_section(file_path: &str, start: u32, size: u32) -> io::Result<Vec<u8>> {
+    let mut f = File::open(file_path)?;
+    f.seek(SeekFrom::Start(start as u64))?;
+    let mut buf = vec![0; size as usize];
+    f.read_exact(&mut buf)?;
+    Ok(buf)
+}
+
+
+fn get_sections(pex: &PE, file_path: &str) -> io::Result<BinSections>{
     let mut bss = BinSections::default();
     for s in pex.sections.iter() {
         bss.total_sections += 1;
@@ -343,6 +354,10 @@ fn get_sections(pex: &PE) -> io::Result<BinSections>{
         bs.virt_address = format!("0x{:02x}", s.virtual_address);
         bs.raw_size = s.size_of_raw_data;
         bs.virt_size = s.virtual_size;
+        let data = read_section(&file_path, s.pointer_to_raw_data, s.size_of_raw_data)?;
+        bs.entropy = get_entropy(&data)?;
+        bs.md5 = format!("{:x}", md5::compute(&data)).to_lowercase();
+        bs.ssdeep = get_ssdeep_hash(&data)?;
         bss.sections.push(bs);
     }
     Ok(bss)
@@ -359,7 +374,7 @@ fn get_pe(file_path: String, buffer: &Vec<u8>) -> io::Result<Binary> {
         Object::PE(pex) => {
             (bin.imports, bin.is_dotnet) = parse_pe_imports(&pex.imports)?;
             bin.entry_point = format!("0x{:02x}", pex.entry);
-            bin.sections = get_sections(&pex)?;
+            bin.sections = get_sections(&pex, &file_path)?;
             (bin.import_hashes, bin.imports.lib_count, bin.imports.func_count) = get_imphashes(&pex.imports)?;
             bin.is_64 = pex.is_64;
             bin.is_lib = pex.is_lib;
