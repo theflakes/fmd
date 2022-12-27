@@ -28,37 +28,30 @@ where
     ntfs: &'n Ntfs,
 }
 
+fn get_fn_times(nt_timestamp: i64) -> String 
+{
+    let _t = match windows_file(nt_timestamp) {
+        Some(t) => return t.format("%Y-%m-%dT%H:%M:%S.%3f").to_string(),
+        None => return "".to_string()
+    };
+}
+
 /*
-    Harvest MFT $FILE_NAME and $STANDARD_INFORMATION dates
+    Harvest MFT $FILE_NAME dates
 */
-fn fileinfo_filename<T>(info: &mut CommandInfo<T>, attribute: NtfsAttribute) -> io::Result<FileTimestamps>
+fn fileinfo_filename<T>(info: &mut CommandInfo<T>, attribute: NtfsAttribute, ftimes: &mut FileTimestamps)
 where
     T: Read + Seek,
 {
-    let mut ftimes = FileTimestamps::default();
-    let file_name = attribute.structured_value::<_, NtfsFileName>(&mut info.fs)?;
-    ftimes.access_fn = match windows_file(file_name.access_time().nt_timestamp() as i64) {
-        Some(d) => d.format("%Y-%m-%dT%H:%M:%S.%3f").to_string(),
-        None => ftimes.access_fn};
-    ftimes.access_si = match windows_file(file_name.access_time().nt_timestamp() as i64) {
-        Some(d) => d.format("%Y-%m-%dT%H:%M:%S.%3f").to_string(),
-        None => ftimes.access_si};
-    ftimes.create_fn = match windows_file(file_name.creation_time().nt_timestamp() as i64) {
-        Some(d) => d.format("%Y-%m-%dT%H:%M:%S.%3f").to_string(),
-        None => ftimes.create_fn};
-    ftimes.create_si = match windows_file(file_name.creation_time().nt_timestamp() as i64) {
-        Some(d) => d.format("%Y-%m-%dT%H:%M:%S.%3f").to_string(),
-        None => ftimes.create_si};
-    ftimes.modify_fn = match windows_file(file_name.modification_time().nt_timestamp() as i64) {
-        Some(d) => d.format("%Y-%m-%dT%H:%M:%S.%3f").to_string(),
-        None => ftimes.modify_fn};
-    ftimes.modify_si = match windows_file(file_name.modification_time().nt_timestamp() as i64) {
-        Some(d) => d.format("%Y-%m-%dT%H:%M:%S.%3f").to_string(),
-        None => ftimes.modify_si};
-    ftimes.mft_record = match windows_file(file_name.mft_record_modification_time().nt_timestamp() as i64) {
-        Some(d) => d.format("%Y-%m-%dT%H:%M:%S.%3f").to_string(),
-        None => "".to_string()};
-    Ok(ftimes)
+    //let mut ftimes = FileTimestamps::default();
+    let file_name = match attribute.structured_value::<_, NtfsFileName>(&mut info.fs){
+        Ok(f) => f,
+        Err(e) => return
+    };
+    ftimes.access_fn = get_fn_times(file_name.access_time().nt_timestamp() as i64);
+    ftimes.create_fn = get_fn_times(file_name.creation_time().nt_timestamp() as i64);
+    ftimes.modify_fn = get_fn_times(file_name.modification_time().nt_timestamp() as i64);
+    ftimes.mft_record = get_fn_times(file_name.mft_record_modification_time().nt_timestamp() as i64);
 }
 
 
@@ -110,7 +103,7 @@ pub fn get_fname(file_path: &String, mut ftimes: FileTimestamps) -> Result<(File
         match attribute.ty() {
             Ok(NtfsAttributeType::StandardInformation) => continue,
             Ok(NtfsAttributeType::FileName) => {
-                ftimes = fileinfo_filename(&mut info, attribute)?;
+                fileinfo_filename(&mut info, attribute, &mut ftimes);
                 break;
             },
             Ok(NtfsAttributeType::Data) => continue,
