@@ -11,7 +11,6 @@ serde = { version = "*", features = ["derive"] }
 serde_json = "*"
 md5 = "*"
 rust-crypto = "*"
-sha256 = "*"
 dunce = "*"
 path_abs = "*"
 chrono = "*"

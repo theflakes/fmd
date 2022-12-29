@@ -1,6 +1,5 @@
 extern crate tree_magic;
 extern crate fuzzyhash;
-extern crate sha256;
 extern crate crypto;
 extern crate path_abs;
 extern crate dunce;
@@ -29,6 +28,7 @@ use std::env;
 use std::process;
 use std::borrow::Cow;
 use crypto::digest::Digest;
+use crypto::sha2::Sha256;
 use std::fs::{self, File};
 use std::io::{BufReader, Read, Seek, Write, SeekFrom};
 use path_abs::{PathAbs, PathInfo};
@@ -38,7 +38,7 @@ use entropy::shannon_entropy;
 use std::os::windows::prelude::*;
 use std::collections::HashMap;
 use chrono::{DateTime, Utc};
-use rand::distributions::{ChiSquared, IndependentSample, Sample};
+//use rand::distributions::{ChiSquared, IndependentSample, Sample};
 
 
 // report out in json
@@ -135,17 +135,21 @@ fn read_file_bytes(mut file: &File) -> std::io::Result<Vec<u8>> {
 fn get_sha1(buffer: &Vec<u8>) -> std::io::Result<String> {
     let mut hasher = crypto::sha1::Sha1::new();
     hasher.input(buffer);
-    let sha1 = hasher.result_str();
-    Ok(sha1)
+    Ok(hasher.result_str())
 }
 
+fn get_sha256(buffer: &Vec<u8>) -> std::io::Result<String> {
+    let mut hasher = crypto::sha2::Sha256::new();
+    hasher.input(buffer);
+    Ok(hasher.result_str())
+}
 
 // get metadata for the file's content (md5, sha1, ...)
 fn get_file_hashes(buffer: &Vec<u8>) -> std::io::Result<Hashes> {
     let mut hashes = Hashes::default();
     hashes.md5 = format!("{:x}", md5::compute(buffer)).to_lowercase();
     hashes.sha1 = get_sha1(buffer)?;
-    hashes.sha256 = sha256::digest_bytes(buffer);
+    hashes.sha256 = get_sha256(buffer)?;
     hashes.ssdeep = get_ssdeep_hash(&buffer)?;
     drop(buffer);
     Ok(hashes)
