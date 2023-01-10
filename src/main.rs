@@ -330,7 +330,10 @@ fn get_pe_file_info(file_path: String) -> io::Result<PeFileInfo> {
     };
     let vs_version = vs_version_check;
     if let Some(string_file_info) = vs_version.string_file_info {
-        let string_map = string_file_info.children[0].string_map();
+        let string_map = match string_file_info.children[0].string_map() {
+            Ok(m) => m,
+            Err(_e) => return Ok(file_info),
+        };
         file_info.product_version = get_hashmap_value(&string_map, "ProductVersion")?;
         file_info.original_filename = get_hashmap_value(&string_map, "ProductVersion")?;
         file_info.file_description = get_hashmap_value(&string_map, "FileDescription")?;
