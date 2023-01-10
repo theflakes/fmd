@@ -385,7 +385,7 @@ fn get_pe(file_path: String, buffer: &Vec<u8>) -> io::Result<Binary> {
             (bin.imports, bin.is_dotnet) = parse_pe_imports(&pex.imports)?;
             bin.entry_point = format!("0x{:02x}", pex.entry);
             bin.sections = get_sections(&pex, &file_path)?;
-            (bin.import_hashes, bin.imports.lib_count, bin.imports.func_count) = get_imphashes(&pex.imports)?;
+            (bin.imports.hashes, bin.imports.lib_count, bin.imports.func_count) = get_imphashes(&pex.imports)?;
             bin.is_64 = pex.is_64;
             bin.is_lib = pex.is_lib;
             bin.exports = parse_pe_exports(&pex.exports)?;

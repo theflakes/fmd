@@ -49,6 +49,25 @@ trait Loggable : Serialize {
 impl<T : ?Sized + Serialize> Loggable for T {}
 
 
+
+impl Default for ImpHashes {
+    fn default () -> ImpHashes {
+        ImpHashes {
+            hash: String::new(),
+            hash_sorted: String::new(),
+            ssdeep: String::new(),
+            ssdeep_sorted: String::new()
+        }
+    }
+}
+#[derive(Serialize, Clone)]
+pub struct ImpHashes {
+    pub hash: String,
+    pub hash_sorted: String,
+    pub ssdeep: String,
+    pub ssdeep_sorted: String
+}
+
 impl Default for Import {
     fn default () -> Import {
         Import {
@@ -68,6 +87,7 @@ pub struct Import {
 impl Default for Imports {
     fn default () -> Imports {
         Imports {
+            hashes: ImpHashes::default(),
             lib_count: 0,
             func_count: 0,
             imports: Vec::new()
@@ -76,9 +96,10 @@ impl Default for Imports {
 }
 #[derive(Serialize, Clone)]
 pub struct Imports {
+    pub hashes: ImpHashes,
     pub lib_count: u32,
     pub func_count: u32,
-    pub imports: Vec<Import>
+    pub imports: Vec<Import>,
 }
 
 impl Default for FileTimestamps {
@@ -187,24 +208,6 @@ pub struct BinSections {
     pub sections: Vec<BinSection>
 }
 
-impl Default for ImpHashes {
-    fn default () -> ImpHashes {
-        ImpHashes {
-            hash: String::new(),
-            hash_sorted: String::new(),
-            ssdeep: String::new(),
-            ssdeep_sorted: String::new()
-        }
-    }
-}
-#[derive(Serialize, Clone)]
-pub struct ImpHashes {
-    pub hash: String,
-    pub hash_sorted: String,
-    pub ssdeep: String,
-    pub ssdeep_sorted: String
-}
-
 impl Default for BinLinker {
     fn default () -> BinLinker {
         BinLinker {
@@ -244,7 +247,6 @@ impl Default for Binary {
             timestamps: BinTimestamps::default(),
             sections: BinSections::default(),
             linker: BinLinker::default(),
-            import_hashes: ImpHashes::default(),
             imports: Imports::default(),
             exports: Exports::default()
         }
@@ -260,7 +262,6 @@ pub struct Binary {
     pub timestamps: BinTimestamps,
     pub linker: BinLinker,
     pub sections: BinSections,
-    pub import_hashes: ImpHashes,
     pub imports: Imports,
     pub exports: Exports
 }
