@@ -6,7 +6,7 @@ extern crate dunce;
 extern crate goblin;
 extern crate entropy;
 extern crate exe;
-extern crate rand;
+//extern crate rand;
 extern crate lnk;
 
 #[macro_use] extern crate lazy_static;
