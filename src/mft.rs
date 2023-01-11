@@ -1,6 +1,7 @@
 use crate::data_defs::DataRun;
 use crate::{data_defs, sector_reader};
 
+use std::path::Path;
 use std::{io, str};
 use ntfs::attribute_value::{NtfsAttributeValue, NtfsResidentAttributeValue};
 use ntfs::indexes::NtfsFileNameIndex;
@@ -66,8 +67,9 @@ fn get_fs(file_path: &String, root: String) -> Result<(BufReader<SectorReader<Fi
 }
 
 
-pub fn get_fname(file_path: &String, mut ftimes: FileTimestamps) -> Result<(FileTimestamps, Vec<DataRun>)> {
+pub fn get_fname(path: &Path, mut ftimes: FileTimestamps) -> Result<(FileTimestamps, Vec<DataRun>)> {
     let mut ads: Vec<DataRun> = Vec::new();
+    let file_path = &path.to_string_lossy().to_string();
     let temp: Vec<&str> = file_path.split(":").collect();
     let dirs = temp[1].split("\\");
     let filename = file_path.split("\\").last().unwrap_or("");
@@ -233,7 +235,7 @@ where
 
 fn bytes_to_string(bytes: &Vec<u8>) -> io::Result<String> {
     let mut s = String::new();
-    if bytes.len() >= 128 {
+    if bytes.len() >= 256 {
         s = String::from_utf8_lossy(&bytes[0..255]).into_owned();
     } else {
         s = String::from_utf8_lossy(bytes).into_owned();

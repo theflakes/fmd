@@ -68,6 +68,7 @@ pub struct ImpHashes {
     pub ssdeep_sorted: String
 }
 
+
 impl Default for Import {
     fn default () -> Import {
         Import {
@@ -83,6 +84,7 @@ pub struct Import {
     pub count: u32,
     pub names: Vec<String>
 }
+
 
 impl Default for Imports {
     fn default () -> Imports {
@@ -101,6 +103,7 @@ pub struct Imports {
     pub func_count: u32,
     pub imports: Vec<Import>,
 }
+
 
 impl Default for FileTimestamps {
     fn default () -> FileTimestamps {
@@ -126,6 +129,7 @@ pub struct FileTimestamps {
     pub mft_record: String
 }
 
+
 impl Default for BinTimestamps {
     fn default () -> BinTimestamps {
         BinTimestamps {
@@ -139,6 +143,7 @@ pub struct BinTimestamps {
     pub compile: String,
     pub debug: String
 }
+
 
 impl Default for PeFileInfo {
     fn default () -> PeFileInfo {
@@ -190,6 +195,7 @@ pub struct BinSection {
     pub virt_size: u32
 }
 
+
 impl Default for BinSections {
     fn default () -> BinSections {
         BinSections {
@@ -222,6 +228,7 @@ pub struct BinLinker {
     pub minor_version: u8
 }
 
+
 impl Default for Exports {
     fn default () -> Exports {
         Exports {
@@ -235,6 +242,7 @@ pub struct Exports {
     pub count: u8,
     pub names: Vec<String>
 }
+
 
 impl Default for Binary {
     fn default () -> Binary {
@@ -266,6 +274,7 @@ pub struct Binary {
     pub exports: Exports
 }
 
+
 impl Default for Hashes {
     fn default () -> Hashes {
         Hashes {
@@ -284,6 +293,7 @@ pub struct Hashes {
     pub ssdeep: String
 }
 
+
 impl Default for DataRun {
     fn default () -> DataRun {
         DataRun {
@@ -300,6 +310,7 @@ pub struct DataRun {
     pub first_256_bytes: String
 }
 
+
 impl Default for RunTimeEnv {
     fn default () -> RunTimeEnv {
         RunTimeEnv {
@@ -315,6 +326,7 @@ pub struct RunTimeEnv {
     pub device_type: String,
     pub run_as_admin: bool,
 }
+
 
 #[derive(Serialize)]
 pub struct MetaData {

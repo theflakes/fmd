@@ -20,7 +20,7 @@ use mft::*;
 use fuzzyhash::FuzzyHash;
 use goblin::pe::PE;
 use std::mem::replace;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::ptr::null;
 use std::str::from_utf8;
 use std::{io, str};
@@ -112,17 +112,6 @@ fn get_ssdeep_hash(mut buffer: &Vec<u8>) -> io::Result<String> {
 }
 
 
-fn convert_to_path(target_file: &str) -> io::Result<&Path> {
-    let file_path = Path::new(target_file);
-    if file_path.exists() && file_path.is_file() { 
-        return Ok(file_path)
-    }
-
-    println!("\nFile not found!\n");
-    process::exit(1)
-}
-
-
 // read in file as byte vector
 fn read_file_bytes(mut file: &File) -> std::io::Result<Vec<u8>> {
     let mut buffer = Vec::new();
@@ -149,6 +138,7 @@ fn get_sha256(buffer: &Vec<u8>) -> io::Result<String> {
     hasher.input(buffer);
     Ok(hasher.result_str())
 }
+
 
 // get metadata for the file's content (md5, sha1, ...)
 fn get_file_hashes(buffer: &Vec<u8>) -> io::Result<Hashes> {
@@ -318,22 +308,13 @@ fn get_hashmap_value(
     The Goblin PE parser doesn't support parsing this PE structure, therefore using exe-rs
     Is not parsing .Net file info
 */
-fn get_pe_file_info(file_path: String) -> io::Result<PeFileInfo> {
+fn get_pe_file_info(path: &Path) -> io::Result<PeFileInfo> {
     let mut file_info = PeFileInfo::default();
-    let pefile = match exe::VecPE::from_disk_file(file_path) {
-        Ok(p) => p,
-        Err(_e) => return Ok(file_info),
-    };
-    let vs_version_check = match exe::VSVersionInfo::parse(&pefile) {
-        Ok(p) => p,
-        Err(_e) => return Ok(file_info),
-    };
+    let Ok(pefile) = exe::VecPE::from_disk_file(path) else { return Ok(file_info) };
+    let Ok(vs_version_check) = exe::VSVersionInfo::parse(&pefile) else { return Ok(file_info) };
     let vs_version = vs_version_check;
     if let Some(string_file_info) = vs_version.string_file_info {
-        let string_map = match string_file_info.children[0].string_map() {
-            Ok(m) => m,
-            Err(_e) => return Ok(file_info),
-        };
+        let Ok(string_map) = string_file_info.children[0].string_map() else { return Ok(file_info) };
         file_info.product_version = get_hashmap_value(&string_map, "ProductVersion")?;
         file_info.original_filename = get_hashmap_value(&string_map, "ProductVersion")?;
         file_info.file_description = get_hashmap_value(&string_map, "FileDescription")?;
@@ -347,8 +328,8 @@ fn get_pe_file_info(file_path: String) -> io::Result<PeFileInfo> {
 }
 
 
-fn read_section(file_path: &str, start: u32, size: u32) -> io::Result<Vec<u8>> {
-    let mut f = File::open(file_path)?;
+fn read_section(path: &Path, start: u32, size: u32) -> io::Result<Vec<u8>> {
+    let mut f = File::open(path)?;
     f.seek(SeekFrom::Start(start as u64))?;
     let mut buf = vec![0; size as usize];
     f.read_exact(&mut buf)?;
@@ -356,7 +337,7 @@ fn read_section(file_path: &str, start: u32, size: u32) -> io::Result<Vec<u8>> {
 }
 
 
-fn get_sections(pex: &PE, file_path: &str) -> io::Result<BinSections>{
+fn get_sections(pex: &PE, path: &Path) -> io::Result<BinSections>{
     let mut bss = BinSections::default();
     for s in pex.sections.iter() {
         bss.total_sections += 1;
@@ -367,7 +348,7 @@ fn get_sections(pex: &PE, file_path: &str) -> io::Result<BinSections>{
         bs.virt_address = format!("0x{:02x}", s.virtual_address);
         bs.raw_size = s.size_of_raw_data;
         bs.virt_size = s.virtual_size;
-        let data = read_section(&file_path, s.pointer_to_raw_data, s.size_of_raw_data)?;
+        let data = read_section(path, s.pointer_to_raw_data, s.size_of_raw_data)?;
         bs.entropy = get_entropy(&data)?;
         bs.md5 = format!("{:x}", md5::compute(&data)).to_lowercase();
         bs.ssdeep = get_ssdeep_hash(&data)?;
@@ -377,7 +358,7 @@ fn get_sections(pex: &PE, file_path: &str) -> io::Result<BinSections>{
 }
 
 
-fn get_pe(file_path: String, buffer: &Vec<u8>) -> io::Result<Binary> {
+fn get_pe(path: &Path, buffer: &Vec<u8>) -> io::Result<Binary> {
     let mut bin = Binary::default();
     if buffer.len() < 97 { return Ok(bin) } // smallest possible PE size, errors with smaller buffer size
     match Object::parse(&buffer).unwrap() {
@@ -387,12 +368,12 @@ fn get_pe(file_path: String, buffer: &Vec<u8>) -> io::Result<Binary> {
         Object::PE(pex) => {
             (bin.imports, bin.is_dotnet) = parse_pe_imports(&pex.imports)?;
             bin.entry_point = format!("0x{:02x}", pex.entry);
-            bin.sections = get_sections(&pex, &file_path)?;
+            bin.sections = get_sections(&pex, path)?;
             (bin.imports.hashes, bin.imports.lib_count, bin.imports.func_count) = get_imphashes(&pex.imports)?;
             bin.is_64 = pex.is_64;
             bin.is_lib = pex.is_lib;
             bin.exports = parse_pe_exports(&pex.exports)?;
-            bin.pe_info = get_pe_file_info(file_path)?;
+            bin.pe_info = get_pe_file_info(path)?;
             bin.timestamps.compile = get_date_string(pex.header.coff_header.time_date_stamp as i64)?;
             bin.timestamps.debug = match pex.debug_data {
                 Some(d) => get_date_string(d.image_debug_directory.time_date_stamp as i64)?,
@@ -421,13 +402,6 @@ fn get_entropy(buffer: &Vec<u8>) -> io::Result<f32> {
 }
 
 
-// find the parent directory of a given dir or file
-fn get_abs_path(path: &std::path::Path) -> io::Result<std::path::PathBuf> {
-    let abs = PathAbs::new(&path)?;
-    Ok(dunce::simplified(&abs.as_path()).into())
-}
-
-
 // get date into the format we need
 fn format_date(time: DateTime::<Utc>) -> io::Result<String> {
     Ok(time.format("%Y-%m-%dT%H:%M:%S.%3f").to_string())
@@ -450,7 +424,7 @@ fn is_hidden(file_path: &Path) -> io::Result<bool> {
 
 fn get_file_times<'a>(path: &Path) -> io::Result<FileTimestamps> {
     let mut ftimes = FileTimestamps::default();
-    let metadata = match fs::metadata(dunce::simplified(&path)) {
+    let metadata = match fs::metadata(&path) {
         Ok(m) => m,
         Err(_e) => return Ok(ftimes)
     };
@@ -463,14 +437,10 @@ fn get_file_times<'a>(path: &Path) -> io::Result<FileTimestamps> {
 }
 
 
-fn start_analysis(file_path: String, pprint: bool, strings_length: usize) -> io::Result<()> {
-    let mut imps = false;
-    let mut run_as_admin = false;
-    let path = convert_to_path(&file_path)?;
-    let abs_path = get_abs_path(path)?.as_path().to_str().unwrap_or("").to_string();
+fn start_analysis(path: &Path, pprint: bool, strings_length: usize) -> io::Result<()> {
     let mut ftimes = get_file_times(&path)?;
     let mut ads: Vec<DataRun> = Vec::new();
-    (ftimes, ads) = get_fname(&abs_path, ftimes).unwrap();
+    (ftimes, ads) = get_fname(path, ftimes).unwrap();
     let file = open_file(&path)?;
     let mut bytes = file.metadata().unwrap().len();
     let is_hidden = is_hidden(&path)?;
@@ -478,10 +448,10 @@ fn start_analysis(file_path: String, pprint: bool, strings_length: usize) -> io:
     let entropy = shannon_entropy(&buffer);
     let mime_type = get_mimetype(&buffer)?;
     let hashes = get_file_hashes(&buffer)?;
-    let bin = get_pe(file_path, &buffer)?;
+    let bin = get_pe(path, &buffer)?;
     let mut strings: Vec<String> = Vec::new();
     if strings_length > 0 {strings = get_strings(&buffer, strings_length)?;}
-    print_log(abs_path, bytes, mime_type, 
+    print_log(path.to_string_lossy().into_owned(), bytes, mime_type, 
         is_hidden, ftimes.clone(), 
         entropy, hashes, ads, bin, 
         pprint, strings)?;
@@ -497,6 +467,7 @@ fn print_help() {
         Usage: fmd [--pretty | -p] ([--strings|-s] #) <file path>
         Options:
             -p, --pretty        Pretty print JSON
+            -r, --recurse       If passed a directory, recurse into subdirectories
             -s, --strings #     Look for strings of length # or longer
 
         NOTE: Harvesting $FILE_NAME timestamps can only be done by running this tool elevated.
@@ -525,16 +496,68 @@ fn print_help() {
 }
 
 
-fn get_args() -> io::Result<(String, bool, usize)> {
+fn is_file_or_dir(path: &Path, pprint: bool, recurse: bool, strings_length: usize) -> io::Result<()> {
+    if path.is_file() {
+        match start_analysis(path, pprint, strings_length) {
+            Ok(a) => a,
+            Err(_e) => return Ok(())
+        };
+    } else if path.is_dir() {
+        for entry in fs::read_dir(path)? {
+            let entry = match entry {
+                Ok(m) => m,
+                Err(_e) => continue
+            };
+            let p = entry.path();
+            if p.is_dir() {
+                if !recurse { continue; }
+                match is_file_or_dir(p.as_path(), pprint, recurse, strings_length) {
+                    Ok(a) => a,
+                    Err(_e) => continue
+                };
+            }
+            if p.is_file() {
+                match start_analysis(p.as_path(), pprint, strings_length) {
+                    Ok(a )=> a,
+                    Err(_e) => continue
+                };
+            }
+        }
+    }
+
+    Ok(())
+}
+
+
+// find the parent directory of a given dir or file
+fn get_abs_path(path: &Path) -> io::Result<std::path::PathBuf> {
+    let abs = PathAbs::new(&path)?;
+    Ok(dunce::simplified(&abs.as_path()).into())
+}
+
+
+fn convert_to_path(target: &str) -> io::Result<PathBuf> {
+    let path = Path::new(target);
+    if !path.exists() {
+        println!("\nNot found!\n");
+        process::exit(1)
+    }
+    return Ok(get_abs_path(path)?)
+}
+
+
+fn get_args() -> io::Result<(String, bool, bool, usize)> {
     let args: Vec<String> = env::args().collect();
     let mut file_path = String::new();
     let mut pprint = false;
+    let mut recurse = false;
     let mut strings: usize = 0;
     let mut get_strings_length = false;
     if args.len() == 1 { print_help(); }
     for arg in args {
         match arg.as_str() {
             "-p" | "--pretty" => pprint = true,
+            "-r" | "--recurse" => recurse = true,
             "-s" | "--strings" => get_strings_length = true,
             _ => {
                 if get_strings_length {
@@ -546,12 +569,12 @@ fn get_args() -> io::Result<(String, bool, usize)> {
             }
         }
     }
-    Ok((file_path.clone(), pprint, strings))
+    Ok((file_path.clone(), pprint, recurse, strings))
 }
 
 
 fn main() -> io::Result<()> {
-    let (file_path, pprint, strings_length) = get_args()?;
-    start_analysis(file_path, pprint, strings_length)?;
+    let (file_path, pprint, recurse, strings_length) = get_args()?;
+    is_file_or_dir(convert_to_path(&file_path)?.as_path(), pprint, recurse, strings_length)?;
     Ok(())
 }
