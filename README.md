@@ -173,8 +173,8 @@ Example output:
     },
     "imports": {
       "hashes": {
-        "hash": "f34d5f2d4577ed6d9ceec516c1f5a744",
-        "hash_sorted": "f34d5f2d4577ed6d9ceec516c1f5a744",
+        "md5": "f34d5f2d4577ed6d9ceec516c1f5a744",
+        "md5_sorted": "f34d5f2d4577ed6d9ceec516c1f5a744",
         "ssdeep": "3:rGsLdAIEK:tf",
         "ssdeep_sorted": "3:rGsLdAIEK:tf"
       },
