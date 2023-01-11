@@ -464,13 +464,14 @@ fn print_help() {
         Author: Brian Kellogg
         License: MIT
         Purpose: Pull various file metadata.
-        Usage: fmd [--pretty | -p] ([--strings|-s] #) <file path>
+        Usage: fmd [--pretty | -p] ([--strings|-s] #) <file path> [--recurse | -r]
         Options:
             -p, --pretty        Pretty print JSON
-            -r, --recurse       If passed a directory, recurse into subdirectories
+            -r, --recurse       If passed a directory, recurse into all subdirectories
             -s, --strings #     Look for strings of length # or longer
 
-        NOTE: Harvesting $FILE_NAME timestamps can only be done by running this tool elevated.
+        NOTE: If passed a directory, all files in that directory will be analyzed.
+              Harvesting $FILE_NAME timestamps can only be done by running this tool elevated.
               The 'run_as_admin' field shows if the tool was run elevated.
 
               Harvesting Alternate Data Stream (ADS) information can only be done by running 
