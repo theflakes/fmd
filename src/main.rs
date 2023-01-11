@@ -529,7 +529,7 @@ fn is_file_or_dir(path: &Path, pprint: bool, recurse: bool, strings_length: usiz
 }
 
 
-// find the parent directory of a given dir or file
+// get the absolute path if given a relative path
 fn get_abs_path(path: &Path) -> io::Result<std::path::PathBuf> {
     let abs = PathAbs::new(&path)?;
     Ok(dunce::simplified(&abs.as_path()).into())
