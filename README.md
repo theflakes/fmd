@@ -3,6 +3,7 @@ File metadata / forensic tool.
 fmd = File Metadata
 
 #### Understanding MS PE analysis
+https://resources.infosecinstitute.com/topic/malware-researchers-handbook/  
 http://www.hacktohell.org/2012/04/analysing-pe-files.html  
 https://tstillz.medium.com/basic-static-analysis-part-1-9c24497790b6  
 https://upload.wikimedia.org/wikipedia/commons/1/1b/Portable_Executable_32_bit_Structure_in_SVG_fixed.svg  
@@ -299,8 +300,8 @@ Example output:
 }
 ```
 See:  
-https://resources.infosecinstitute.com/topic/malware-researchers-handbook/  
 https://github.com/frank2  
+https://github.com/lilopkins/lnk-rs  
 https://docs.rs/fuzzyhash/latest/fuzzyhash/  
 https://dfir.science/2017/07/How-To-Fuzzy-Hashing-with-SSDEEP-(similarity-matching).html  
 https://docs.rs/tree_magic/latest/tree_magic/  

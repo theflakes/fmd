@@ -324,7 +324,6 @@ dependencies = [
  "md5",
  "ntfs",
  "path_abs",
- "rand 0.3.23",
  "rust-crypto",
  "serde",
  "serde_json",

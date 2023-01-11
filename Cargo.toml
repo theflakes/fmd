@@ -27,7 +27,7 @@ anyhow = "*"
 epochs = "*"
 is_elevated = "*"
 exe = "*"
-rand = "*"
+#rand = "*"
 lnk = "*"
 
 [profile.release]
