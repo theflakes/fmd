@@ -205,10 +205,10 @@ fn parse_pe_imports(imports: &Vec<goblin::pe::import::Import>) -> io::Result<(Im
 }
 
 
-fn get_imphash_sorted(imphash_array: &mut Vec<String>) -> io::Result<(String, String)> {
-    imphash_array.sort();
+fn get_hash_sorted(hash_array: &mut Vec<String>) -> io::Result<(String, String)> {
+    hash_array.sort();
     let mut imphash_text_sorted = String::new();
-    for i in imphash_array.iter() {
+    for i in hash_array.iter() {
         imphash_text_sorted.push_str(i);
     }
     imphash_text_sorted = imphash_text_sorted.trim_end_matches(",").to_string();
@@ -229,11 +229,10 @@ fn check_ordinal(dll: &str, func: &str) -> io::Result<String> {
 
 
 fn get_imphashes(imports: &Vec<goblin::pe::import::Import>) 
-                        -> io::Result<(ImpHashes, u32, u32)> {
+                        -> io::Result<(ImpHashes, usize, usize)> {
     let mut imphash_array: Vec<String> = Vec::new();    // store in array for calculating imphash on sorted
     let mut imphash_text = String::new();       // text imphash for imports in bin natural order
-    let mut total_dlls = 0;
-    let mut total_funcs = 0;
+    let mut total_dlls = 0;     // dlls imports are in the form of {"dll_name","function_name"} - one to one relationship
     let mut track_dll = String::new();
     for i in imports.iter() {
         let mut temp = String::new();
@@ -250,29 +249,44 @@ fn get_imphashes(imports: &Vec<goblin::pe::import::Import>)
         temp.push_str(",");
         imphash_text.push_str(&temp.to_string());
         imphash_array.push(temp.to_string());
-        total_funcs += 1;
         track_dll = i.dll.to_string();
     }
     let mut imphashes = ImpHashes::default();
     imphash_text = imphash_text.trim_end_matches(",").to_string();
-    imphashes.hash = format!("{:x}", md5::compute(imphash_text.clone())).to_lowercase();
+    imphashes.md5 = format!("{:x}", md5::compute(imphash_text.clone())).to_lowercase();
     let mut imphash_text_sorted = String::new();
-    (imphash_text_sorted, imphashes.hash_sorted) = get_imphash_sorted(&mut imphash_array)?;
+    (imphash_text_sorted, imphashes.md5_sorted) = get_hash_sorted(&mut imphash_array)?;
     let imphash_bytes: Vec<u8> = imphash_text.as_bytes().to_vec();
     let imphash_bytes_ordered: Vec<u8> = imphash_text_sorted.as_bytes().to_vec();
     imphashes.ssdeep = get_ssdeep_hash(&imphash_bytes)?;
     imphashes.ssdeep_sorted = get_ssdeep_hash(&imphash_bytes_ordered)?;
-    
-    Ok((imphashes, total_dlls, total_funcs))
+    Ok((imphashes, total_dlls, imports.len()))
 }
 
 
 fn parse_pe_exports(exports: &Vec<goblin::pe::export::Export>) -> io::Result<Exports> {
     let mut exps = Exports::default();
+    //let mut exphash_array: Vec<String> = Vec::new();
+    let mut exphash_text = String::new();
     for e in exports.iter() {
         exps.names.push(e.name.unwrap_or("").to_string());
-        exps.count += 1;
+        let mut temp = String::new();
+        temp.push_str(&e.name.unwrap_or("").to_string());
+        temp.push_str(",");
+        //exphash_array.push(temp.to_string());
+        exphash_text.push_str(&temp.to_string());
     }
+    exps.count = exports.len();
+    let mut exphashes = ExpHashes::default();
+    exphash_text = exphash_text.trim_end_matches(",").to_string();
+    exphashes.md5 = format!("{:x}", md5::compute(exphash_text.clone())).to_lowercase();
+    //let mut exphash_text_sorted = String::new();
+    //(exphash_text_sorted, exphashes.md5_sorted) = get_hash_sorted(&mut exphash_array)?;
+    let exphash_bytes: Vec<u8> = exphash_text.as_bytes().to_vec();
+    //let exphash_bytes_ordered: Vec<u8> = exphash_text_sorted.as_bytes().to_vec();
+    exphashes.ssdeep = get_ssdeep_hash(&exphash_bytes)?;
+    //exphashes.ssdeep_sorted = get_ssdeep_hash(&exphash_bytes_ordered)?;
+    exps.hashes = exphashes;
     Ok(exps)
 }
 

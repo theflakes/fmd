@@ -53,8 +53,8 @@ impl<T : ?Sized + Serialize> Loggable for T {}
 impl Default for ImpHashes {
     fn default () -> ImpHashes {
         ImpHashes {
-            hash: String::new(),
-            hash_sorted: String::new(),
+            md5: String::new(),
+            md5_sorted: String::new(),
             ssdeep: String::new(),
             ssdeep_sorted: String::new()
         }
@@ -62,10 +62,25 @@ impl Default for ImpHashes {
 }
 #[derive(Serialize, Clone)]
 pub struct ImpHashes {
-    pub hash: String,
-    pub hash_sorted: String,
+    pub md5: String,
+    pub md5_sorted: String,
     pub ssdeep: String,
     pub ssdeep_sorted: String
+}
+
+
+impl Default for ExpHashes {
+    fn default () -> ExpHashes {
+        ExpHashes {
+            md5: String::new(),
+            ssdeep: String::new(),
+        }
+    }
+}
+#[derive(Serialize, Clone)]
+pub struct ExpHashes {
+    pub md5: String,
+    pub ssdeep: String,
 }
 
 
@@ -99,8 +114,8 @@ impl Default for Imports {
 #[derive(Serialize, Clone)]
 pub struct Imports {
     pub hashes: ImpHashes,
-    pub lib_count: u32,
-    pub func_count: u32,
+    pub lib_count: usize,
+    pub func_count: usize,
     pub imports: Vec<Import>,
 }
 
@@ -232,6 +247,7 @@ pub struct BinLinker {
 impl Default for Exports {
     fn default () -> Exports {
         Exports {
+            hashes: ExpHashes::default(),
             count: 0,
             names: Vec::new()
         }
@@ -239,7 +255,8 @@ impl Default for Exports {
 }
 #[derive(Serialize, Clone)]
 pub struct Exports {
-    pub count: u8,
+    pub hashes: ExpHashes,
+    pub count: usize,
     pub names: Vec<String>
 }
 
