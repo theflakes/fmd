@@ -299,6 +299,7 @@ Example output:
 }
 ```
 See:  
+https://resources.infosecinstitute.com/topic/malware-researchers-handbook/  
 https://github.com/frank2  
 https://docs.rs/fuzzyhash/latest/fuzzyhash/  
 https://dfir.science/2017/07/How-To-Fuzzy-Hashing-with-SSDEEP-(similarity-matching).html  
