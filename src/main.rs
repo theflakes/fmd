@@ -7,6 +7,7 @@ extern crate goblin;
 extern crate entropy;
 extern crate exe;
 extern crate rand;
+extern crate lnk;
 
 #[macro_use] extern crate lazy_static;
 
@@ -38,6 +39,7 @@ use entropy::shannon_entropy;
 use std::os::windows::prelude::*;
 use std::collections::HashMap;
 use chrono::{DateTime, Utc};
+use lnk::{ShellLink};
 //use rand::distributions::{ChiSquared, IndependentSample, Sample};
 
 
@@ -47,6 +49,8 @@ fn print_log(
                 bytes: u64,
                 mime_type: String, 
                 is_hidden: bool,
+                is_link: bool,
+                link: Link,
                 timestamps: FileTimestamps,
                 entropy: f32,
                 hashes: Hashes,
@@ -63,6 +67,8 @@ fn print_log(
             bytes,
             mime_type,
             is_hidden,
+            is_link,
+            link,
             timestamps,
             entropy,
             hashes,
@@ -77,6 +83,8 @@ fn print_log(
             bytes,
             mime_type, 
             is_hidden,
+            is_link,
+            link,
             timestamps,
             entropy,
             hashes,
@@ -437,9 +445,100 @@ fn get_file_times<'a>(path: &Path) -> io::Result<FileTimestamps> {
 }
 
 
-fn start_analysis(path: &Path, pprint: bool, strings_length: usize) -> io::Result<()> {
+// find the parent directory of a given dir or file
+pub fn get_parent_dir(path: &std::path::Path) -> &std::path::Path {
+    match path.parent() {
+        Some(d) => return d,
+        None => return path
+    };
+}
+
+// return the path that a symlink points to
+fn resolve_link(
+        link_path: &std::path::Path,
+        file_path: &std::path::Path
+    ) -> std::io::Result<std::path::PathBuf> 
+{
+    let parent_dir = get_parent_dir(link_path);
+    match std::env::set_current_dir(parent_dir) {
+        Ok(f) => f,
+        Err(_e) => return Ok(std::path::PathBuf::new())
+    };
+    let abs = PathAbs::new(&file_path)?;
+    Ok(dunce::simplified(&abs.as_path()).into())
+}
+
+fn format_hotkey_text(hotkey: String) ->  std::io::Result<String> {
+    let mk = hotkey
+        .replace("HotkeyFlags { low_byte: ", "")
+        .replace(", high_byte: ", " ")
+        .replace(" }", "");
+    let keys: Vec<&str> = mk.split(' ').collect();
+    let mut hk = match keys.len() {
+        0 => String::new(),
+        n => keys[n-1].to_string()
+    };
+    for k in keys.iter().rev().skip(1) {
+        hk = format!("{}-{}", hk, k);
+    }
+    Ok(hk)
+}
+
+// convert a string to a Rust file path
+pub fn push_file_path(
+        path: &str, 
+        suffix: &str
+    ) -> std::path::PathBuf 
+{
+    let mut p = path.to_owned();
+    p.push_str(suffix);
+    let r = std::path::Path::new(&p);
+    return r.to_owned()
+}
+
+/*
+    determine if a file is a symlink or not
+*/
+pub fn get_link_info(link_path: &Path) -> std::io::Result<(Link, bool)> {
+    let mut link = Link::default();
+    let symlink= match ShellLink::open(link_path) {
+        Ok(l) => l,
+        Err(_e) => return Ok((link, false))
+    };
+    link.name = match symlink.name() {
+        Some(a) => a.to_string(),
+        None => String::new()
+    };
+    let file_path = match symlink.relative_path() {
+        Some(p) => push_file_path(p, ""),
+        None => std::path::PathBuf::new()
+    };
+    link.target = resolve_link(&link_path, &file_path)?.as_os_str().to_string_lossy().to_string();
+    println!("{:?}", file_path);
+    link.arguments =  match symlink.arguments() {
+        Some(a) => a.to_string(),
+        None => String::new()
+    };
+    link.working_dir = match symlink.working_dir() {
+        Some(a) => a.to_string(),
+        None => String::new()
+    };
+    link.icon_location = match symlink.icon_location() {
+        Some(a) => a.to_string(),
+        None => String::new()
+    };
+    link.hotkey = format_hotkey_text(format!("{:?}", symlink.header().hotkey()))?;
+    link.show_command = format!("{:?}", symlink.header().show_command());
+    Ok((link, true))
+}
+
+
+fn analyze_file(path: &Path, pprint: bool, strings_length: usize) -> io::Result<()> {
     let mut ftimes = get_file_times(&path)?;
     let mut ads: Vec<DataRun> = Vec::new();
+    let mut link = Link::default();
+    let mut is_link = false;
+    (link, is_link) = get_link_info(path)?;
     (ftimes, ads) = get_fname(path, ftimes).unwrap();
     let file = open_file(&path)?;
     let mut bytes = file.metadata().unwrap().len();
@@ -452,54 +551,16 @@ fn start_analysis(path: &Path, pprint: bool, strings_length: usize) -> io::Resul
     let mut strings: Vec<String> = Vec::new();
     if strings_length > 0 {strings = get_strings(&buffer, strings_length)?;}
     print_log(path.to_string_lossy().into_owned(), bytes, mime_type, 
-        is_hidden, ftimes.clone(), 
+        is_hidden,  is_link, link, ftimes.clone(), 
         entropy, hashes, ads, bin, 
         pprint, strings)?;
     Ok(())
 }
 
 
-fn print_help() {
-    let help = "
-        Author: Brian Kellogg
-        License: MIT
-        Purpose: Pull various file metadata.
-        Usage: fmd [--pretty | -p] ([--strings|-s] #) <file path> [--recurse | -r]
-        Options:
-            -p, --pretty        Pretty print JSON
-            -r, --recurse       If passed a directory, recurse into all subdirectories
-            -s, --strings #     Look for strings of length # or longer
-
-        NOTE: If passed a directory, all files in that directory will be analyzed.
-              Harvesting $FILE_NAME timestamps can only be done by running this tool elevated.
-              The 'run_as_admin' field shows if the tool was run elevated.
-
-              Harvesting Alternate Data Stream (ADS) information can only be done by running 
-              this tool elevated. ADS information is acquired by directly accessing the NTFS which
-              requires elevation.
-
-              'runtime_env' stores information on the device that this tool was run on.
-
-              PE Sections:
-              - 'total_sections' reports how many PE sections are found after the PE headers.
-              - 'total_raw_bytes' cumulative size in bytes of all raw, on disk, sections.
-              - 'total_virt_bytes' cumulative size in bytes of all virtual, in memory, sections.
-              - if 'total_virt_bytes' is much larger than 'total_raw_bytes', this can indicate
-                a packed binary.
-
-              Certain forensic information can only be harvested when the file is analyzed on
-              the filesystem of origin. 
-              - e.g. timestamps and alternate data streams are lost when the file is moved 
-                off of the filesystem of origin.
-    ";
-    println!("{}", help);
-    process::exit(1)
-}
-
-
 fn is_file_or_dir(path: &Path, pprint: bool, recurse: bool, strings_length: usize) -> io::Result<()> {
     if path.is_file() {
-        match start_analysis(path, pprint, strings_length) {
+        match analyze_file(path, pprint, strings_length) {
             Ok(a) => a,
             Err(_e) => return Ok(())
         };
@@ -518,7 +579,7 @@ fn is_file_or_dir(path: &Path, pprint: bool, recurse: bool, strings_length: usiz
                 };
             }
             if p.is_file() {
-                match start_analysis(p.as_path(), pprint, strings_length) {
+                match analyze_file(p.as_path(), pprint, strings_length) {
                     Ok(a )=> a,
                     Err(_e) => continue
                 };
@@ -578,4 +639,42 @@ fn main() -> io::Result<()> {
     let (file_path, pprint, recurse, strings_length) = get_args()?;
     is_file_or_dir(convert_to_path(&file_path)?.as_path(), pprint, recurse, strings_length)?;
     Ok(())
+}
+
+
+fn print_help() {
+    let help = "
+        Author: Brian Kellogg
+        License: MIT
+        Purpose: Pull various file metadata.
+        Usage: fmd [--pretty | -p] ([--strings|-s] #) <file path> [--recurse | -r]
+        Options:
+            -p, --pretty        Pretty print JSON
+            -r, --recurse       If passed a directory, recurse into all subdirectories
+            -s, --strings #     Look for strings of length # or longer
+
+        NOTE: If passed a directory, all files in that directory will be analyzed.
+              Harvesting $FILE_NAME timestamps can only be done by running this tool elevated.
+              The 'run_as_admin' field shows if the tool was run elevated.
+
+              Harvesting Alternate Data Stream (ADS) information can only be done by running 
+              this tool elevated. ADS information is acquired by directly accessing the NTFS which
+              requires elevation.
+
+              'runtime_env' stores information on the device that this tool was run on.
+
+              PE Sections:
+              - 'total_sections' reports how many PE sections are found after the PE headers.
+              - 'total_raw_bytes' cumulative size in bytes of all raw, on disk, sections.
+              - 'total_virt_bytes' cumulative size in bytes of all virtual, in memory, sections.
+              - if 'total_virt_bytes' is much larger than 'total_raw_bytes', this can indicate
+                a packed binary.
+
+              Certain forensic information can only be harvested when the file is analyzed on
+              the filesystem of origin. 
+              - e.g. timestamps and alternate data streams are lost when the file is moved 
+                off of the filesystem of origin.
+    ";
+    println!("{}", help);
+    process::exit(1)
 }

@@ -311,6 +311,31 @@ pub struct DataRun {
 }
 
 
+impl Default for Link {
+    fn default () -> Link {
+        Link {
+            name: String::new(),
+            target: String::new(),
+            arguments: String::new(),
+            working_dir: String::new(),
+            icon_location: String::new(),
+            hotkey: String::new(),
+            show_command: String::new(),
+        }
+    }
+}
+#[derive(Serialize, Clone, Debug)]
+pub struct Link {
+    pub name: String,
+    pub target: String,
+    pub arguments: String,
+    pub working_dir: String,
+    pub icon_location: String,
+    pub hotkey: String,
+    pub show_command: String,
+}
+
+
 impl Default for RunTimeEnv {
     fn default () -> RunTimeEnv {
         RunTimeEnv {
@@ -335,6 +360,8 @@ pub struct MetaData {
     pub bytes: u64,
     pub mime_type: String,
     pub is_hidden: bool,
+    pub is_link: bool,
+    pub link: Link,
     pub timestamps: FileTimestamps,
     pub entropy: f32,
     pub hashes: Hashes,
@@ -349,6 +376,8 @@ impl MetaData {
             bytes: u64,
             mime_type: String,
             is_hidden: bool,
+            is_link: bool,
+            link: Link,
             timestamps: FileTimestamps,
             entropy: f32,
             hashes: Hashes,
@@ -361,6 +390,8 @@ impl MetaData {
             bytes,
             mime_type,
             is_hidden,
+            is_link,
+            link,
             timestamps,
             entropy,
             hashes,
@@ -369,7 +400,6 @@ impl MetaData {
             strings
         }
     }
-
     // convert struct to json and report it out
     pub fn report_log(&self) {
         self.write_log()

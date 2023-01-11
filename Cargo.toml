@@ -24,6 +24,7 @@ epochs = "*"
 is_elevated = "*"
 exe = "*"
 rand = "*"
+lnk = "*"
 
 [profile.release]
 lto = true

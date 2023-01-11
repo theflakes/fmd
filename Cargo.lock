@@ -320,6 +320,7 @@ dependencies = [
  "goblin",
  "is_elevated",
  "lazy_static",
+ "lnk",
  "md5",
  "ntfs",
  "path_abs",
@@ -485,6 +486,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "lnk"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "74c22ceaeab0d65bc44bb98e3fd15bdf7b77ad5035c72a9d30edc9c4425da0bb"
+dependencies = [
+ "bitflags",
+ "byteorder",
+ "log",
+ "num-derive",
+ "num-traits",
+]
+
+[[package]]
 name = "lock_api"
 version = "0.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -568,6 +582,17 @@ dependencies = [
  "memoffset",
  "strum_macros",
  "time 0.3.17",
+]
+
+[[package]]
+name = "num-derive"
+version = "0.3.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "876a53fff98e03a936a674b29568b0e605f06b29372c2489ff4de23f1949743d"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
