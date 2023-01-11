@@ -314,25 +314,27 @@ pub struct DataRun {
 impl Default for Link {
     fn default () -> Link {
         Link {
-            name: String::new(),
             target: String::new(),
             arguments: String::new(),
             working_dir: String::new(),
             icon_location: String::new(),
             hotkey: String::new(),
+            comment: String::new(),
             show_command: String::new(),
+            flags: String::new(),
         }
     }
 }
 #[derive(Serialize, Clone, Debug)]
 pub struct Link {
-    pub name: String,
     pub target: String,
     pub arguments: String,
     pub working_dir: String,
     pub icon_location: String,
     pub hotkey: String,
+    pub comment: String,
     pub show_command: String,
+    pub flags: String,
 }
 
 
@@ -357,6 +359,9 @@ pub struct RunTimeEnv {
 pub struct MetaData {
     pub runtime_env: RunTimeEnv,
     pub path: String,
+    pub directory: String,
+    pub filename: String,
+    pub extension: String,
     pub bytes: u64,
     pub mime_type: String,
     pub is_hidden: bool,
@@ -373,6 +378,9 @@ impl MetaData {
     pub fn new(
             runtime_env: RunTimeEnv,
             path: String,
+            directory: String,
+            filename: String,
+            extension: String,
             bytes: u64,
             mime_type: String,
             is_hidden: bool,
@@ -387,6 +395,9 @@ impl MetaData {
         MetaData {
             runtime_env,
             path,
+            directory,
+            filename,
+            extension,
             bytes,
             mime_type,
             is_hidden,

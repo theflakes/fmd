@@ -46,6 +46,9 @@ use lnk::{ShellLink};
 // report out in json
 fn print_log(
                 path: String,
+                directory: String,
+                filename: String,
+                extension: String,
                 bytes: u64,
                 mime_type: String, 
                 is_hidden: bool,
@@ -64,6 +67,9 @@ fn print_log(
         MetaData::new(
             runtime_env,
             path.to_string(),
+            directory,
+            filename,
+            extension,
             bytes,
             mime_type,
             is_hidden,
@@ -80,6 +86,9 @@ fn print_log(
         MetaData::new(
             runtime_env,
             path.to_string(),
+            directory,
+            filename,
+            extension,
             bytes,
             mime_type, 
             is_hidden,
@@ -505,16 +514,11 @@ pub fn get_link_info(link_path: &Path) -> std::io::Result<(Link, bool)> {
         Ok(l) => l,
         Err(_e) => return Ok((link, false))
     };
-    link.name = match symlink.name() {
-        Some(a) => a.to_string(),
-        None => String::new()
-    };
     let file_path = match symlink.relative_path() {
         Some(p) => push_file_path(p, ""),
         None => std::path::PathBuf::new()
     };
     link.target = resolve_link(&link_path, &file_path)?.as_os_str().to_string_lossy().to_string();
-    println!("{:?}", file_path);
     link.arguments =  match symlink.arguments() {
         Some(a) => a.to_string(),
         None => String::new()
@@ -528,12 +532,36 @@ pub fn get_link_info(link_path: &Path) -> std::io::Result<(Link, bool)> {
         None => String::new()
     };
     link.hotkey = format_hotkey_text(format!("{:?}", symlink.header().hotkey()))?;
+    link.comment = match symlink.name() {
+        Some(a) => a.to_string(),
+        None => String::new()
+    };
     link.show_command = format!("{:?}", symlink.header().show_command());
+    link.flags = format!("{:?}", symlink.header().link_flags());
     Ok((link, true))
 }
 
 
+fn get_dir_fname_ext(path: &Path) -> io::Result<(String, String, String)> {
+    let dir = match path.parent() {
+        Some(a) => a.to_string_lossy().into_owned(),
+        None => String::new()
+    };;
+    let fname = match path.file_name() {
+        Some(a) => a.to_string_lossy().into_owned(),
+        None => String::new()
+    };;
+    let ext = match path.extension() {
+        Some(a) => a.to_string_lossy().into_owned(),
+        None => String::new()
+    };
+    Ok((dir, fname, ext))
+}
+
+
 fn analyze_file(path: &Path, pprint: bool, strings_length: usize) -> io::Result<()> {
+    let p = path.to_string_lossy().into_owned();
+    let (dir, fname, ext) = get_dir_fname_ext(path)?;
     let mut ftimes = get_file_times(&path)?;
     let mut ads: Vec<DataRun> = Vec::new();
     let mut link = Link::default();
@@ -550,10 +578,9 @@ fn analyze_file(path: &Path, pprint: bool, strings_length: usize) -> io::Result<
     let bin = get_pe(path, &buffer)?;
     let mut strings: Vec<String> = Vec::new();
     if strings_length > 0 {strings = get_strings(&buffer, strings_length)?;}
-    print_log(path.to_string_lossy().into_owned(), bytes, mime_type, 
-        is_hidden,  is_link, link, ftimes.clone(), 
-        entropy, hashes, ads, bin, 
-        pprint, strings)?;
+    print_log(p, dir, fname, ext,
+        bytes, mime_type, is_hidden,  is_link, link, ftimes.clone(), 
+        entropy, hashes, ads, bin, pprint, strings)?;
     Ok(())
 }
 
@@ -637,7 +664,9 @@ fn get_args() -> io::Result<(String, bool, bool, usize)> {
 
 fn main() -> io::Result<()> {
     let (file_path, pprint, recurse, strings_length) = get_args()?;
-    is_file_or_dir(convert_to_path(&file_path)?.as_path(), pprint, recurse, strings_length)?;
+    is_file_or_dir(
+        convert_to_path(&file_path)?.as_path(), pprint, recurse, strings_length
+    )?;
     Ok(())
 }
 
