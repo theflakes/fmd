@@ -308,7 +308,7 @@ checksum = "37ab347416e802de484e4d03c7316c48f1ecb56574dfd4a46a80f173ce1de04d"
 
 [[package]]
 name = "fmd"
-version = "0.9.0"
+version = "0.9.1"
 dependencies = [
  "anyhow",
  "chrono",
@@ -475,12 +475,13 @@ dependencies = [
 
 [[package]]
 name = "lnk"
-version = "0.4.1"
+version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "74c22ceaeab0d65bc44bb98e3fd15bdf7b77ad5035c72a9d30edc9c4425da0bb"
+checksum = "e066ce29d4da51727b57c404c1270e3fa2a5ded0db1a4cb67c61f7a132421b2c"
 dependencies = [
  "bitflags",
  "byteorder",
+ "chrono",
  "log",
  "num-derive",
  "num-traits",

@@ -331,7 +331,8 @@ pub struct DataRun {
 impl Default for Link {
     fn default () -> Link {
         Link {
-            target: String::new(),
+            rel_path: String::new(),
+            abs_path: String::new(),
             arguments: String::new(),
             working_dir: String::new(),
             icon_location: String::new(),
@@ -339,12 +340,16 @@ impl Default for Link {
             comment: String::new(),
             show_command: String::new(),
             flags: String::new(),
+            drive_type: String::new(),
+            drive_serial_number: String::new(),
+            volume_label: String::new(),
         }
     }
 }
 #[derive(Serialize, Clone, Debug)]
 pub struct Link {
-    pub target: String,
+    pub rel_path: String,
+    pub abs_path: String,
     pub arguments: String,
     pub working_dir: String,
     pub icon_location: String,
@@ -352,6 +357,9 @@ pub struct Link {
     pub comment: String,
     pub show_command: String,
     pub flags: String,
+    pub drive_type: String,
+    pub drive_serial_number: String,
+    pub volume_label: String,
 }
 
 

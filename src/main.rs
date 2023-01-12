@@ -17,6 +17,7 @@ mod sector_reader;
 mod mft;
 
 use data_defs::*;
+use lnk::linkinfo::{VolumeID, DriveType};
 use mft::*;
 use fuzzyhash::FuzzyHash;
 use goblin::pe::PE;
@@ -39,7 +40,7 @@ use entropy::shannon_entropy;
 use std::os::windows::prelude::*;
 use std::collections::HashMap;
 use chrono::{DateTime, Utc};
-use lnk::{ShellLink};
+use lnk::{ShellLink, LinkInfo};
 //use rand::distributions::{ChiSquared, IndependentSample, Sample};
 
 
@@ -467,30 +468,6 @@ fn get_file_times<'a>(path: &Path) -> io::Result<FileTimestamps> {
     Ok(ftimes)
 }
 
-
-// find the parent directory of a given dir or file
-pub fn get_parent_dir(path: &std::path::Path) -> &std::path::Path {
-    match path.parent() {
-        Some(d) => return d,
-        None => return path
-    };
-}
-
-// return the path that a symlink points to
-fn resolve_link(
-        link_path: &std::path::Path,
-        file_path: &std::path::Path
-    ) -> std::io::Result<std::path::PathBuf> 
-{
-    let parent_dir = get_parent_dir(link_path);
-    match std::env::set_current_dir(parent_dir) {
-        Ok(f) => f,
-        Err(_e) => return Ok(std::path::PathBuf::new())
-    };
-    let abs = PathAbs::new(&file_path)?;
-    Ok(dunce::simplified(&abs.as_path()).into())
-}
-
 fn format_hotkey_text(hotkey: String) ->  std::io::Result<String> {
     let mk = hotkey
         .replace("HotkeyFlags { low_byte: ", "")
@@ -507,18 +484,6 @@ fn format_hotkey_text(hotkey: String) ->  std::io::Result<String> {
     Ok(hk)
 }
 
-// convert a string to a Rust file path
-pub fn push_file_path(
-        path: &str, 
-        suffix: &str
-    ) -> std::path::PathBuf 
-{
-    let mut p = path.to_owned();
-    p.push_str(suffix);
-    let r = std::path::Path::new(&p);
-    return r.to_owned()
-}
-
 /*
     determine if a file is a symlink or not
 */
@@ -528,11 +493,19 @@ pub fn get_link_info(link_path: &Path) -> std::io::Result<(Link, bool)> {
         Ok(l) => l,
         Err(_e) => return Ok((link, false))
     };
-    let file_path = match symlink.relative_path() {
-        Some(p) => push_file_path(p, ""),
-        None => std::path::PathBuf::new()
+    link.rel_path = match symlink.relative_path() {
+        Some(p) => p.to_string(),
+        None => String::new()
     };
-    link.target = resolve_link(&link_path, &file_path)?.as_os_str().to_string_lossy().to_string();
+    let binding = LinkInfo::default();
+    let i = match symlink.link_info() {
+        Some(a) => a,
+        None => &binding
+    };
+    link.abs_path = match i.local_base_path() {
+        Some(a) => a.to_string(),
+        None => String::new()
+    };
     link.arguments =  match symlink.arguments() {
         Some(a) => a.to_string(),
         None => String::new()
@@ -552,6 +525,14 @@ pub fn get_link_info(link_path: &Path) -> std::io::Result<(Link, bool)> {
     };
     link.show_command = format!("{:?}", symlink.header().show_command());
     link.flags = format!("{:?}", symlink.header().link_flags());
+    let volume = VolumeID::default();
+    let v = match i.volume_id() {
+        Some(a) => a,
+        None => &volume
+    };
+    link.drive_type = format!("{:?}", v.drive_type());
+    link.drive_serial_number = format!("{:?}", v.drive_serial_number());
+    link.volume_label = format!("{:?}", v.volume_label());
     Ok((link, true))
 }
 
