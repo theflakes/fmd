@@ -201,9 +201,9 @@ Example output:
 ```
 {
   "runtime_env": {
-    "timestamp": "2023-01-12T00:26:43.964116700+00:00",
+    "timestamp": "2023-01-12T00:28:57.871971300+00:00",
     "device_type": "Windows 10.0.22621 (Workstation)",
-    "run_as_admin": false
+    "run_as_admin": true
   },
   "path": "C:\\Users\\thefl\\Downloads\\SharpHound.exe.lnk",
   "directory": "C:\\Users\\thefl\\Downloads",
@@ -228,13 +228,13 @@ Example output:
     "volume_label": "\"Bkps\""
   },
   "timestamps": {
-    "access_fn": "",
-    "access_si": "2023-01-12T00:22:13.674",
-    "create_fn": "",
+    "access_fn": "2023-01-11T15:23:46.799",
+    "access_si": "2023-01-12T00:26:43.962",
+    "create_fn": "2023-01-11T15:23:46.790",
     "create_si": "2023-01-11T15:23:46.790",
-    "modify_fn": "",
+    "modify_fn": "2023-01-11T15:23:46.793",
     "modify_si": "2023-01-11T16:25:01.945",
-    "mft_record": ""
+    "mft_record": "2023-01-11T15:23:46.801"
   },
   "entropy": 4.3651047,
   "hashes": {
@@ -243,7 +243,13 @@ Example output:
     "sha256": "58dd16a28e5b7edee3ee2ed5a2159135ef53b70ca31f6a2fdf3513cdf10068cc",
     "ssdeep": "24:8GC8aWsnLnN5/yLkZmdyDkNQ1DHdz4/LFtVMwLs2cXpoHs/dmn7:8G/SnLeyDH1DgGpGIc"
   },
-  "ads": [],
+  "ads": [
+    {
+      "name": "",
+      "bytes": 1446,
+      "first_256_bytes": "L...\u0001\u0014\u0002.....�......F�.\b. ...�Y\u001a�,\u0016�\u0001fr\u001f��%�\u0001.��~v��\u0001.\f\u0010.....\u0001...............�.\u0014.\u001fP�O� �:i\u0010��\b.+00�\u0019./E:\\...................T.1.....)VE\r0.shared..>.\t.\u0004.ﾖU�\u0014+V�z....�.....\u0004...............'�\u0012\u0001s.h.a.r.e.d...\u0016.j.2..\f\u0010.\u0003U�� .SHARPH~1.EXE..N.\t.\u0004.ﾖU\\�+V�z...."
+    }
+  ],
   "binary": {
     "is_64": false,
     "is_dotnet": false,
