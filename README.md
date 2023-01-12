@@ -67,7 +67,8 @@ Example output:
   "is_hidden": false,
   "is_link": false,
   "link": {
-    "target": "",
+    "rel_path": "",
+    "abs_path": "",
     "arguments": "",
     "working_dir": "",
     "icon_location": "",
