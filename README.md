@@ -74,7 +74,10 @@ Example output:
     "hotkey": "",
     "comment": "",
     "show_command": "",
-    "attributes": ""
+    "flags": "",
+    "drive_type": "",
+    "drive_serial_number": "",
+    "volume_label": ""
   },
   "timestamps": {
     "access_fn": "2022-12-24T16:48:24.647",
