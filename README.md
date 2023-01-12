@@ -201,51 +201,49 @@ Example output:
 ```
 {
   "runtime_env": {
-    "timestamp": "2023-01-11T18:07:33.317621500+00:00",
+    "timestamp": "2023-01-12T00:26:43.964116700+00:00",
     "device_type": "Windows 10.0.22621 (Workstation)",
-    "run_as_admin": true
+    "run_as_admin": false
   },
-  "path": "C:\\Users\\thefl\\Downloads\\RunAsService.exe.lnk",
+  "path": "C:\\Users\\thefl\\Downloads\\SharpHound.exe.lnk",
   "directory": "C:\\Users\\thefl\\Downloads",
-  "filename": "RunAsService.exe.lnk",
+  "filename": "SharpHound.exe.lnk",
   "extension": "lnk",
-  "bytes": 1206,
+  "bytes": 1446,
   "mime_type": "application/octet-stream",
   "is_hidden": false,
   "is_link": true,
   "link": {
-    "target": "C:\\Users\\thefl\\Downloads\\RunAsService.exe",
-    "arguments": "--do_evil \"evil stuff\" --make_it_really_evil",
-    "working_dir": "C:\\Users\\thefl\\Downloads",
-    "icon_location": "%SystemRoot%\\System32\\SHELL32.dll",
+    "rel_path": "",
+    "abs_path": "E:\\shared\\SharpHound.exe",
+    "arguments": "-blah \"hi there\"",
+    "working_dir": "E:\\shared",
+    "icon_location": "E:\\shared\\SharpHound.exe",
     "hotkey": "NO_MODIFIER-NoKeyAssigned",
-    "comment": "Definately not evil",
+    "comment": "not evil, please just run me",
     "show_command": "ShowNormal",
-    "attributes": "FILE_ATTRIBUTE_ARCHIVE"
+    "flags": "HAS_LINK_TARGET_ID_LIST | HAS_LINK_INFO | HAS_WORKING_DIR | HAS_ARGUMENTS | HAS_ICON_LOCATION | IS_UNICODE | ENABLE_TARGET_METADATA",
+    "drive_type": "DriveFixed",
+    "drive_serial_number": "1963598570",
+    "volume_label": "\"Bkps\""
   },
   "timestamps": {
-    "access_fn": "2023-01-11T18:05:56.205",
-    "access_si": "2023-01-11T18:07:28.681",
-    "create_fn": "2023-01-11T18:05:56.190",
-    "create_si": "2023-01-11T18:05:56.190",
-    "modify_fn": "2023-01-11T18:05:56.190",
-    "modify_si": "2023-01-11T18:07:28.057",
-    "mft_record": "2023-01-11T18:05:56.205"
+    "access_fn": "",
+    "access_si": "2023-01-12T00:22:13.674",
+    "create_fn": "",
+    "create_si": "2023-01-11T15:23:46.790",
+    "modify_fn": "",
+    "modify_si": "2023-01-11T16:25:01.945",
+    "mft_record": ""
   },
-  "entropy": 4.6267877,
+  "entropy": 4.3651047,
   "hashes": {
-    "md5": "36825bc94d81d08fce309a50a663ddaa",
-    "sha1": "aa203ae1e1dd3b76b6b695936f11f8a73cab8413",
-    "sha256": "168f41912190771a1f193e2a71670c970c11cc0a9f33ae8ddd376019c49a5ecd",
-    "ssdeep": "24:8hbh2NE52qKfe7QATcA7UL4I0sVIFnZfaYYqjjmaN:8T2NE5RCe7TdDIKBU0dN"
+    "md5": "fc751be8019b136611299843b174da3f",
+    "sha1": "301ef23cfbba2e105ad1fb7e23290c72d9720d4d",
+    "sha256": "58dd16a28e5b7edee3ee2ed5a2159135ef53b70ca31f6a2fdf3513cdf10068cc",
+    "ssdeep": "24:8GC8aWsnLnN5/yLkZmdyDkNQ1DHdz4/LFtVMwLs2cXpoHs/dmn7:8G/SnLeyDH1DgGpGIc"
   },
-  "ads": [
-    {
-      "name": "",
-      "bytes": 1206,
-      "first_256_bytes": "L...\u0001\u0014\u0002.....�......F�.\b. ...�\u0004���\u0017�\u0001�)�d�%�\u0001�R��\u0017�\u0001.\\..\u001b...\u0001...............�.:.\u001f.\u00059�\b#\u0003\u0002K�&]�B�\u0011_&.\u0001.&.�\u0011...j��P�\u0010�\u0001�E/��%�\u0001?\u0007{~�%�\u0001\u0014.n.2..\\..�UZ� .RUNASS~1.EXE..R.\t.\u0004.ﾘU\f�+V��....8�....8...............Vk\u0007.R.u.n.A.s.S.e.r.v.i.c.e...e.x.e...\u001c...X...\u001c.."
-    }
-  ],
+  "ads": [],
   "binary": {
     "is_64": false,
     "is_dotnet": false,
@@ -277,8 +275,8 @@ Example output:
     },
     "imports": {
       "hashes": {
-        "hash": "",
-        "hash_sorted": "",
+        "md5": "",
+        "md5_sorted": "",
         "ssdeep": "",
         "ssdeep_sorted": ""
       },
@@ -287,16 +285,15 @@ Example output:
       "imports": []
     },
     "exports": {
+      "hashes": {
+        "md5": "",
+        "ssdeep": ""
+      },
       "count": 0,
       "names": []
     }
   },
-  "strings": [
-    "RUNASS",
-    "1.EXE",
-    "C:\\Users\\thefl\\Downloads\\RunAsService.exe",
-    "1SPS0"
-  ]
+  "strings": []
 }
 ```
 See:  
