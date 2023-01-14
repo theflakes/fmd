@@ -580,35 +580,38 @@ fn analyze_file(path: &Path, pprint: bool, strings_length: usize) -> io::Result<
 }
 
 
-fn is_file_or_dir(path: &Path, pprint: bool, recurse: bool, strings_length: usize) -> io::Result<()> {
+fn is_file_or_dir(
+        path: &Path, pprint: bool, recurse: bool, depth: usize, 
+        mut current_depth: usize, strings_length: usize
+    ) -> io::Result<()> 
+{
     if path.is_file() {
         match analyze_file(path, pprint, strings_length) {
             Ok(a) => a,
             Err(_e) => return Ok(())
         };
     } else if path.is_dir() {
+        current_depth += 1;
         for entry in fs::read_dir(path)? {
-            let entry = match entry {
+            let e = match entry {
                 Ok(m) => m,
                 Err(_e) => continue
             };
-            let p = entry.path();
-            if p.is_dir() {
+            if e.path().is_dir() && (current_depth < depth) {
                 if !recurse { continue; }
-                match is_file_or_dir(p.as_path(), pprint, recurse, strings_length) {
+                match is_file_or_dir(e.path().as_path(), pprint, recurse, depth, current_depth, strings_length) {
                     Ok(a) => a,
                     Err(_e) => continue
                 };
             }
-            if p.is_file() {
-                match analyze_file(p.as_path(), pprint, strings_length) {
+            if e.path().is_file() {
+                match analyze_file(e.path().as_path(), pprint, strings_length) {
                     Ok(a )=> a,
                     Err(_e) => continue
                 };
             }
         }
     }
-
     Ok(())
 }
 
@@ -630,22 +633,30 @@ fn convert_to_path(target: &str) -> io::Result<PathBuf> {
 }
 
 
-fn get_args() -> io::Result<(String, bool, bool, usize)> {
+fn get_args() -> io::Result<(String, bool, bool, usize, usize)> {
     let args: Vec<String> = env::args().collect();
     let mut file_path = String::new();
+    let mut get_depth = false;
     let mut pprint = false;
     let mut recurse = false;
     let mut strings: usize = 0;
+    let mut depth: usize = 0;
     let mut get_strings_length = false;
     if args.len() == 1 { print_help(); }
     for arg in args {
         match arg.as_str() {
+            "-d" | "--depth" => get_depth = true,
             "-p" | "--pretty" => pprint = true,
             "-r" | "--recurse" => recurse = true,
             "-s" | "--strings" => get_strings_length = true,
             _ => {
-                if get_strings_length {
+                if get_depth {
+                    depth = arg.as_str().parse::<usize>().unwrap_or(1);
+                    if depth < 1 { print_help(); }
+                    get_depth = false;
+                } else if get_strings_length {
                     strings = arg.as_str().parse::<usize>().unwrap_or(50);
+                    if strings < 1 { print_help(); }
                     get_strings_length = false;
                 } else {
                     file_path = arg.clone();
@@ -653,14 +664,14 @@ fn get_args() -> io::Result<(String, bool, bool, usize)> {
             }
         }
     }
-    Ok((file_path.clone(), pprint, recurse, strings))
+    Ok((file_path.clone(), pprint, recurse, depth, strings))
 }
 
 
 fn main() -> io::Result<()> {
-    let (file_path, pprint, recurse, strings_length) = get_args()?;
+    let (file_path, pprint, recurse, depth, strings_length) = get_args()?;
     is_file_or_dir(
-        convert_to_path(&file_path)?.as_path(), pprint, recurse, strings_length
+        convert_to_path(&file_path)?.as_path(), pprint, recurse, depth,  0, strings_length
     )?;
     Ok(())
 }
@@ -668,36 +679,43 @@ fn main() -> io::Result<()> {
 
 fn print_help() {
     let help = "
-        Author: Brian Kellogg
-        License: MIT
-        Purpose: Pull various file metadata.
-        Usage: fmd [--pretty | -p] ([--strings|-s] #) <file path> [--recurse | -r]
-        Options:
-            -p, --pretty        Pretty print JSON
-            -r, --recurse       If passed a directory, recurse into all subdirectories
-            -s, --strings #     Look for strings of length # or longer
+Author: Brian Kellogg
+License: MIT
+Purpose: Pull various file metadata.
+Usage: fmd [--pretty | -p] ([--strings|-s] #) <file path> [--recurse | -r]
+Options:
+    -d, --depth #       Number of subdirecties to recurse into from the starting directory 
+    -p, --pretty        Pretty print JSON
+    -r, --recurse       If passed a directory, recurse into all subdirectories
+    -s, --strings #     Look for strings of length # or longer
 
-        NOTE: If passed a directory, all files in that directory will be analyzed.
-              Harvesting $FILE_NAME timestamps can only be done by running this tool elevated.
-              The 'run_as_admin' field shows if the tool was run elevated.
+If just passed a directory, only the contents of that directory will be processed.
+    - i.e. no subdirectories will be processed.
 
-              Harvesting Alternate Data Stream (ADS) information can only be done by running 
-              this tool elevated. ADS information is acquired by directly accessing the NTFS which
-              requires elevation.
+fmd.exe <directory> --recurse --depth 1
+    - This will work exactly as if the -r and -d options were not specified.
 
-              'runtime_env' stores information on the device that this tool was run on.
+NOTE: If passed a directory, all files in that directory will be analyzed.
+        Harvesting $FILE_NAME timestamps can only be done by running this tool elevated.
+        The 'run_as_admin' field shows if the tool was run elevated.
 
-              PE Sections:
-              - 'total_sections' reports how many PE sections are found after the PE headers.
-              - 'total_raw_bytes' cumulative size in bytes of all raw, on disk, sections.
-              - 'total_virt_bytes' cumulative size in bytes of all virtual, in memory, sections.
-              - if 'total_virt_bytes' is much larger than 'total_raw_bytes', this can indicate
-                a packed binary.
+        Harvesting Alternate Data Stream (ADS) information can only be done by running 
+        this tool elevated. ADS information is acquired by directly accessing the NTFS which
+        requires elevation.
 
-              Certain forensic information can only be harvested when the file is analyzed on
-              the filesystem of origin. 
-              - e.g. timestamps and alternate data streams are lost when the file is moved 
-                off of the filesystem of origin.
+        'runtime_env' stores information on the device that this tool was run on.
+
+        PE Sections:
+        - 'total_sections' reports how many PE sections are found after the PE headers.
+        - 'total_raw_bytes' cumulative size in bytes of all raw, on disk, sections.
+        - 'total_virt_bytes' cumulative size in bytes of all virtual, in memory, sections.
+        - if 'total_virt_bytes' is much larger than 'total_raw_bytes', this can indicate
+        a packed binary.
+
+        Certain forensic information can only be harvested when the file is analyzed on
+        the filesystem of origin. 
+        - e.g. timestamps and alternate data streams are lost when the file is moved 
+        off of the filesystem of origin.
     ";
     println!("{}", help);
     process::exit(1)
