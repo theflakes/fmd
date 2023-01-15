@@ -554,25 +554,27 @@ fn get_dir_fname_ext(path: &Path) -> io::Result<(String, String, String)> {
 }
 
 
-fn analyze_file(path: &Path, pprint: bool, strings_length: usize) -> io::Result<()> {
+fn analyze_file(path: &Path, pprint: bool, strings_length: usize, max_size: u64) -> io::Result<()> {
     let p = path.to_string_lossy().into_owned();
     let (dir, fname, ext) = get_dir_fname_ext(path)?;
     let mut ftimes = get_file_times(&path)?;
     let mut ads: Vec<DataRun> = Vec::new();
-    let mut link = Link::default();
-    let mut is_link = false;
-    (link, is_link) = get_link_info(path)?;
+    let (link, is_link) = get_link_info(path)?;
     (ftimes, ads) = get_fname(path, ftimes).unwrap();
     let file = open_file(&path)?;
-    let mut bytes = file.metadata().unwrap().len();
+    let bytes = file.metadata().unwrap().len();
     let is_hidden = is_hidden(&path)?;
-    let buffer = read_file_bytes(&file)?;
-    let entropy = shannon_entropy(&buffer);
-    let mime_type = get_mimetype(&buffer)?;
-    let hashes = get_file_hashes(&buffer)?;
-    let bin = get_pe(path, &buffer)?;
+    let mut entropy: f32 = 0.0;
+    let mut hashes = Hashes::default();
     let mut strings: Vec<String> = Vec::new();
+    let buffer = read_file_bytes(&file)?;
+    let mime_type = get_mimetype(&buffer)?;
+    let bin = get_pe(path, &buffer)?;
     if strings_length > 0 {strings = get_strings(&buffer, strings_length)?;}
+    if bytes <= max_size {
+        entropy = shannon_entropy(&buffer);
+        hashes = get_file_hashes(&buffer)?;
+    }
     print_log(p, dir, fname, ext,
         bytes, mime_type, is_hidden,  is_link, link, ftimes.clone(), 
         entropy, hashes, ads, bin, pprint, strings)?;
@@ -582,11 +584,11 @@ fn analyze_file(path: &Path, pprint: bool, strings_length: usize) -> io::Result<
 
 fn is_file_or_dir(
         path: &Path, pprint: bool, recurse: bool, depth: usize, 
-        mut current_depth: usize, strings_length: usize
+        mut current_depth: usize, strings_length: usize, max_size: u64
     ) -> io::Result<()> 
 {
     if path.is_file() {
-        match analyze_file(path, pprint, strings_length) {
+        match analyze_file(path, pprint, strings_length, max_size) {
             Ok(a) => a,
             Err(_e) => return Ok(())
         };
@@ -599,13 +601,13 @@ fn is_file_or_dir(
             };
             if e.path().is_dir() && (current_depth < depth) {
                 if !recurse { continue; }
-                match is_file_or_dir(e.path().as_path(), pprint, recurse, depth, current_depth, strings_length) {
+                match is_file_or_dir(e.path().as_path(), pprint, recurse, depth, current_depth, strings_length, max_size) {
                     Ok(a) => a,
                     Err(_e) => continue
                 };
             }
             if e.path().is_file() {
-                match analyze_file(e.path().as_path(), pprint, strings_length) {
+                match analyze_file(e.path().as_path(), pprint, strings_length, max_size) {
                     Ok(a )=> a,
                     Err(_e) => continue
                 };
@@ -633,7 +635,7 @@ fn convert_to_path(target: &str) -> io::Result<PathBuf> {
 }
 
 
-fn get_args() -> io::Result<(String, bool, bool, usize, usize)> {
+fn get_args() -> io::Result<(String, bool, bool, usize, usize, u64)> {
     let args: Vec<String> = env::args().collect();
     let mut file_path = String::new();
     let mut get_depth = false;
@@ -641,11 +643,14 @@ fn get_args() -> io::Result<(String, bool, bool, usize, usize)> {
     let mut recurse = false;
     let mut strings: usize = 0;
     let mut depth: usize = 0;
+    let mut get_size = false;
+    let mut max_size: u64 = 0;
     let mut get_strings_length = false;
     if args.len() == 1 { print_help(); }
     for arg in args {
         match arg.as_str() {
             "-d" | "--depth" => get_depth = true,
+            "-m" | "--maxsize" => get_size = true,
             "-p" | "--pretty" => pprint = true,
             "-r" | "--recurse" => recurse = true,
             "-s" | "--strings" => get_strings_length = true,
@@ -654,6 +659,10 @@ fn get_args() -> io::Result<(String, bool, bool, usize, usize)> {
                     depth = arg.as_str().parse::<usize>().unwrap_or(1);
                     if depth < 1 { print_help(); }
                     get_depth = false;
+                } else if get_size {
+                    max_size = arg.as_str().parse::<u64>().unwrap_or(0);
+                    if max_size < 1 { print_help(); }
+                    get_size = false;
                 } else if get_strings_length {
                     strings = arg.as_str().parse::<usize>().unwrap_or(50);
                     if strings < 1 { print_help(); }
@@ -664,14 +673,14 @@ fn get_args() -> io::Result<(String, bool, bool, usize, usize)> {
             }
         }
     }
-    Ok((file_path.clone(), pprint, recurse, depth, strings))
+    Ok((file_path.clone(), pprint, recurse, depth, strings, max_size))
 }
 
 
 fn main() -> io::Result<()> {
-    let (file_path, pprint, recurse, depth, strings_length) = get_args()?;
+    let (file_path, pprint, recurse, depth, strings_length, max_size) = get_args()?;
     is_file_or_dir(
-        convert_to_path(&file_path)?.as_path(), pprint, recurse, depth,  0, strings_length
+        convert_to_path(&file_path)?.as_path(), pprint, recurse, depth,  0, strings_length, max_size
     )?;
     Ok(())
 }
@@ -682,9 +691,12 @@ fn print_help() {
 Author: Brian Kellogg
 License: MIT
 Purpose: Pull various file metadata.
-Usage: fmd [--pretty | -p] ([--strings|-s] #) <file path> [--recurse | -r]
+Usage: fmd [--pretty | -p] ([--strings|-s] #) <file path> [--recurse | -r] ([--depth | -d] #)
 Options:
     -d, --depth #       Number of subdirecties to recurse into from the starting directory 
+    -m, --maxsize #     Max file size in bytes to perform content analysis on
+                            Any file larger than this will not have the following run: 
+                            hashing, entropy
     -p, --pretty        Pretty print JSON
     -r, --recurse       If passed a directory, recurse into all subdirectories
     -s, --strings #     Look for strings of length # or longer
