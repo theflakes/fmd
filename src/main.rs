@@ -554,13 +554,27 @@ fn get_dir_fname_ext(path: &Path) -> io::Result<(String, String, String)> {
 }
 
 
+fn check_extensions(not_exts: bool, extensions: &Vec<String>, ext: &String) -> bool {
+    if extensions.len() == 0 { return false; }
+    match not_exts {
+        true => {
+            if extensions.contains(&ext) {return true;} else {return false}
+        }
+        false => {
+            if !extensions.contains(&ext) {return true;} else {return false}
+        }
+    }
+}
+
+
 fn analyze_file(
-    path: &Path, pprint: bool, strings_length: usize, 
-    max_size: u64, extensions: &Vec<String>, not_exts: bool
+        path: &Path, pprint: bool, strings_length: usize, 
+        max_size: u64, extensions: &Vec<String>, not_exts: bool,
+        int_mtypes: bool
     ) -> io::Result<()> 
 {
     let (dir, fname, ext) = get_dir_fname_ext(path)?;
-    if (not_exts && extensions.contains(&ext)) || (!not_exts && !extensions.contains(&ext)) { return Ok(()) }
+    if check_extensions(not_exts, extensions, &ext) { return Ok(()) }
     let mut ftimes = get_file_times(&path)?;
     let mut ads: Vec<DataRun> = Vec::new();
     let (link, is_link) = get_link_info(path)?;
@@ -568,14 +582,17 @@ fn analyze_file(
     let file = open_file(&path)?;
     let bytes = file.metadata().unwrap().len();
     let is_hidden = is_hidden(&path)?;
+    let mut bin = Binary::default();
     let mut entropy: f32 = 0.0;
     let mut hashes = Hashes::default();
     let mut strings: Vec<String> = Vec::new();
-    let buffer = read_file_bytes(&file)?;
-    let mime_type = get_mimetype(&buffer)?;
-    let bin = get_pe(path, &buffer)?;
-    if strings_length > 0 {strings = get_strings(&buffer, strings_length)?;}
-    if bytes <= max_size {
+    let mut mime_type = String::new();
+    if max_size == 0 || bytes <= max_size {
+        let buffer = read_file_bytes(&file)?;
+        mime_type = get_mimetype(&buffer)?;
+        if int_mtypes && !INTERESTING_MIME_TYPES.contains(&mime_type.as_str()) { return Ok(())}
+        bin = get_pe(path, &buffer)?;
+        if strings_length > 0 {strings = get_strings(&buffer, strings_length)?;}
         entropy = shannon_entropy(&buffer);
         hashes = get_file_hashes(&buffer)?;
     }
@@ -588,13 +605,15 @@ fn analyze_file(
 
 
 fn is_file_or_dir(
-        path: &Path, pprint: bool, recurse: bool, depth: usize, 
-        mut current_depth: usize, strings_length: usize, max_size: u64,
-        extensions: &Vec<String>, not_exts: bool
+        path: &Path, pprint: bool, depth: usize, mut current_depth: usize, 
+        strings_length: usize, max_size: u64, extensions: &Vec<String>, 
+        not_exts: bool, int_mtypes: bool
     ) -> io::Result<()> 
 {
     if path.is_file() {
-        match analyze_file(path, pprint, strings_length, max_size, extensions, not_exts) {
+        match analyze_file(path, pprint, strings_length, 
+                max_size, extensions, not_exts, int_mtypes) 
+        {
             Ok(a) => a,
             Err(_e) => return Ok(())
         };
@@ -605,15 +624,21 @@ fn is_file_or_dir(
                 Ok(m) => m,
                 Err(_e) => continue
             };
-            if e.path().is_dir() && (current_depth < depth) {
-                if !recurse { continue; }
-                match is_file_or_dir(e.path().as_path(), pprint, recurse, depth, current_depth, strings_length, max_size, extensions, not_exts) {
+            if e.path().is_dir() && (current_depth < depth || depth == 0) {
+                if depth == 0 { continue; }
+                match is_file_or_dir(e.path().as_path(), pprint, depth, 
+                        current_depth, strings_length, max_size, extensions, 
+                        not_exts, int_mtypes) 
+                {
                     Ok(a) => a,
                     Err(_e) => continue
                 };
             }
             if e.path().is_file() {
-                match analyze_file(e.path().as_path(), pprint, strings_length, max_size, extensions, not_exts) {
+                match analyze_file(e.path().as_path(), pprint, 
+                    strings_length, max_size, extensions, not_exts
+                    , int_mtypes) 
+                {
                     Ok(a )=> a,
                     Err(_e) => continue
                 };
@@ -641,12 +666,11 @@ fn convert_to_path(target: &str) -> io::Result<PathBuf> {
 }
 
 
-fn get_args() -> io::Result<(String, bool, bool, usize, usize, u64, Vec<String>, bool)> {
+fn get_args() -> io::Result<(String, bool, usize, usize, u64, Vec<String>, bool, bool)> {
     let args: Vec<String> = env::args().collect();
     let mut file_path = String::new();
-    let mut get_depth = false;
     let mut pprint = false;
-    let mut recurse = false;
+    let mut get_depth = false;
     let mut strings: usize = 0;
     let mut depth: usize = 0;
     let mut get_size = false;
@@ -655,18 +679,19 @@ fn get_args() -> io::Result<(String, bool, bool, usize, usize, u64, Vec<String>,
     let mut get_exts = false;
     let mut exts_vec: Vec<String> = Vec::new();
     let mut not_exts = false;
+    let mut int_mtypes = false;
     if args.len() == 1 { print_help(); }
     for arg in args {
         match arg.as_str() {
             "-d" | "--depth" => get_depth = true,
             "-e" | "--extensions" => get_exts = true,
+            "-i" | "--int-mtypes" => int_mtypes = true,
             "-m" | "--maxsize" => get_size = true,
             "-p" | "--pretty" => pprint = true,
-            "-r" | "--recurse" => recurse = true,
             "-s" | "--strings" => get_strings_length = true,
             _ => {
                 if get_depth {
-                    depth = arg.as_str().parse::<usize>().unwrap_or(1);
+                    depth = arg.as_str().parse::<usize>().unwrap_or(0);
                     if depth < 1 { print_help(); }
                     get_depth = false;
                 } else if get_size {
@@ -680,7 +705,8 @@ fn get_args() -> io::Result<(String, bool, bool, usize, usize, u64, Vec<String>,
                 } else if get_exts {
                     let exts = arg.as_str();
                     if exts.starts_with("not:") { not_exts = true }
-                    exts_vec = exts.replace(" ", "").replace("not:", "").split(',').map(str::to_string).collect();
+                    exts_vec = exts.replace(" ", "").replace("not:", "")
+                                    .split(',').map(str::to_string).collect();
                     get_exts = false;
                 } else {
                     file_path = arg.clone();
@@ -688,17 +714,17 @@ fn get_args() -> io::Result<(String, bool, bool, usize, usize, u64, Vec<String>,
             }
         }
     }
-    Ok((file_path.clone(), pprint, recurse, depth, strings, max_size, exts_vec, not_exts))
+    Ok((file_path.clone(), pprint, depth, strings, max_size, exts_vec, not_exts, int_mtypes))
 }
 
 
 fn main() -> io::Result<()> {
-    let (file_path, pprint, recurse, depth, 
-        strings_length, max_size, extensions, not_exts) = get_args()?;
+    let (file_path, pprint, depth, 
+        strings_length, max_size, extensions, 
+        not_exts, int_mtypes) = get_args()?;
     is_file_or_dir(
-        convert_to_path(&file_path)?.as_path(), pprint, recurse, 
-        depth,  0, strings_length, max_size, &extensions,
-        not_exts
+        convert_to_path(&file_path)?.as_path(), pprint,  depth,  0, strings_length, max_size, &extensions,
+        not_exts, int_mtypes
     )?;
     Ok(())
 }
@@ -717,14 +743,15 @@ Usage:
         This will process all files that do not have the specified extensions.
 
 Options:
-    -d, --depth #       Number of subdirecties to recurse into from the starting directory 
+    -d, --depth #       If passed a directory, recurse into all subdirectories
+                        to the specified subdirectory depth
     -e, --extensions *  Quoted list of comma seperated extensions
                             Any extensions not in the list will be ignored
+    -i, --int_mtypes    Only analyze files that are more interesting mime types
     -m, --maxsize #     Max file size in bytes to perform content analysis on
                             Any file larger than this will not have the following run: 
-                            hashing, entropy
+                            hashing, entropy, mime type, strings, PE analysis
     -p, --pretty        Pretty print JSON
-    -r, --recurse       If passed a directory, recurse into all subdirectories
     -s, --strings #     Look for strings of length # or longer
 
 If just passed a directory, only the contents of that directory will be processed.
@@ -732,6 +759,11 @@ If just passed a directory, only the contents of that directory will be processe
 
 fmd.exe <directory> --recurse --depth 1
     - This will work exactly as if the -r and -d options were not specified.
+
+Interesting mime types:
+    application/x-executable    -> executable
+    application/x-msdownload    -> self-extracting
+    application/x-sharedlib     -> elf binary
 
 NOTE: If passed a directory, all files in that directory will be analyzed.
         Harvesting $FILE_NAME timestamps can only be done by running this tool elevated.

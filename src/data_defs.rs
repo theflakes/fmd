@@ -12,6 +12,12 @@ lazy_static! {
     pub static ref DEVICE_TYPE: String = whoami::distro();
 }
 
+pub static INTERESTING_MIME_TYPES: &'static [&'static str] = &[
+    "application/x-executable", // executable
+    "application/x-msdownload", // self-extracting
+    "application/x-sharedlib",  // elf binary
+];
+
 fn get_time_iso8601() -> io::Result<String> {
     let now = SystemTime::now();
     let now: DateTime<Utc> = now.into();

@@ -21,11 +21,23 @@ Linux x64:  sudo apt update && sudo apt install mingw-w64
 Author: Brian Kellogg
 License: MIT
 Purpose: Pull various file metadata.
-Usage: fmd [--pretty | -p] ([--strings|-s] #) <file path> [--recurse | -r]
+
+Usage: 
+    fmd [--pretty | -p] ([--strings|-s] #) <file path> [--recurse | -r] ([--depth | -d] #)
+    fmd --pretty -r --depth 3 --extensions \"exe,dll,pif,ps1,bat,com\"
+    fmd --pretty -r --depth 3 --extensions \"not:exe,dll,pif,ps1,bat,com\"
+        This will process all files that do not have the specified extensions.
+
 Options:
-    -d, --depth #       Number of subdirecties to recurse into from the starting directory 
+    -d, --depth #       If passed a directory, recurse into all subdirectories
+                        to the specified subdirectory depth
+    -e, --extensions *  Quoted list of comma seperated extensions
+                            Any extensions not in the list will be ignored
+    -i, --int_mtypes    Only analyze files that are more interesting mime types
+    -m, --maxsize #     Max file size in bytes to perform content analysis on
+                            Any file larger than this will not have the following run: 
+                            hashing, entropy, mime type, strings, PE analysis
     -p, --pretty        Pretty print JSON
-    -r, --recurse       If passed a directory, recurse into all subdirectories
     -s, --strings #     Look for strings of length # or longer
 
 If just passed a directory, only the contents of that directory will be processed.
@@ -33,6 +45,11 @@ If just passed a directory, only the contents of that directory will be processe
 
 fmd.exe <directory> --recurse --depth 1
     - This will work exactly as if the -r and -d options were not specified.
+
+Interesting mime types:
+    application/x-executable    -> executable
+    application/x-msdownload    -> self-extracting
+    application/x-sharedlib     -> elf binary
 
 NOTE: If passed a directory, all files in that directory will be analyzed.
         Harvesting $FILE_NAME timestamps can only be done by running this tool elevated.
