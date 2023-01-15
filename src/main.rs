@@ -709,12 +709,13 @@ fn print_help() {
 Author: Brian Kellogg
 License: MIT
 Purpose: Pull various file metadata.
+
 Usage: 
     fmd [--pretty | -p] ([--strings|-s] #) <file path> [--recurse | -r] ([--depth | -d] #)
     fmd --pretty -r --depth 3 --extensions \"exe,dll,pif,ps1,bat,com\"
     fmd --pretty -r --depth 3 --extensions \"not:exe,dll,pif,ps1,bat,com\"
         This will process all files that do not have the specified extensions.
-        
+
 Options:
     -d, --depth #       Number of subdirecties to recurse into from the starting directory 
     -e, --extensions *  Quoted list of comma seperated extensions
