@@ -554,9 +554,13 @@ fn get_dir_fname_ext(path: &Path) -> io::Result<(String, String, String)> {
 }
 
 
-fn analyze_file(path: &Path, pprint: bool, strings_length: usize, max_size: u64, extensions: &Vec<String>) -> io::Result<()> {
+fn analyze_file(
+    path: &Path, pprint: bool, strings_length: usize, 
+    max_size: u64, extensions: &Vec<String>, not_exts: bool
+    ) -> io::Result<()> 
+{
     let (dir, fname, ext) = get_dir_fname_ext(path)?;
-    if !extensions.contains(&ext) { return Ok(()) }
+    if (not_exts && extensions.contains(&ext)) || (!not_exts && !extensions.contains(&ext)) { return Ok(()) }
     let mut ftimes = get_file_times(&path)?;
     let mut ads: Vec<DataRun> = Vec::new();
     let (link, is_link) = get_link_info(path)?;
@@ -586,11 +590,11 @@ fn analyze_file(path: &Path, pprint: bool, strings_length: usize, max_size: u64,
 fn is_file_or_dir(
         path: &Path, pprint: bool, recurse: bool, depth: usize, 
         mut current_depth: usize, strings_length: usize, max_size: u64,
-        extensions: &Vec<String>
+        extensions: &Vec<String>, not_exts: bool
     ) -> io::Result<()> 
 {
     if path.is_file() {
-        match analyze_file(path, pprint, strings_length, max_size, extensions) {
+        match analyze_file(path, pprint, strings_length, max_size, extensions, not_exts) {
             Ok(a) => a,
             Err(_e) => return Ok(())
         };
@@ -603,13 +607,13 @@ fn is_file_or_dir(
             };
             if e.path().is_dir() && (current_depth < depth) {
                 if !recurse { continue; }
-                match is_file_or_dir(e.path().as_path(), pprint, recurse, depth, current_depth, strings_length, max_size, extensions) {
+                match is_file_or_dir(e.path().as_path(), pprint, recurse, depth, current_depth, strings_length, max_size, extensions, not_exts) {
                     Ok(a) => a,
                     Err(_e) => continue
                 };
             }
             if e.path().is_file() {
-                match analyze_file(e.path().as_path(), pprint, strings_length, max_size, extensions) {
+                match analyze_file(e.path().as_path(), pprint, strings_length, max_size, extensions, not_exts) {
                     Ok(a )=> a,
                     Err(_e) => continue
                 };
@@ -637,7 +641,7 @@ fn convert_to_path(target: &str) -> io::Result<PathBuf> {
 }
 
 
-fn get_args() -> io::Result<(String, bool, bool, usize, usize, u64, Vec<String>)> {
+fn get_args() -> io::Result<(String, bool, bool, usize, usize, u64, Vec<String>, bool)> {
     let args: Vec<String> = env::args().collect();
     let mut file_path = String::new();
     let mut get_depth = false;
@@ -650,6 +654,7 @@ fn get_args() -> io::Result<(String, bool, bool, usize, usize, u64, Vec<String>)
     let mut get_strings_length = false;
     let mut get_exts = false;
     let mut exts_vec: Vec<String> = Vec::new();
+    let mut not_exts = false;
     if args.len() == 1 { print_help(); }
     for arg in args {
         match arg.as_str() {
@@ -674,7 +679,8 @@ fn get_args() -> io::Result<(String, bool, bool, usize, usize, u64, Vec<String>)
                     get_strings_length = false;
                 } else if get_exts {
                     let exts = arg.as_str();
-                    exts_vec = exts.replace(" ", "").split(',').map(str::to_string).collect();
+                    if exts.starts_with("not:") { not_exts = true }
+                    exts_vec = exts.replace(" ", "").replace("not:", "").split(',').map(str::to_string).collect();
                     get_exts = false;
                 } else {
                     file_path = arg.clone();
@@ -682,14 +688,17 @@ fn get_args() -> io::Result<(String, bool, bool, usize, usize, u64, Vec<String>)
             }
         }
     }
-    Ok((file_path.clone(), pprint, recurse, depth, strings, max_size, exts_vec))
+    Ok((file_path.clone(), pprint, recurse, depth, strings, max_size, exts_vec, not_exts))
 }
 
 
 fn main() -> io::Result<()> {
-    let (file_path, pprint, recurse, depth, strings_length, max_size, extensions) = get_args()?;
+    let (file_path, pprint, recurse, depth, 
+        strings_length, max_size, extensions, not_exts) = get_args()?;
     is_file_or_dir(
-        convert_to_path(&file_path)?.as_path(), pprint, recurse, depth,  0, strings_length, max_size, &extensions
+        convert_to_path(&file_path)?.as_path(), pprint, recurse, 
+        depth,  0, strings_length, max_size, &extensions,
+        not_exts
     )?;
     Ok(())
 }
@@ -703,6 +712,8 @@ Purpose: Pull various file metadata.
 Usage: 
     fmd [--pretty | -p] ([--strings|-s] #) <file path> [--recurse | -r] ([--depth | -d] #)
     fmd --pretty -r --depth 3 --extensions \"exe,dll,pif,ps1,bat,com\"
+    fmd --pretty -r --depth 3 --extensions \"not:exe,dll,pif,ps1,bat,com\"
+        This will process all files that do not have the specified extensions.
 Options:
     -d, --depth #       Number of subdirecties to recurse into from the starting directory 
     -e, --extensions *  Quoted list of comma seperated extensions
