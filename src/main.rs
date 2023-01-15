@@ -554,9 +554,9 @@ fn get_dir_fname_ext(path: &Path) -> io::Result<(String, String, String)> {
 }
 
 
-fn analyze_file(path: &Path, pprint: bool, strings_length: usize, max_size: u64) -> io::Result<()> {
-    let p = path.to_string_lossy().into_owned();
+fn analyze_file(path: &Path, pprint: bool, strings_length: usize, max_size: u64, extensions: &Vec<String>) -> io::Result<()> {
     let (dir, fname, ext) = get_dir_fname_ext(path)?;
+    if !extensions.contains(&ext) { return Ok(()) }
     let mut ftimes = get_file_times(&path)?;
     let mut ads: Vec<DataRun> = Vec::new();
     let (link, is_link) = get_link_info(path)?;
@@ -575,6 +575,7 @@ fn analyze_file(path: &Path, pprint: bool, strings_length: usize, max_size: u64)
         entropy = shannon_entropy(&buffer);
         hashes = get_file_hashes(&buffer)?;
     }
+    let p = path.to_string_lossy().into_owned();
     print_log(p, dir, fname, ext,
         bytes, mime_type, is_hidden,  is_link, link, ftimes.clone(), 
         entropy, hashes, ads, bin, pprint, strings)?;
@@ -584,11 +585,12 @@ fn analyze_file(path: &Path, pprint: bool, strings_length: usize, max_size: u64)
 
 fn is_file_or_dir(
         path: &Path, pprint: bool, recurse: bool, depth: usize, 
-        mut current_depth: usize, strings_length: usize, max_size: u64
+        mut current_depth: usize, strings_length: usize, max_size: u64,
+        extensions: &Vec<String>
     ) -> io::Result<()> 
 {
     if path.is_file() {
-        match analyze_file(path, pprint, strings_length, max_size) {
+        match analyze_file(path, pprint, strings_length, max_size, extensions) {
             Ok(a) => a,
             Err(_e) => return Ok(())
         };
@@ -601,13 +603,13 @@ fn is_file_or_dir(
             };
             if e.path().is_dir() && (current_depth < depth) {
                 if !recurse { continue; }
-                match is_file_or_dir(e.path().as_path(), pprint, recurse, depth, current_depth, strings_length, max_size) {
+                match is_file_or_dir(e.path().as_path(), pprint, recurse, depth, current_depth, strings_length, max_size, extensions) {
                     Ok(a) => a,
                     Err(_e) => continue
                 };
             }
             if e.path().is_file() {
-                match analyze_file(e.path().as_path(), pprint, strings_length, max_size) {
+                match analyze_file(e.path().as_path(), pprint, strings_length, max_size, extensions) {
                     Ok(a )=> a,
                     Err(_e) => continue
                 };
@@ -635,7 +637,7 @@ fn convert_to_path(target: &str) -> io::Result<PathBuf> {
 }
 
 
-fn get_args() -> io::Result<(String, bool, bool, usize, usize, u64)> {
+fn get_args() -> io::Result<(String, bool, bool, usize, usize, u64, Vec<String>)> {
     let args: Vec<String> = env::args().collect();
     let mut file_path = String::new();
     let mut get_depth = false;
@@ -646,10 +648,13 @@ fn get_args() -> io::Result<(String, bool, bool, usize, usize, u64)> {
     let mut get_size = false;
     let mut max_size: u64 = 0;
     let mut get_strings_length = false;
+    let mut get_exts = false;
+    let mut exts_vec: Vec<String> = Vec::new();
     if args.len() == 1 { print_help(); }
     for arg in args {
         match arg.as_str() {
             "-d" | "--depth" => get_depth = true,
+            "-e" | "--extensions" => get_exts = true,
             "-m" | "--maxsize" => get_size = true,
             "-p" | "--pretty" => pprint = true,
             "-r" | "--recurse" => recurse = true,
@@ -667,20 +672,24 @@ fn get_args() -> io::Result<(String, bool, bool, usize, usize, u64)> {
                     strings = arg.as_str().parse::<usize>().unwrap_or(50);
                     if strings < 1 { print_help(); }
                     get_strings_length = false;
+                } else if get_exts {
+                    let exts = arg.as_str();
+                    exts_vec = exts.replace(" ", "").split(',').map(str::to_string).collect();
+                    get_exts = false;
                 } else {
                     file_path = arg.clone();
                 }
             }
         }
     }
-    Ok((file_path.clone(), pprint, recurse, depth, strings, max_size))
+    Ok((file_path.clone(), pprint, recurse, depth, strings, max_size, exts_vec))
 }
 
 
 fn main() -> io::Result<()> {
-    let (file_path, pprint, recurse, depth, strings_length, max_size) = get_args()?;
+    let (file_path, pprint, recurse, depth, strings_length, max_size, extensions) = get_args()?;
     is_file_or_dir(
-        convert_to_path(&file_path)?.as_path(), pprint, recurse, depth,  0, strings_length, max_size
+        convert_to_path(&file_path)?.as_path(), pprint, recurse, depth,  0, strings_length, max_size, &extensions
     )?;
     Ok(())
 }
@@ -691,9 +700,13 @@ fn print_help() {
 Author: Brian Kellogg
 License: MIT
 Purpose: Pull various file metadata.
-Usage: fmd [--pretty | -p] ([--strings|-s] #) <file path> [--recurse | -r] ([--depth | -d] #)
+Usage: 
+    fmd [--pretty | -p] ([--strings|-s] #) <file path> [--recurse | -r] ([--depth | -d] #)
+    fmd --pretty -r --depth 3 --extensions \"exe,dll,pif,ps1,bat,com\"
 Options:
     -d, --depth #       Number of subdirecties to recurse into from the starting directory 
+    -e, --extensions *  Quoted list of comma seperated extensions
+                            Any extensions not in the list will be ignored
     -m, --maxsize #     Max file size in bytes to perform content analysis on
                             Any file larger than this will not have the following run: 
                             hashing, entropy
