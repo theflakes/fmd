@@ -31,11 +31,11 @@ exe = "*"
 lnk = "*"
 
 [profile.release]
-lto = true
+lto = "fat"
 panic = 'abort'
 opt-level = "s"
 debug = false
 rpath = false
 debug-assertions = false
 codegen-units = 1
-strip = true
+strip = "symbols"

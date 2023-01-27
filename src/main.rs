@@ -393,38 +393,43 @@ fn get_sections(pex: &PE, path: &Path) -> io::Result<BinSections>{
 fn get_pe(path: &Path, buffer: &Vec<u8>) -> io::Result<Binary> {
     let mut bin = Binary::default();
     if buffer.len() < 97 { return Ok(bin) } // smallest possible PE size, errors with smaller buffer size
-    match Object::parse(&buffer).unwrap() {
-        Object::Elf(elf) => {
-            //println!("Elf binary");
-        },
-        Object::PE(pex) => {
-            (bin.imports, bin.is_dotnet) = parse_pe_imports(&pex.imports)?;
-            bin.entry_point = format!("0x{:02x}", pex.entry);
-            bin.sections = get_sections(&pex, path)?;
-            (bin.imports.hashes, bin.imports.lib_count, bin.imports.func_count) = get_imphashes(&pex.imports)?;
-            bin.is_64 = pex.is_64;
-            bin.is_lib = pex.is_lib;
-            bin.exports = parse_pe_exports(&pex.exports)?;
-            bin.pe_info = get_pe_file_info(path)?;
-            bin.timestamps.compile = get_date_string(pex.header.coff_header.time_date_stamp as i64)?;
-            bin.timestamps.debug = match pex.debug_data {
-                Some(d) => get_date_string(d.image_debug_directory.time_date_stamp as i64)?,
-                None => "".to_string()};
-            bin.linker.major_version = match pex.header.optional_header {
-                Some(d) => d.standard_fields.major_linker_version,
-                None => 0};
-            bin.linker.minor_version = match pex.header.optional_header {
-                Some(d) => d.standard_fields.minor_linker_version,
-                None => 0};
-        },
-        Object::Mach(mach) => {
-            //println!("Mach binary");
-        },
-        Object::Archive(archive) => {
-            //println!("Archive file");
-        },
-        Object::Unknown(magic) => {  }
-    }
+    let object = match Object::parse(&buffer) {
+        Ok(o) => 
+            match o {
+                Object::Elf(elf) => {
+                    //println!("Elf binary");
+                },
+                Object::PE(pex) => {
+                    (bin.imports, bin.is_dotnet) = parse_pe_imports(&pex.imports)?;
+                    bin.entry_point = format!("0x{:02x}", pex.entry);
+                    bin.sections = get_sections(&pex, path)?;
+                    (bin.imports.hashes, bin.imports.lib_count, bin.imports.func_count) = get_imphashes(&pex.imports)?;
+                    bin.is_64 = pex.is_64;
+                    bin.is_lib = pex.is_lib;
+                    bin.exports = parse_pe_exports(&pex.exports)?;
+                    bin.pe_info = get_pe_file_info(path)?;
+                    bin.timestamps.compile = get_date_string(pex.header.coff_header.time_date_stamp as i64)?;
+                    bin.timestamps.debug = match pex.debug_data {
+                        Some(d) => get_date_string(d.image_debug_directory.time_date_stamp as i64)?,
+                        None => "".to_string()};
+                    bin.linker.major_version = match pex.header.optional_header {
+                        Some(d) => d.standard_fields.major_linker_version,
+                        None => 0};
+                    bin.linker.minor_version = match pex.header.optional_header {
+                        Some(d) => d.standard_fields.minor_linker_version,
+                        None => 0};
+                },
+                Object::Mach(mach) => {
+                    //println!("Mach binary");
+                },
+                Object::Archive(archive) => {
+                    //println!("Archive file");
+                },
+                Object::Unknown(magic) => {  }
+            },
+        Err(_e) => return Ok(bin),
+    };
+    
     Ok(bin)
 }
 
