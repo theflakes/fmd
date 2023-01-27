@@ -3,6 +3,7 @@ File metadata / forensic tool.
 fmd = File Metadata
 
 #### Understanding MS PE analysis
+https://practicalsecurityanalytics.com/threat-hunting-with-function-imports/
 https://resources.infosecinstitute.com/topic/malware-researchers-handbook/  
 http://www.hacktohell.org/2012/04/analysing-pe-files.html  
 https://tstillz.medium.com/basic-static-analysis-part-1-9c24497790b6  
