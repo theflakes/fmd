@@ -498,7 +498,6 @@ pub fn get_link_info(link_path: &Path) -> std::io::Result<(Link, bool)> {
         Ok(l) => l,
         Err(_e) => return Ok((link, false))
     };
-    println!("{:?}", symlink);
     link.rel_path = match symlink.relative_path() {
         Some(p) => p.to_string(),
         None => String::new()
