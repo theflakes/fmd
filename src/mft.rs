@@ -101,7 +101,7 @@ pub fn get_fname(path: &Path, mut ftimes: FileTimestamps) -> Result<(FileTimesta
     let mut attributes = file.attributes();
     while let Some(attribute_item) = attributes.next(&mut info.fs) {
         let attribute_item = attribute_item?;
-        let attribute = attribute_item.to_attribute();
+        let attribute = attribute_item.to_attribute().unwrap();
         match attribute.ty() {
             Ok(NtfsAttributeType::StandardInformation) => continue,
             Ok(NtfsAttributeType::FileName) => {
@@ -260,13 +260,15 @@ where
     let mut buf = [0u8; 4096];
 
     for attribute in attributes {
-        let ty = attribute.ty()?;
+        let a = attribute?.clone();
+        let ty = a.ty()?;
         if ty == NtfsAttributeType::Data {
-            let stream = NtfsAttributeValue::from(attribute.value(fs)?);
+            let att = a;
+            let stream = NtfsAttributeValue::from(att.value(fs)?);
 
-            data.name = attribute.name()?.to_string();
-            data.bytes = attribute.value_length();
-            let bytes_read = attribute.value(fs)?.read(fs, &mut buf)?;
+            data.name = att.name()?.to_string();
+            data.bytes = att.value_length();
+            let bytes_read = att.value(fs)?.read(fs, &mut buf)?;
             data.first_256_bytes = bytes_to_string(&buf[..bytes_read].to_vec())?;
             
             ads.push(data.to_owned());
