@@ -671,7 +671,7 @@ fn convert_to_path(target: &str) -> io::Result<PathBuf> {
 }
 
 
-fn get_args() -> io::Result<(String, bool, usize, usize, u64, Vec<String>, bool, bool)> {
+fn get_args() -> io::Result<(String, bool, usize, usize, u64, Vec<String>, bool, bool, bool)> {
     let args: Vec<String> = env::args().collect();
     let mut file_path = String::new();
     let mut pprint = false;
@@ -685,6 +685,7 @@ fn get_args() -> io::Result<(String, bool, usize, usize, u64, Vec<String>, bool,
     let mut exts_vec: Vec<String> = Vec::new();
     let mut not_exts = false;
     let mut int_mtypes = false;
+    let mut get_funcs = false;
     if args.len() == 1 { print_help(); }
     for arg in args {
         match arg.as_str() {
@@ -694,6 +695,7 @@ fn get_args() -> io::Result<(String, bool, usize, usize, u64, Vec<String>, bool,
             "-m" | "--maxsize" => get_size = true,
             "-p" | "--pretty" => pprint = true,
             "-s" | "--strings" => get_strings_length = true,
+            "-z" | "--analyze" => get_funcs = true,
             _ => {
                 if get_depth {
                     depth = arg.as_str().parse::<usize>().unwrap_or(0);
@@ -719,14 +721,16 @@ fn get_args() -> io::Result<(String, bool, usize, usize, u64, Vec<String>, bool,
             }
         }
     }
-    Ok((file_path.clone(), pprint, depth, strings, max_size, exts_vec, not_exts, int_mtypes))
+    Ok((file_path.clone(), pprint, depth, strings, max_size, exts_vec, not_exts, int_mtypes, get_funcs))
 }
 
 
 fn main() -> io::Result<()> {
     let (file_path, pprint, depth, 
         strings_length, max_size, extensions, 
-        not_exts, int_mtypes) = get_args()?;
+        not_exts, int_mtypes, get_funcs) = get_args()?;
+    let mut dlls: HashMap<String, Vec<Func>> = HashMap::new();
+    if get_funcs { dlls = build_interesting_funcs()}
     is_file_or_dir(
         convert_to_path(&file_path)?.as_path(), pprint,  depth,  0, strings_length, max_size, &extensions,
         not_exts, int_mtypes
@@ -737,7 +741,8 @@ fn main() -> io::Result<()> {
 
 fn print_help() {
     let help = "
-Author: Brian Kellogg
+Authors: Brian Kellogg
+         Jason Langston
 License: MIT
 Purpose: Pull various file metadata.
 
@@ -758,6 +763,7 @@ Options:
                             hashing, entropy, mime type, strings, PE analysis
     -p, --pretty        Pretty print JSON
     -s, --strings #     Look for strings of length # or longer
+    -z, --analyze       Find more interesting imported functions
 
 If just passed a directory, only the contents of that directory will be processed.
     - i.e. no subdirectories will be processed.
