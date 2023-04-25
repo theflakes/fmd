@@ -91,6 +91,23 @@ pub struct ExpHashes {
 }
 
 
+impl Default for Function {
+    fn default () -> Function {
+        Function {
+            name: String::new(),
+            more_interesting: false,
+            info: String::new()
+        }
+    }
+}
+#[derive(Serialize, Clone)]
+pub struct Function {
+    pub name: String,
+    pub more_interesting: bool,
+    pub info: String
+}
+
+
 impl Default for Import {
     fn default () -> Import {
         Import {
@@ -104,7 +121,7 @@ impl Default for Import {
 pub struct Import {
     pub lib: String,
     pub count: u32,
-    pub names: Vec<String>
+    pub names: Vec<Function>
 }
 
 
@@ -490,6 +507,7 @@ pub fn build_interesting_funcs() -> HashMap<String, Vec<Func>> {
     let func = Func::default();
     let mut dlls: HashMap<String, Vec<Func>> = HashMap::new();
 
+    // advapi32.dll
     let funcs: Vec<Func> = [
         func.create("accept", "Permits an incom,ing connection attempt on a socket."),
         func.create("connectnamedpipe", "Enables a named pipe server process to wait for a client process to connect to an instance of a named pipe."),
@@ -500,22 +518,26 @@ pub fn build_interesting_funcs() -> HashMap<String, Vec<Func>> {
     ].to_vec();
     dlls.insert("advapi32.dll".to_string(), funcs);
 
+    // crypt32.dll
     let funcs: Vec<Func> = [
         func.create("bitblt", "Permforms a bit-block transfer."),
         func.create("certopensystemstorea", "Opens the most common system certification store."),
     ].to_vec();
     dlls.insert("crypt32.dll".to_string(), funcs);
 
+    // gdi32.dll
     let funcs: Vec<Func> = [
         func.create("bind", "Associates a local address with a socket."),
     ].to_vec();
     dlls.insert("gdi32.dll".to_string(), funcs);
 
+    // icmp.dll
     let funcs: Vec<Func> = [
         func.create("IcmpCreateFile", "Opens a handle on which IPv4 ICMP echo requests can be issued."),
     ].to_vec();
     dlls.insert("icmp.dll".to_string(), funcs);
 
+    // kernel32.dll
     let funcs: Vec<Func> = [
         func.create("connect", "Establishes a connection to a specified socket."),
         func.create("corbindtoruntimeex", ""),
@@ -605,22 +627,27 @@ pub fn build_interesting_funcs() -> HashMap<String, Vec<Func>> {
     ].to_vec();
     dlls.insert("kernel32.dll".to_string(), funcs);
 
+    // mpr.dll
     let funcs: Vec<Func> = [
         func.create("certopensystemstorew", "Opens the most common system certification store."),
         func.create("wnetuseconnectionw", "Makes a connection to a network resource."),
     ].to_vec();
     dlls.insert("mpr.dll".to_string(), funcs);
 
+    // mscoree.dll
     let funcs: Vec<Func> = [
         func.create("controlservice", "Sends a control code to a service."),
     ].to_vec();
     dlls.insert("mscoree.dll".to_string(), funcs);
 
+    // netapi32.dll
     let funcs: Vec<Func> = [
+        func.create("NetShareEnum", "Retrieves information about each shared resource on a server."),
         func.create("NetWkstaGetInfo", "Returns information about the configuration of a workstation."),
     ].to_vec();
     dlls.insert("netapi32.dll".to_string(), funcs);
 
+    // oleaut32.dll
     let funcs: Vec<Func> = [
         func.create("MethCallEngine", "??"),
         func.create("ProcCallEngine", "??"),
@@ -639,27 +666,32 @@ pub fn build_interesting_funcs() -> HashMap<String, Vec<Func>> {
     ].to_vec();
     dlls.insert("oleaut32.dll".to_string(), funcs);
 
+    // rpcrt4.dll
     let funcs: Vec<Func> = [
         func.create("AdjustTokenPrivileges", "Enables or disabled Privileges."),
     ].to_vec();
     dlls.insert("rpcrt4.dll".to_string(), funcs);
 
+    // urlmon.dll
     let funcs: Vec<Func> = [
         func.create("URLDownloadToFileA", "??"),
         func.create("URLDownloadToFileW", "??"),
     ].to_vec();
     dlls.insert("urlmon.dll".to_string(), funcs);
 
+    // user32.dll
     let funcs: Vec<Func> = [
         func.create("getprocaddress", "Retrieves the address of an exported function or variable from the specified dynamic-link library."),
     ].to_vec();
     dlls.insert("user32.dll".to_string(), funcs);
 
+    // vbe7.dll
     let funcs: Vec<Func> = [
         func.create("__vbaexcepthandler", "??"),
     ].to_vec();
     dlls.insert("vbe7.dll".to_string(), funcs);
 
+    // winhttp.dll
     let funcs: Vec<Func> = [
         func.create("WinHttpCloseHandle", "closes a single HINTERNET handle."),
         func.create("WinHttpConnect", "specifies the initial target server of an HTTP request and returns an HINTERNET connection handle to an HTTP session for that initial target."),
@@ -673,6 +705,7 @@ pub fn build_interesting_funcs() -> HashMap<String, Vec<Func>> {
     ].to_vec();
     dlls.insert("winhttp.dll".to_string(), funcs);
 
+    // wininet.dll
     let funcs: Vec<Func> = [
         func.create("HttpOpenRequestA", "Creates an HTTP request handle."),
         func.create("HttpOpenRequestW", "Creates an HTTP request handle."),
@@ -695,6 +728,7 @@ pub fn build_interesting_funcs() -> HashMap<String, Vec<Func>> {
     ].to_vec();
     dlls.insert("wininet.dll".to_string(), funcs);
 
+    // ws2_32.dll
     let funcs: Vec<Func> = [
         func.create("wsaasyncgethostbyname", "asynchronously retrieves host information that corresponds to a host name."),
         func.create("getprofileinta", "Retrieves an integer from a key in the specified section of the Win.ini file.."),
