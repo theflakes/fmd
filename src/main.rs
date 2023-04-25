@@ -25,6 +25,7 @@ use std::mem::replace;
 use std::path::{Path, PathBuf};
 use std::ptr::null;
 use std::str::from_utf8;
+use std::sync::Arc;
 use std::{io, str};
 use std::env;
 use std::process;
@@ -185,9 +186,9 @@ fn is_dotnet(imps: &Imports) -> io::Result<bool> {
     Ok(false)
 }
 
-fn is_function_interesting(dlls: &HashMap<String, Vec<Func>>, dll: &str, func: &str) -> (bool, String) {
-    if dlls.contains_key(dll) {
-        let funcs = match dlls.get(dll) {
+fn is_function_interesting(dll: &str, func: &str) -> (bool, String) {
+    if DLLS.contains_key(dll) {
+        let funcs = match DLLS.get(dll) {
             Some(it) => it,
             None => return (false, String::new()),
         };
@@ -200,8 +201,7 @@ fn is_function_interesting(dlls: &HashMap<String, Vec<Func>>, dll: &str, func: &
     (false, String::new())
 }
 
-fn parse_pe_imports(imports: &Vec<goblin::pe::import::Import>, 
-                    dlls: &HashMap<String, Vec<Func>>) -> io::Result<(Imports, bool)> 
+fn parse_pe_imports(imports: &Vec<goblin::pe::import::Import>) -> io::Result<(Imports, bool)> 
 {
     let mut track_dlls:Vec<&str> = Vec::new();
     let mut imps: Imports = Imports::default();
@@ -216,7 +216,6 @@ fn parse_pe_imports(imports: &Vec<goblin::pe::import::Import>,
             temp.count += 1;
             func.name = m.name.to_string();
             (func.more_interesting, func.info) = is_function_interesting(
-                                                    dlls, 
                                                     &i.dll.to_lowercase(),
                                                     &func.name); 
             temp.names.push(func.clone());
@@ -412,7 +411,7 @@ fn get_sections(pex: &PE, path: &Path) -> io::Result<BinSections>{
 }
 
 
-fn get_pe(path: &Path, buffer: &Vec<u8>, dlls: &HashMap<String, Vec<Func>>) -> io::Result<Binary> {
+fn get_pe(path: &Path, buffer: &Vec<u8>) -> io::Result<Binary> {
     let mut bin = Binary::default();
     if buffer.len() < 97 { return Ok(bin) } // smallest possible PE size, errors with smaller buffer size
     let object = match Object::parse(&buffer) {
@@ -422,7 +421,7 @@ fn get_pe(path: &Path, buffer: &Vec<u8>, dlls: &HashMap<String, Vec<Func>>) -> i
                     //println!("Elf binary");
                 },
                 Object::PE(pex) => {
-                    (bin.imports, bin.is_dotnet) = parse_pe_imports(&pex.imports, dlls)?;
+                    (bin.imports, bin.is_dotnet) = parse_pe_imports(&pex.imports)?;
                     bin.entry_point = format!("0x{:02x}", pex.entry);
                     bin.sections = get_sections(&pex, path)?;
                     (bin.imports.hashes, bin.imports.lib_count, bin.imports.func_count) = get_imphashes(&pex.imports)?;
@@ -597,7 +596,7 @@ fn check_extensions(not_exts: bool, extensions: &Vec<String>, ext: &String) -> b
 fn analyze_file(
         path: &Path, pprint: bool, strings_length: usize, 
         max_size: u64, extensions: &Vec<String>, not_exts: bool,
-        int_mtypes: bool, dlls: &HashMap<String, Vec<Func>>
+        int_mtypes: bool
     ) -> io::Result<()> 
 {
     let (dir, fname, ext) = get_dir_fname_ext(path)?;
@@ -618,7 +617,7 @@ fn analyze_file(
         let buffer = read_file_bytes(&file)?;
         mime_type = get_mimetype(&buffer)?;
         if int_mtypes && !INTERESTING_MIME_TYPES.contains(&mime_type.as_str()) { return Ok(())}
-        bin = get_pe(path, &buffer, dlls)?;
+        bin = get_pe(path, &buffer)?;
         if strings_length > 0 {strings = get_strings(&buffer, strings_length)?;}
         entropy = shannon_entropy(&buffer);
         hashes = get_file_hashes(&buffer)?;
@@ -634,12 +633,12 @@ fn analyze_file(
 fn is_file_or_dir(
         path: &Path, pprint: bool, depth: usize, mut current_depth: usize, 
         strings_length: usize, max_size: u64, extensions: &Vec<String>, 
-        not_exts: bool, int_mtypes: bool, dlls: &HashMap<String, Vec<Func>>
+        not_exts: bool, int_mtypes: bool
     ) -> io::Result<()> 
 {
     if path.is_file() {
         match analyze_file(path, pprint, strings_length, 
-                max_size, extensions, not_exts, int_mtypes, dlls) 
+                max_size, extensions, not_exts, int_mtypes) 
         {
             Ok(a) => a,
             Err(_e) => return Ok(())
@@ -655,7 +654,7 @@ fn is_file_or_dir(
                 if depth == 0 { continue; }
                 match is_file_or_dir(e.path().as_path(), pprint, depth, 
                         current_depth, strings_length, max_size, extensions, 
-                        not_exts, int_mtypes, dlls) 
+                        not_exts, int_mtypes) 
                 {
                     Ok(a) => a,
                     Err(_e) => continue
@@ -664,7 +663,7 @@ fn is_file_or_dir(
             if e.path().is_file() {
                 match analyze_file(e.path().as_path(), pprint, 
                     strings_length, max_size, extensions, not_exts
-                    , int_mtypes, dlls) 
+                    , int_mtypes) 
                 {
                     Ok(a )=> a,
                     Err(_e) => continue
@@ -701,11 +700,8 @@ fn main() -> io::Result<()> {
         max_size, 
         extensions, 
         not_exts, 
-        int_mtypes, 
-        get_funcs
+        int_mtypes
     ) = get_args()?;
-    let mut dlls: HashMap<String, Vec<Func>> = HashMap::new();
-    if get_funcs { dlls = build_interesting_funcs()}
     is_file_or_dir(
         convert_to_path(&file_path)?.as_path(), 
         pprint,  
@@ -715,14 +711,13 @@ fn main() -> io::Result<()> {
         max_size, 
         &extensions,
         not_exts, 
-        int_mtypes,
-        &dlls
+        int_mtypes
     )?;
     Ok(())
 }
 
 
-fn get_args() -> io::Result<(String, bool, usize, usize, u64, Vec<String>, bool, bool, bool)> {
+fn get_args() -> io::Result<(String, bool, usize, usize, u64, Vec<String>, bool, bool)> {
     let args: Vec<String> = env::args().collect();
     let mut file_path = String::new();
     let mut pprint = false;
@@ -736,7 +731,6 @@ fn get_args() -> io::Result<(String, bool, usize, usize, u64, Vec<String>, bool,
     let mut exts_vec: Vec<String> = Vec::new();
     let mut not_exts = false;
     let mut int_mtypes = false;
-    let mut get_funcs = false;
     if args.len() == 1 { print_help(); }
     for arg in args {
         match arg.as_str() {
@@ -744,7 +738,6 @@ fn get_args() -> io::Result<(String, bool, usize, usize, u64, Vec<String>, bool,
             "-e" | "--extensions" => get_exts = true,
             "-i" | "--int_mtypes" => int_mtypes = true,
             "-m" | "--maxsize" => get_size = true,
-            "-o" | "--int_imports" => get_funcs = true,
             "-p" | "--pretty" => pprint = true,
             "-s" | "--strings" => get_strings_length = true,
             _ => {
@@ -772,7 +765,7 @@ fn get_args() -> io::Result<(String, bool, usize, usize, u64, Vec<String>, bool,
             }
         }
     }
-    Ok((file_path.clone(), pprint, depth, strings, max_size, exts_vec, not_exts, int_mtypes, get_funcs))
+    Ok((file_path.clone(), pprint, depth, strings, max_size, exts_vec, not_exts, int_mtypes))
 }
 
 
@@ -785,8 +778,8 @@ Purpose: Pull various file metadata.
 
 Usage: 
     fmd [--pretty | -p] ([--strings|-s] #) <file path> ([--depth | -d] #)
-    fmd --pretty --depth 3 --extensions \"exe,dll,pif,ps1,bat,com\"
-    fmd --pretty --depth 3 --extensions \"not:exe,dll,pif,ps1,bat,com\"
+    fmd --pretty --depth 3 --extensions 'exe,dll,pif,ps1,bat,com'
+    fmd --pretty --depth 3 --extensions 'not:exe,dll,pif,ps1,bat,com'
         This will process all files that do not have the specified extensions.
 
 Options:
@@ -798,7 +791,6 @@ Options:
     -m, --maxsize #     Max file size in bytes to perform content analysis on
                         - Any file larger than this will not have the following run: 
                           hashing, entropy, mime type, strings, PE analysis
-    -o, --int_imports   Find more interesting imported functions
     -p, --pretty        Pretty print JSON
     -s, --strings #     Look for strings of length # or longer
 
@@ -806,7 +798,7 @@ If just passed a directory, only the contents of that directory will be processe
     - i.e. no subdirectories will be processed.
 
 fmd.exe <directory> --depth 1
-    - This will work exactly as if the \"--depth\" 1 option was not specified.
+    - This will work exactly as if the '--depth' 1 option was not specified.
 
 Interesting mime types:
     application/x-executable    -> executable

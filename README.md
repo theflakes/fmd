@@ -19,25 +19,26 @@ Linux x64:  sudo apt update && sudo apt install mingw-w64
 ```
 
 ```
-Author: Brian Kellogg
+Authors: Brian Kellogg
+         Jason Langston
 License: MIT
 Purpose: Pull various file metadata.
 
 Usage: 
     fmd [--pretty | -p] ([--strings|-s] #) <file path> ([--depth | -d] #)
-    fmd --pretty --depth 3 --extensions \"exe,dll,pif,ps1,bat,com\"
-    fmd --pretty --depth 3 --extensions \"not:exe,dll,pif,ps1,bat,com\"
+    fmd --pretty --depth 3 --extensions 'exe,dll,pif,ps1,bat,com'
+    fmd --pretty --depth 3 --extensions 'not:exe,dll,pif,ps1,bat,com'
         This will process all files that do not have the specified extensions.
 
 Options:
     -d, --depth #       If passed a directory, recurse into all subdirectories
                         to the specified subdirectory depth
     -e, --extensions *  Quoted list of comma seperated extensions
-                            Any extensions not in the list will be ignored
+                        - Any extensions not in the list will be ignored
     -i, --int_mtypes    Only analyze files that are more interesting mime types
     -m, --maxsize #     Max file size in bytes to perform content analysis on
-                            Any file larger than this will not have the following run: 
-                            hashing, entropy, mime type, strings, PE analysis
+                        - Any file larger than this will not have the following run: 
+                          hashing, entropy, mime type, strings, PE analysis
     -p, --pretty        Pretty print JSON
     -s, --strings #     Look for strings of length # or longer
 
@@ -45,7 +46,7 @@ If just passed a directory, only the contents of that directory will be processe
     - i.e. no subdirectories will be processed.
 
 fmd.exe <directory> --depth 1
-    - This will work exactly as if the \"--depth\" 1 option was not specified.
+    - This will work exactly as if the '--depth' 1 option was not specified.
 
 Interesting mime types:
     application/x-executable    -> executable

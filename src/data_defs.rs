@@ -11,6 +11,7 @@ use std::collections::HashMap;
 
 lazy_static! { 
     pub static ref DEVICE_TYPE: String = whoami::distro();
+    pub static ref DLLS: HashMap<String, Vec<Func>> = build_interesting_funcs();
 }
 
 pub static INTERESTING_MIME_TYPES: &'static [&'static str] = &[
@@ -546,29 +547,29 @@ pub fn build_interesting_funcs() -> HashMap<String, Vec<Func>> {
         func.create("createfilemappingw", "Creates or opens a named or unnamed file mapping object for a specified file."),
         func.create("createmutexw", "Creates or opens a named or unamed mutex object."),
         func.create("createremotethread", "Creates a thread that runs in the virtual address space of another process."),
-        func.create("createservicea", "creates a service object and adds it to the specified service control manager database."),
-        func.create("createservicew", "creates a service object and adds it to the specified service control manager database."),
-        func.create("createtoolhelp32snapshot", "takes a snapshot of the specified processes, heaps,modules, and threads used by the processes."),
+        func.create("createservicea", "Creates a service object and adds it to the specified service control manager database."),
+        func.create("createservicew", "Creates a service object and adds it to the specified service control manager database."),
+        func.create("createtoolhelp32snapshot", "Takes a snapshot of the specified processes, heaps,modules, and threads used by the processes."),
         func.create("cryptacquirecontexta", "Used to acquire a handle to a particular key container with a cryptographic service provider."),
         func.create("cryptacquirecontextw", "Used to acquire a handle to a particular key container with a cryptographic service provider."),
         func.create("deviceiocontrol", "Sends a control code directly to a specified device driver, causing the corresponding device to perform the ."),
-        func.create("disconnectnamedpipe", "disconnects the server end of a named pipe instance from a client."),
+        func.create("disconnectnamedpipe", "Disconnects the server end of a named pipe instance from a client."),
         func.create("dllfunctioncall", "??."),
-        func.create("enumcalendarinfoa", "enumerates calendar infromation for a specified locale."),
+        func.create("enumcalendarinfoa", "Enumerates calendar infromation for a specified locale."),
         func.create("enumprocesses", "Retrieves the process identifier for each process object in the system."),
         func.create("enumprocessmodules", "Retrieves a handle for each module in the specified process."),
         func.create("event_sink_addref", "??."),
         func.create("event_sink_queryinterface", "??."),
         func.create("event_sink_release", "??."),
-        func.create("findfirstfilea", "searches a directory for a file or subdirectory with a name."),
-        func.create("findfirstfileexa", "searches a directory for a file or subdirectory with a name."),
-        func.create("findfirstfileexw", "searches a directory for a file or subdirectory with a name."),
-        func.create("findfirstfilew", "searches a directory for a file or subdirectory with a name."),
-        func.create("findnextfilea", "continues a file search for a previous call to the 'findfirstfile/findfirstfileex/findfirstfiletransacted' function."),
-        func.create("findnextfilew", "continues a file search for a previous call to the 'findfirstfile/findfirstfileex/findfirstfiletransacted' function."),
+        func.create("findfirstfilea", "Searches a directory for a file or subdirectory with a name."),
+        func.create("findfirstfileexa", "Searches a directory for a file or subdirectory with a name."),
+        func.create("findfirstfileexw", "Searches a directory for a file or subdirectory with a name."),
+        func.create("findfirstfilew", "Searches a directory for a file or subdirectory with a name."),
+        func.create("findnextfilea", "Continues a file search for a previous call to the 'findfirstfile/findfirstfileex/findfirstfiletransacted' function."),
+        func.create("findnextfilew", "Continues a file search for a previous call to the 'findfirstfile/findfirstfileex/findfirstfiletransacted' function."),
         func.create("findresourcea", "Determines the location of a resource with specified type and name in the specified module."),
-        func.create("findresourceexa", "determines the location of the resource with specified type,name, and language in the specified module."),
-        func.create("findresourceexw", "determines the location of the resource with specified type,name, and language in the specified module."),
+        func.create("findresourceexa", "Determines the location of the resource with specified type,name, and language in the specified module."),
+        func.create("findresourceexw", "Determines the location of the resource with specified type,name, and language in the specified module."),
         func.create("findresourcew", "Determines the location of a resource with specified type and name in the specified module."),
         func.create("findwindowa", "Retrieves a handle to the top-level window whose class name and window name match the specified strings NO child windows, Not case-sensitive."),
         func.create("findwindowexa", "Retrieves a handle to a window whose class name and window name match the specified string. the function searches child windows NOT case-sensitive."),
@@ -593,14 +594,14 @@ pub fn build_interesting_funcs() -> HashMap<String, Vec<Func>> {
         func.create("ftprenamefilea", "Renames a file stored on the FTP server."),
         func.create("ftpsetcurrentdirectorya", "Changes to a different working directory on the FTP server."),
         func.create("ftpsetcurrentdirectoryw", "Changes to a different working directory on the FTP server."),
-        func.create("getadaptersinfo", "retrieves adapter information for the local computer (for windows XP and later use GetAdaptersAddresses)."),
+        func.create("getadaptersinfo", "Detrieves adapter information for the local computer (for windows XP and later use GetAdaptersAddresses)."),
         func.create("getasynckeystate", "Determines whether a key is up or down at the time the function is called."),
-        func.create("getdc", " retrieves a handle to a device context for the client area of a specified window or for the entire screen."),
-        func.create("getdcex", "an extension to the GetDC function, which gives an application more control over how and whether clipping occurs in the client area."),
+        func.create("getdc", "Retrieves a handle to a device context for the client area of a specified window or for the entire screen."),
+        func.create("getdcex", "An extension to the GetDC function, which gives an application more control over how and whether clipping occurs in the client area."),
         func.create("geterrorinfo", "Obtains the error information pointer set by seterrorinfo."),
         func.create("getforegroundwindow", "Retrieves a handle to the foreground window."),
-        func.create("gethostbyname", "retrieves host information corresponding to a host name from a host database."),
-        func.create("gethostname", "retrieves the standard host name for the local computer."),
+        func.create("gethostbyname", "Retrieves host information corresponding to a host name from a host database."),
+        func.create("gethostname", "Retrieves the standard host name for the local computer."),
         func.create("getkeystate", "Retrieves the status of the specified virtual key."),
         func.create("getmodulefilenamea", "Retrieves the fully qualified path for the file that contains the specified module."),
         func.create("getmodulefilenamew", "Retrieves the fully qualified path for the file that contains the specified module."),
@@ -614,7 +615,7 @@ pub fn build_interesting_funcs() -> HashMap<String, Vec<Func>> {
         func.create("GetTempPathA", "Retrieves the path of the directory designated for temporary files."),
         func.create("GetTempPathW", "Retrieves the path of the directory designated for temporary files."),
         func.create("GetThreadContext", "Retrieves the context of the specified thread."),
-        func.create("GetVersion", "return value includes the major and minor version numbers of the operating system in the low-order word, and information about the operating system platform in the high-order word. (Unavailable for release after windows 8.1)."),
+        func.create("GetVersion", "Return value includes the major and minor version numbers of the operating system in the low-order word, and information about the operating system platform in the high-order word. (Unavailable for release after windows 8.1)."),
         func.create("GetVersionExA", "??"),
         func.create("GetVersionExW", "??"),
         func.create("GetWindowsDirectoryA", "Retrieves the path of the Windows directory."),
@@ -693,15 +694,15 @@ pub fn build_interesting_funcs() -> HashMap<String, Vec<Func>> {
 
     // winhttp.dll
     let funcs: Vec<Func> = [
-        func.create("WinHttpCloseHandle", "closes a single HINTERNET handle."),
-        func.create("WinHttpConnect", "specifies the initial target server of an HTTP request and returns an HINTERNET connection handle to an HTTP session for that initial target."),
-        func.create("WinHttpOpen", "nitializes, for an application, the use of WinHTTP functions and returns a WinHTTP-session handle."),
-        func.create("WinHttpOpenRequest", "creates an HTTP request handle."),
-        func.create("WinHttpQueryDataAvailable", "function returns the amount of data, in bytes, available to be read with WinHttpReadData."),
-        func.create("WinHttpQueryHeaders", " retrieves header information associated with an HTTP request."),
-        func.create("WinHttpReadData", "reads data from a handle opened by the WinHttpOpenRequest function."),
-        func.create("WinHttpReceiveResponse", "waits to receive the response to an HTTP request initiated by WinHttpSendRequest."),
-        func.create("winhttpsendrequest", "sends the specified request to the HTTP server."),
+        func.create("WinHttpCloseHandle", "Closes a single HINTERNET handle."),
+        func.create("WinHttpConnect", "Specifies the initial target server of an HTTP request and returns an HINTERNET connection handle to an HTTP session for that initial target."),
+        func.create("WinHttpOpen", "Initializes, for an application, the use of WinHTTP functions and returns a WinHTTP-session handle."),
+        func.create("WinHttpOpenRequest", "Creates an HTTP request handle."),
+        func.create("WinHttpQueryDataAvailable", "Function returns the amount of data, in bytes, available to be read with WinHttpReadData."),
+        func.create("WinHttpQueryHeaders", "Retrieves header information associated with an HTTP request."),
+        func.create("WinHttpReadData", "Reads data from a handle opened by the WinHttpOpenRequest function."),
+        func.create("WinHttpReceiveResponse", "Waits to receive the response to an HTTP request initiated by WinHttpSendRequest."),
+        func.create("winhttpsendrequest", "Sends the specified request to the HTTP server."),
     ].to_vec();
     dlls.insert("winhttp.dll".to_string(), funcs);
 
@@ -730,9 +731,9 @@ pub fn build_interesting_funcs() -> HashMap<String, Vec<Func>> {
 
     // ws2_32.dll
     let funcs: Vec<Func> = [
-        func.create("wsaasyncgethostbyname", "asynchronously retrieves host information that corresponds to a host name."),
+        func.create("wsaasyncgethostbyname", "Asynchronously retrieves host information that corresponds to a host name."),
         func.create("getprofileinta", "Retrieves an integer from a key in the specified section of the Win.ini file.."),
-        func.create("inet_addr", " converts a string containing an IPv4 dotted-decimal address into a proper address for the IN_ADDR structure."),
+        func.create("inet_addr", "Converts a string containing an IPv4 dotted-decimal address into a proper address for the IN_ADDR structure."),
     ].to_vec();
     dlls.insert("ws2_32.dll".to_string(), funcs);
 
