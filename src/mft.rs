@@ -266,7 +266,7 @@ where
             let att = a;
             let stream = NtfsAttributeValue::from(att.value(fs)?);
 
-            data.name = att.name()?.to_string();
+            data.name = att.name()?.to_string_lossy();
             data.bytes = att.value_length();
             let bytes_read = att.value(fs)?.read(fs, &mut buf)?;
             data.first_256_bytes = bytes_to_string(&buf[..bytes_read].to_vec())?;
