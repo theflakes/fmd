@@ -15,9 +15,17 @@ lazy_static! {
 }
 
 pub static INTERESTING_MIME_TYPES: &'static [&'static str] = &[
-    "application/x-executable", // executable
-    "application/x-msdownload", // self-extracting
-    "application/x-sharedlib",  // elf binary
+    "application/hta",
+    "application/mac-binary",
+    "application/macbinary",
+    "application/octet-stream",
+    "application/x-binary",
+    "application/x-dosexec",
+    "application/x-executable",
+    "application/x-macbinary",
+    "application/x-ms-dos-executable",
+    "application/x-msdownload",
+    "application/x-sharedlib",
 ];
 
 fn get_time_iso8601() -> io::Result<String> {

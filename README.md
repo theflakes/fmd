@@ -56,9 +56,17 @@ fmd.exe <directory> --depth 1
     - This will work exactly as if the '--depth' 1 option was not specified.
 
 Interesting mime types:
-    application/x-executable    -> executable
-    application/x-msdownload    -> self-extracting
-    application/x-sharedlib     -> elf binary
+    "application/hta",
+    "application/mac-binary",
+    "application/macbinary",
+    "application/octet-stream",
+    "application/x-binary",
+    "application/x-dosexec",
+    "application/x-executable",
+    "application/x-macbinary",
+    "application/x-ms-dos-executable",
+    "application/x-msdownload",
+    "application/x-sharedlib"
 
 NOTE: If passed a directory, all files in that directory will be analyzed.
       Harvesting $FILE_NAME timestamps can only be done by running this tool elevated.
