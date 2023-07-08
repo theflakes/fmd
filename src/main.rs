@@ -27,7 +27,7 @@ use std::ptr::null;
 use std::str::from_utf8;
 use std::sync::Arc;
 use std::{io, str};
-use std::env;lg earbuds pair
+use std::env;
 use std::process;
 use std::borrow::Cow;
 use crypto::digest::Digest;
@@ -60,6 +60,7 @@ fn print_log(
                 entropy: f32,
                 hashes: Hashes,
                 ads: Vec<DataRun>,
+                chi2: String,
                 binary: Binary,
                 pprint: bool,
                 strings: Vec<String>
@@ -81,6 +82,7 @@ fn print_log(
             entropy,
             hashes,
             ads,
+            chi2,
             binary,
             strings
         ).report_pretty_log();
@@ -100,6 +102,7 @@ fn print_log(
             entropy,
             hashes,
             ads,
+            chi2,
             binary,
             strings
         ).report_log();
@@ -247,6 +250,18 @@ fn check_ordinal(dll: &str, func: &str) -> io::Result<String> {
         f = ordinals::imphash_resolve(dll, o).to_ascii_lowercase();
     }
     Ok(f)
+}
+
+
+fn get_chi2_observed(buffer: &[u8]) -> String {
+    let mut observed = vec![0; 256];
+    for byte in buffer.iter() {
+        observed[*byte as usize] += 1;
+    }
+    return observed.iter()
+            .map(|&x| x.to_string())
+            .collect::<Vec<String>>()
+            .join(",")
 }
 
 
@@ -494,6 +509,7 @@ fn get_file_times<'a>(path: &Path) -> io::Result<FileTimestamps> {
     Ok(ftimes)
 }
 
+
 fn format_hotkey_text(hotkey: String) ->  std::io::Result<String> {
     let mk = hotkey
         .replace("HotkeyFlags { low_byte: ", "")
@@ -509,6 +525,7 @@ fn format_hotkey_text(hotkey: String) ->  std::io::Result<String> {
     }
     Ok(hk)
 }
+
 
 /*
     determine if a file is a symlink or not
@@ -613,6 +630,7 @@ fn analyze_file(
     let mut hashes = Hashes::default();
     let mut strings: Vec<String> = Vec::new();
     let mut mime_type = String::new();
+    let mut chi2 = String::new();
     if max_size == 0 || bytes <= max_size {
         let buffer = read_file_bytes(&file)?;
         mime_type = get_mimetype(&buffer)?;
@@ -621,11 +639,12 @@ fn analyze_file(
         if strings_length > 0 {strings = get_strings(&buffer, strings_length)?;}
         entropy = shannon_entropy(&buffer);
         hashes = get_file_hashes(&buffer)?;
+        chi2 = get_chi2_observed(&buffer);
     }
     let p = path.to_string_lossy().into_owned();
     print_log(p, dir, fname, ext,
         bytes, mime_type, is_hidden,  is_link, link, ftimes.clone(), 
-        entropy, hashes, ads, bin, pprint, strings)?;
+        entropy, hashes, ads, chi2, bin, pprint, strings)?;
     Ok(())
 }
 

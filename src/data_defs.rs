@@ -429,6 +429,7 @@ pub struct MetaData {
     pub entropy: f32,
     pub hashes: Hashes,
     pub ads: Vec<DataRun>,
+    pub chi2: String,
     pub binary: Binary,
     pub strings: Vec<String>
 }
@@ -448,6 +449,7 @@ impl MetaData {
             entropy: f32,
             hashes: Hashes,
             ads: Vec<DataRun>,
+            chi2: String,
             binary: Binary,
             strings: Vec<String>) -> MetaData {
         MetaData {
@@ -465,6 +467,7 @@ impl MetaData {
             entropy,
             hashes,
             ads,
+            chi2,
             binary,
             strings
         }
