@@ -26,6 +26,8 @@ Linux x64:  sudo apt update && sudo apt install mingw-w64
 ```
 **Chi Squared file analysis**: This calculation counts the number of occurances for each 256 values of a byte in a file. The Chi2 calculation is found in the "chi2" field with the count of each byte possibility [0..256] as a comma seperated string.
 - See: https://inria.hal.science/hal-01789936/document
+
+# Help and Output
 ```
 Authors: Brian Kellogg
          Jason Langston
