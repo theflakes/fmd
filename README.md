@@ -57,39 +57,40 @@ fmd.exe <directory> --depth 1
     - This will work exactly as if the '--depth' 1 option was not specified.
 
 Interesting mime types:
-    "application/hta",
-    "application/mac-binary",
-    "application/macbinary",
-    "application/octet-stream",
-    "application/x-binary",
-    "application/x-dosexec",
-    "application/x-executable",
-    "application/x-macbinary",
-    "application/x-ms-dos-executable",
-    "application/x-msdownload",
-    "application/x-sharedlib"
+    application/hta
+    application/mac-binary
+    application/macbinary
+    application/octet-stream
+    application/x-binary
+    application/x-dosexec
+    application/x-executable
+    application/x-macbinary
+    application/x-ms-dos-executable
+    application/x-msdownload
+    application/x-sharedlib
 
-NOTE: If passed a directory, all files in that directory will be analyzed.
-      Harvesting $FILE_NAME timestamps can only be done by running this tool elevated.
-      The 'run_as_admin' field shows if the tool was run elevated.
+NOTE: 
+    If passed a directory, all files in that directory will be analyzed.
+    Harvesting $FILE_NAME timestamps can only be done by running this tool elevated.
+    The 'run_as_admin' field shows if the tool was run elevated.
 
-      Harvesting Alternate Data Stream (ADS) information can only be done by running 
-      this tool elevated. ADS information is acquired by directly accessing the NTFS which
-      requires elevation.
+    Harvesting Alternate Data Stream (ADS) information can only be done by running 
+    this tool elevated. ADS information is acquired by directly accessing the NTFS which
+    requires elevation.
 
-      'runtime_env' stores information on the device that this tool was run on.
+    'runtime_env' stores information on the device that this tool was run on.
 
-      PE Sections:
-      - 'total_sections' reports how many PE sections are found after the PE headers.
-      - 'total_raw_bytes' cumulative size in bytes of all raw, on disk, sections.
-      - 'total_virt_bytes' cumulative size in bytes of all virtual, in memory, sections.
-      - if 'total_virt_bytes' is much larger than 'total_raw_bytes', this can indicate
-      a packed binary.
+    PE Sections:
+    - 'total_sections' reports how many PE sections are found after the PE headers.
+    - 'total_raw_bytes' cumulative size in bytes of all raw, on disk, sections.
+    - 'total_virt_bytes' cumulative size in bytes of all virtual, in memory, sections.
+    - if 'total_virt_bytes' is much larger than 'total_raw_bytes', this can indicate
+    a packed binary.
 
-      Certain forensic information can only be harvested when the file is analyzed on
-      the filesystem of origin. 
-      - e.g. timestamps and alternate data streams are lost when the file is moved 
-      off of the filesystem of origin.
+    Certain forensic information can only be harvested when the file is analyzed on
+    the filesystem of origin. 
+    - e.g. timestamps and alternate data streams are lost when the file is moved 
+    off of the filesystem of origin.
 ```
 
 Example output:
