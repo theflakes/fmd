@@ -366,16 +366,16 @@ Identify more interesting imports:
 ./fmd -p ./fmd.exe
 {
   "runtime_env": {
-    "timestamp": "2023-05-08T14:14:01.160860300+00:00",
-    "device_type": "Windows 10.0.22621 (Workstation)",
+    "timestamp": "2023-07-09T00:57:22.194723900+00:00",
+    "device_type": "Windows 6.1.7601 (Workstation)",
     "run_as_admin": true
   },
-  "path": "D:\\code\\fmd\\target\\release\\fmd.exe",
-  "directory": "D:\\code\\fmd\\target\\release",
+  "path": "Z:\\home\\flakes\\code\\fmd\\target\\x86_64-pc-windows-gnu\\release\\fmd.exe",
+  "directory": "Z:\\home\\flakes\\code\\fmd\\target\\x86_64-pc-windows-gnu\\release",
   "filename": "fmd.exe",
   "extension": "exe",
-  "bytes": 912384,
-  "mime_type": "application/x-executable",
+  "bytes": 937472,
+  "mime_type": "application/x-ms-dos-executable",
   "is_hidden": false,
   "is_link": false,
   "link": {
@@ -393,33 +393,37 @@ Identify more interesting imports:
     "volume_label": ""
   },
   "timestamps": {
-    "access_fn": "2023-05-08T14:06:07.327",
-    "access_si": "2023-05-08T14:14:00.858",
-    "create_fn": "2023-05-08T14:06:07.293",
-    "create_si": "2023-05-08T14:06:07.293",
-    "modify_fn": "2023-05-08T14:06:07.327",
-    "modify_si": "2023-05-08T14:06:07.327",
-    "mft_record": "2023-05-08T14:06:07.511"
+    "access_fn": "",
+    "access_si": "2023-07-08T23:47:17.508",
+    "create_fn": "",
+    "create_si": "2023-07-08T23:47:17.528",
+    "modify_fn": "",
+    "modify_si": "2023-07-08T23:47:17.528",
+    "mft_record": ""
   },
-  "entropy": 6.3614507,
+  "entropy": 6.3930492,
   "hashes": {
-    "md5": "f771e9ca94e03156d156e59cf1108acf",
-    "sha1": "b2e11e6a56d6195959a48dbc59503e82ae656f5c",
-    "sha256": "e2862b30b4629f48068edd292fd100e8ff2d9c0f5b621cdd5dd994f48de38205",
-    "ssdeep": "12288:iTUxmsNjTtfnRRIAk/HsnDvj5eqpb8qhLx7VcptoZ:iTUTtfDIX/Hs35xpbrX7Gpti"
+    "md5": "d8f5515b28d5eb2beea99bda323b1dc1",
+    "sha1": "bb318ef32a29fb6ccf521dd34435c086cd02af0d",
+    "sha256": "f28b0bde7181240ede7388e760f94519175f77aa3f2e4e32ff5dac119f0ad30e",
+    "ssdeep": "12288:Lmt9/MJg02PFMxZSkHMD7/gvUDjw575MHzEibr5eoJ0DHnJwoCnk0:Lm3qg02PFiMD7/mUHgi5ecYn1C"
   },
-  "ads": [
-    {
-      "name": "",
-      "bytes": 912384,
-      "first_256_bytes": "MZ�.\u0003...\u0004...��..�.......@...................................�...\u000e\u001f�\u000e.�\t�!�\u0001L�!This program cannot be run in DOS mode.\r\r\n$.......�O8��.V��.V��.V�0\\U��.V�0\\S�j.V�0\\R��.V�\\RS��.V�\\RR��.V�\\RU��.V�0\\W��.V��.W��.V��.V��.V�:ST��.V�Rich�.V�................PE..d�\u0006"
-    }
-  ],
+  "ads": [],
+  "chi2": "162534,20199,8096,6266,7873,6231,4406,3788,8177,4470,5355,4030,3376,4330,2625,18725,7096,2718,964,1219,1170,2056,9
+36,723,2704,858,754,559,902,696,854,1819,10280,1136,575,757,32420,765,604,742,4360,2668,550,870,1090,2737,2847,3780,5733,6040
+,1561,907,1096,1163,762,813,3141,2749,1218,908,1162,1764,1736,943,7003,11472,2620,1543,10901,3692,2571,1271,52050,11175,1182,
+854,17830,4654,1750,1058,3546,745,1076,1573,2600,1189,2302,1836,1883,537,533,1502,1858,1355,1873,2190,2895,8021,1639,4511,405
+2,8609,5854,1702,2655,7893,496,1196,5046,3087,5904,6702,7358,472,6135,5275,11562,4104,1903,1249,3846,1671,787,478,1756,462,75
+0,997,3484,1739,1205,9279,11886,4570,691,621,2511,31753,919,17782,3547,12386,384,308,2271,290,441,286,2660,432,273,310,1180,3
+14,267,293,978,249,248,281,1494,416,491,414,773,450,451,534,1179,419,403,511,1118,443,494,645,1474,395,346,421,1406,371,1491,
+1195,3861,1913,1342,461,1988,535,517,701,6411,4920,1891,2090,1646,788,2010,4372,2244,1886,942,575,492,501,961,727,2498,1381,2
+408,710,444,459,612,787,1634,1158,864,848,356,365,459,535,2658,945,1083,542,728,470,505,617,9696,4429,743,3388,1448,1090,545,
+630,2823,1638,1092,1038,483,509,1285,1002,3321,2456,2063,1351,1374,1863,2081,21435",
   "binary": {
     "is_64": true,
     "is_dotnet": false,
     "is_lib": false,
-    "entry_point": "0x8783c",
+    "entry_point": "0x14f0",
     "pe_info": {
       "product_version": "",
       "original_filename": "",
@@ -431,595 +435,120 @@ Identify more interesting imports:
       "legal_copyright": ""
     },
     "timestamps": {
-      "compile": "2023-05-08T14:06:07",
-      "debug": "2023-05-08T14:06:07"
+      "compile": "2023-07-08T23:47:17",
+      "debug": ""
     },
     "linker": {
-      "major_version": 14,
-      "minor_version": 35
+      "major_version": 2,
+      "minor_version": 38
     },
     "sections": {
-      "total_sections": 6,
-      "total_raw_bytes": 911360,
-      "total_virt_bytes": 914640,
+      "total_sections": 10,
+      "total_raw_bytes": 936448,
+      "total_virt_bytes": 934620,
       "sections": [
         {
           "name": ".text",
-          "entropy": 6.2606473,
-          "md5": "b27fda7b8dda8b67b4a83f0397eb6e2e",
-          "ssdeep": "12288:hTUxmsNjTtfnRRIAk/HsnDvj5eqpb8qhLx7Vcpt:hTUTtfDIX/Hs35xpbrX7Gpt",
+          "entropy": 6.17574,
+          "md5": "6e3cee650d1cf3d2d11ae9f6b6533767",
+          "ssdeep": "12288:Dmt9/MJg02PFMxZSkHMD7/gvUDjw575MHzEibr5eoJ0DHnJw:Dm3qg02PFiMD7/mUHgi5ecYn",
           "virt_address": "0x1000",
-          "raw_size": 629760,
-          "virt_size": 629584
-        },
-        {
-          "name": ".rdata",
-          "entropy": 5.620502,
-          "md5": "3514e91c3409ea2169e3318bcd4643f0",
-          "ssdeep": "3072:P06t6vb0qRsiVcZpkZvwNQmuILUS5AKQdlLkt8n1OC13L01vlftQj0UV:JkSIMYS5wWev55",
-          "virt_address": "0x9b000",
-          "raw_size": 254976,
-          "virt_size": 254480
+          "raw_size": 698880,
+          "virt_size": 698488
         },
         {
           "name": ".data",
-          "entropy": 2.077,
-          "md5": "02a216035bd81096ad2a6d35058abfbd",
-          "ssdeep": "24:bY1Bf6uSkeKP6uSkeK8hBSqRSSSS1wVVbeC1u:b8BTk4TkPkCSSSSyHbeC1u",
-          "virt_address": "0xda000",
-          "raw_size": 3072,
-          "virt_size": 8024
+          "entropy": 1.0986191,
+          "md5": "39cedd8f9dcc48361788316a0a58bb76",
+          "ssdeep": "3:flRj+l/lmlH/lPEllXRDD7+tVeklll1LVzlElVytf3Rt/Mfl:bqMhEJRk7EC1M",
+          "virt_address": "0xac000",
+          "raw_size": 512,
+          "virt_size": 288
+        },
+        {
+          "name": ".rdata",
+          "entropy": 5.8037515,
+          "md5": "0e677a78d76e141fe77533f8cd4a0267",
+          "ssdeep": "1536:XargjgjTT/7jDv1iWMX/8S8yk1ixseq8ZmD8LVYlQvOXMwQGK6jv9eys+F6d9paT:4fTDvNYX/F8yqimDKALkt8kC",
+          "virt_address": "0xad000",
+          "raw_size": 194048,
+          "virt_size": 193808
         },
         {
           "name": ".pdata",
-          "entropy": 5.765786,
-          "md5": "3e910837566d751a4ca1b304f2b7b64b",
-          "ssdeep": "384:k/+PYyFpNJDRvZT32NWIybFBS18BA9v3BfpiUJ6UrMDiFpM16c5jR/BX:kilHDT7IyzS1WWmUrMDTv",
-          "virt_address": "0xdc000",
-          "raw_size": 16384,
-          "virt_size": 16008
+          "entropy": 5.8055377,
+          "md5": "242e2e0b248adce2990bf297e0c6cd2c",
+          "ssdeep": "192:78BxAls/X5sD06Pw2pjwS1H/ZfQkHt5RxH4zstwDGrplEJV2yemI7Jj4aRw8jQh9:7IxAGf5uhlh5xH4zo0GrpqV2vF1jc",
+          "virt_address": "0xdd000",
+          "raw_size": 12800,
+          "virt_size": 12312
         },
         {
-          "name": "_RDATA",
-          "entropy": 3.3046613,
-          "md5": "31ff6f2798d8f7c00aaf516b84718be2",
-          "ssdeep": "6:P/hxYw51Uoit95idqOJMYwCTA4Fbb3zyveNA4XK13H:If6PCYo4FbKH",
-          "virt_address": "0xe0000",
+          "name": ".xdata",
+          "entropy": 5.158668,
+          "md5": "52e19a41f6f31b31efaf574af0634968",
+          "ssdeep": "384:YndfZzokSUVg/V1IdD9ScdAPLRLg0zKYPGg74UBxVLGYVk9ug1bDUuj9q7OS9fss:cJaNTZX",
+          "virt_address": "0xe1000",
+          "raw_size": 18944,
+          "virt_size": 18936
+        },
+        {
+          "name": ".bss",
+          "entropy": 0.0,
+          "md5": "d41d8cd98f00b204e9800998ecf8427e",
+          "ssdeep": "3::",
+          "virt_address": "0xe6000",
+          "raw_size": 0,
+          "virt_size": 1120
+        },
+        {
+          "name": ".idata",
+          "entropy": 4.3447256,
+          "md5": "e2a534477d84a4aa71a97a5d2f25f4e3",
+          "ssdeep": "96:NwFZ909wFZ90MQx21cqmkQWY8JXXvyP/mfnWBM+AzCkz:WFj0mFj0jx217mkTJJK/mfnWe+AOkz",
+          "virt_address": "0xe7000",
+          "raw_size": 5120,
+          "virt_size": 4648
+        },
+        {
+          "name": ".CRT",
+          "entropy": 0.5403517,
+          "md5": "31f2757303c0144dae8926d0545b9aab",
+          "ssdeep": "3:TlblNs/DAkll/HklVkl:Tlw/8k0lOl",
+          "virt_address": "0xe9000",
           "raw_size": 512,
-          "virt_size": 348
+          "virt_size": 120
+        },
+        {
+          "name": ".tls",
+          "entropy": 0.0,
+          "md5": "bf619eac0cdf3f68d496ea9344137e8b",
+          "ssdeep": "3::",
+          "virt_address": "0xea000",
+          "raw_size": 512,
+          "virt_size": 16
         },
         {
           "name": ".reloc",
-          "entropy": 5.3366485,
-          "md5": "e37675ee4c4f5dcb7b3fb0f74698cfac",
-          "ssdeep": "192:8Qn81cD1c+hvJe725jRmVJPISajeJzT/X+uYAiz+sssEXL:8Qn8KBBe72tRmTAazjzsssE",
-          "virt_address": "0xe1000",
-          "raw_size": 6656,
-          "virt_size": 6196
+          "entropy": 5.3757067,
+          "md5": "a3ef38fa4a201a37b4d5107e37f827bd",
+          "ssdeep": "96:xWX3DKenhKenGv61cEsZ39CH1VKnoJ3rZ/mW2w0mMntnG/GEcnnzy:xmee4eI61chCVVKEJmW2VG/GFnzy",
+          "virt_address": "0xeb000",
+          "raw_size": 5120,
+          "virt_size": 4884
         }
       ]
     },
     "imports": {
       "hashes": {
-        "md5": "ad3f2eabfdf67bac7ed8a69a4c402917",
-        "md5_sorted": "5919e44bd5534590d79649bcc72515fc",
-        "ssdeep": "48:pErXcdf/p9zWwTxrWA1stv4Bc+pRl7EcbfK:arXcV/pJWwTxrWA1stv4Bc+pRrS",
-        "ssdeep_sorted": "48:mbfKW5W6yFQCg9/w3+nmPc1hnxQsGvXHcvB:UCW5W6YQCg5Rnm8hnxQsGvXHcvB"
+        "md5": "93bc9d9897e4e465d4287edf79c2eeb8",
+        "md5_sorted": "5aa3b1a3a880c918589b831414013445",
+        "ssdeep": "48:mbfKW5W6GHMCf9Fa4qcnboxQIOXHcAJG6qJ7k7qtD:UCW5W6GHMCfr5qcnboxQIOXHcAJGhlC4",
+        "ssdeep_sorted": "48:mbfdW5W6GHMCf9Fa40cnboxQIOXHcfJG6qJ7k7qtD:U1W5W6GHMCfr50cnboxQIOXHcfJGhlC4"
       },
-      "lib_count": 3,
-      "func_count": 105,
+      "lib_count": 5,
+      "func_count": 116,
       "imports": [
-        {
-          "lib": "KERNEL32.dll",
-          "count": 101,
-          "names": [
-            {
-              "name": "CloseHandle",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "GetCurrentProcess",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "SetFilePointerEx",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "GetLastError",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "FindFirstFileW",
-              "more_interesting": true,
-              "info": "Searches a directory for a file or subdirectory with a name."
-            },
-            {
-              "name": "FindClose",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "GetCommandLineW",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "SetLastError",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "GetModuleFileNameW",
-              "more_interesting": true,
-              "info": "Retrieves the fully qualified path for the file that contains the specified module."
-            },
-            {
-              "name": "AddVectoredExceptionHandler",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "SetThreadStackGuarantee",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "GetCurrentThread",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "HeapReAlloc",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "FileTimeToSystemTime",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "SystemTimeToTzSpecificLocalTime",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "SystemTimeToFileTime",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "GetTimeZoneInformation",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "HeapAlloc",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "GetProcessHeap",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "Sleep",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "GetModuleHandleA",
-              "more_interesting": true,
-              "info": "Retrieves a module handle for the specified module."
-            },
-            {
-              "name": "TryAcquireSRWLockExclusive",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "ReleaseSRWLockExclusive",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "GetStdHandle",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "GetConsoleMode",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "FreeLibrary",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "MultiByteToWideChar",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "WriteConsoleW",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "GetCurrentDirectoryW",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "WaitForSingleObjectEx",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "LoadLibraryA",
-              "more_interesting": true,
-              "info": "Loads the specified module into the address space of the calling process."
-            },
-            {
-              "name": "CreateMutexA",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "ReleaseMutex",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "RtlLookupFunctionEntry",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "GetModuleHandleW",
-              "more_interesting": true,
-              "info": "Retrieves a module handle for the specified module."
-            },
-            {
-              "name": "FormatMessageW",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "CreateFileW",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "GetFileInformationByHandle",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "GetFileInformationByHandleEx",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "GetFullPathNameW",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "FindNextFileW",
-              "more_interesting": true,
-              "info": "Continues a file search for a previous call to the 'findfirstfile/findfirstfileex/findfirstfiletransacted' function."
-            },
-            {
-              "name": "AcquireSRWLockExclusive",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "ExitProcess",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "QueryPerformanceCounter",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "QueryPerformanceFrequency",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "GetSystemTimeAsFileTime",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "RtlCaptureContext",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "AcquireSRWLockShared",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "ReleaseSRWLockShared",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "GetEnvironmentVariableW",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "GetFinalPathNameByHandleW",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "GetProcAddress",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "LoadLibraryExW",
-              "more_interesting": true,
-              "info": "Loads the specified module into the address space of the calling process."
-            },
-            {
-              "name": "WaitForSingleObject",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "HeapFree",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "GetCurrentProcessId",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "GetCurrentThreadId",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "InitializeSListHead",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "RtlVirtualUnwind",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "IsDebuggerPresent",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "UnhandledExceptionFilter",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "SetUnhandledExceptionFilter",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "GetStartupInfoW",
-              "more_interesting": true,
-              "info": "Retrieves the contents of the STARTUPINFO structure that was specified when the calling process was created."
-            },
-            {
-              "name": "IsProcessorFeaturePresent",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "RtlUnwindEx",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "EncodePointer",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "RaiseException",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "EnterCriticalSection",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "LeaveCriticalSection",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "DeleteCriticalSection",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "InitializeCriticalSectionAndSpinCount",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "TlsAlloc",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "TlsGetValue",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "TlsSetValue",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "TlsFree",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "RtlPcToFileHeader",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "WriteFile",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "TerminateProcess",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "GetModuleHandleExW",
-              "more_interesting": true,
-              "info": "Retrieves a module handle for the specified module and increments the module's reference count."
-            },
-            {
-              "name": "GetCommandLineA",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "FindFirstFileExW",
-              "more_interesting": true,
-              "info": "Searches a directory for a file or subdirectory with a name."
-            },
-            {
-              "name": "IsValidCodePage",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "GetACP",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "GetOEMCP",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "GetCPInfo",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "WideCharToMultiByte",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "GetEnvironmentStringsW",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "FreeEnvironmentStringsW",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "SetEnvironmentVariableW",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "SetStdHandle",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "GetFileType",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "GetStringTypeW",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "FlsAlloc",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "FlsGetValue",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "FlsSetValue",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "FlsFree",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "CompareStringW",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "LCMapStringW",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "HeapSize",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "FlushFileBuffers",
-              "more_interesting": false,
-              "info": ""
-            },
-            {
-              "name": "GetConsoleOutputCP",
-              "more_interesting": false,
-              "info": ""
-            }
-          ]
-        },
         {
           "lib": "ADVAPI32.dll",
           "count": 3,
@@ -1047,6 +576,586 @@ Identify more interesting imports:
           "names": [
             {
               "name": "BCryptGenRandom",
+              "more_interesting": false,
+              "info": ""
+            }
+          ]
+        },
+        {
+          "lib": "KERNEL32.dll",
+          "count": 78,
+          "names": [
+            {
+              "name": "AcquireSRWLockExclusive",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "AcquireSRWLockShared",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "AddVectoredExceptionHandler",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "CloseHandle",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "CreateFileMappingA",
+              "more_interesting": true,
+              "info": "Creates or opens a named or unnamed file mapping object for a specified file."
+            },
+            {
+              "name": "CreateFileW",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "CreateMutexA",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "CreateToolhelp32Snapshot",
+              "more_interesting": true,
+              "info": "Takes a snapshot of the specified processes, heaps,modules, and threads used by the processes."
+            },
+            {
+              "name": "DeleteCriticalSection",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "DuplicateHandle",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "EnterCriticalSection",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "ExitProcess",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "FindClose",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "FindFirstFileW",
+              "more_interesting": true,
+              "info": "Searches a directory for a file or subdirectory with a name."
+            },
+            {
+              "name": "FindNextFileW",
+              "more_interesting": true,
+              "info": "Continues a file search for a previous call to the 'findfirstfile/findfirstfileex/findfirstfiletransac
+ted' function."
+            },
+            {
+              "name": "FormatMessageW",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "FreeLibrary",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "GetCommandLineW",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "GetConsoleMode",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "GetCurrentDirectoryW",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "GetCurrentProcess",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "GetCurrentThread",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "GetEnvironmentVariableW",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "GetFileInformationByHandle",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "GetFileInformationByHandleEx",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "GetFinalPathNameByHandleW",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "GetFullPathNameW",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "GetLastError",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "GetModuleFileNameW",
+              "more_interesting": true,
+              "info": "Retrieves the fully qualified path for the file that contains the specified module."
+            },
+            {
+              "name": "GetModuleHandleA",
+              "more_interesting": true,
+              "info": "Retrieves a module handle for the specified module."
+            },
+            {
+              "name": "GetModuleHandleW",
+              "more_interesting": true,
+              "info": "Retrieves a module handle for the specified module."
+            },
+            {
+              "name": "GetProcAddress",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "GetProcessHeap",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "GetStartupInfoA",
+              "more_interesting": true,
+              "info": "Retrieves the contents of the STARTUPINFO structure that was specified when the calling process was cr
+eated."
+            },
+            {
+              "name": "GetStdHandle",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "GetSystemTimeAsFileTime",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "HeapAlloc",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "HeapFree",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "HeapReAlloc",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "InitOnceBeginInitialize",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "InitOnceComplete",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "InitializeCriticalSection",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "LeaveCriticalSection",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "LoadLibraryA",
+              "more_interesting": true,
+              "info": "Loads the specified module into the address space of the calling process."
+            },
+            {
+              "name": "LoadLibraryExW",
+              "more_interesting": true,
+              "info": "Loads the specified module into the address space of the calling process."
+            },
+            {
+              "name": "MapViewOfFile",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "Module32FirstW",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "Module32NextW",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "MultiByteToWideChar",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "QueryPerformanceCounter",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "QueryPerformanceFrequency",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "RaiseException",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "ReleaseMutex",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "ReleaseSRWLockExclusive",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "ReleaseSRWLockShared",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "RtlCaptureContext",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "RtlLookupFunctionEntry",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "RtlUnwindEx",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "RtlVirtualUnwind",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "SetFilePointerEx",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "SetLastError",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "SetThreadStackGuarantee",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "SetUnhandledExceptionFilter",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "Sleep",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "SystemTimeToFileTime",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "SystemTimeToTzSpecificLocalTime",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "TlsAlloc",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "TlsFree",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "TlsGetValue",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "TlsSetValue",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "TryAcquireSRWLockExclusive",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "UnmapViewOfFile",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "VirtualProtect",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "VirtualQuery",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "WaitForSingleObject",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "WaitForSingleObjectEx",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "WriteConsoleW",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "__C_specific_handler",
+              "more_interesting": false,
+              "info": ""
+            }
+          ]
+        },
+        {
+          "lib": "msvcrt.dll",
+          "count": 31,
+          "names": [
+            {
+              "name": "__getmainargs",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "__initenv",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "__iob_func",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "__lconv_init",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "__set_app_type",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "__setusermatherr",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "_acmdln",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "_amsg_exit",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "_cexit",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "_commode",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "_errno",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "_fmode",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "_fpreset",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "_initterm",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "_onexit",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "abort",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "calloc",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "exit",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "fprintf",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "free",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "fwrite",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "logf",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "malloc",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "memcmp",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "memcpy",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "memmove",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "memset",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "signal",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "strlen",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "strncmp",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "vfprintf",
+              "more_interesting": false,
+              "info": ""
+            }
+          ]
+        },
+        {
+          "lib": "ntdll.dll",
+          "count": 3,
+          "names": [
+            {
+              "name": "NtReadFile",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "NtWriteFile",
+              "more_interesting": false,
+              "info": ""
+            },
+            {
+              "name": "RtlNtStatusToDosError",
               "more_interesting": false,
               "info": ""
             }
