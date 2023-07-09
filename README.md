@@ -57,7 +57,7 @@ If just passed a directory, only the contents of that directory will be processe
 fmd.exe <directory> --depth 1
     - This will work exactly as if the '--depth' 1 option was not specified.
 
-Mimietypes are determined by examining a file's contents.
+Mimetypes are determined by examining a file's contents.
   - Interesting mime types:
       application/hta
       application/mac-binary
