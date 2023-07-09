@@ -24,7 +24,7 @@ x64:        cargo build --release --target x86_64-pc-windows-msvc
 Linux x64:  sudo apt update && sudo apt install mingw-w64
             cargo build --release --target x86_64-pc-windows-gnu
 ```
-Chi Squared file analysis: This calculation counts the number of occurances for each 256 values of a byte in a file. The Chi2 calculation is found in the "chi2" field with the count of each byte possibility [0..256] as a comma seperated string.
+*Chi Squared file analysis*: This calculation counts the number of occurances for each 256 values of a byte in a file. The Chi2 calculation is found in the "chi2" field with the count of each byte possibility [0..256] as a comma seperated string.
 ```
 Authors: Brian Kellogg
          Jason Langston
