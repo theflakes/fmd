@@ -420,6 +420,7 @@ fn get_sections(pex: &PE, path: &Path) -> io::Result<BinSections>{
         bs.entropy = get_entropy(&data)?;
         bs.md5 = format!("{:x}", md5::compute(&data)).to_lowercase();
         bs.ssdeep = get_ssdeep_hash(&data)?;
+        bs.chi2 = get_chi2_observed(&data);
         bss.sections.push(bs);
     }
     Ok(bss)

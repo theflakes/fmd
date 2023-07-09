@@ -228,7 +228,8 @@ impl Default for BinSection {
             ssdeep: String::new(),
             virt_address: String::new(),
             raw_size: 0,
-            virt_size: 0
+            virt_size: 0,
+            chi2: String::new()
         }
     }
 }
@@ -240,7 +241,8 @@ pub struct BinSection {
     pub ssdeep: String,
     pub virt_address: String,
     pub raw_size: u32,
-    pub virt_size: u32
+    pub virt_size: u32,
+    pub chi2: String
 }
 
 
