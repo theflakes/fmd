@@ -60,7 +60,6 @@ fn print_log(
                 entropy: f32,
                 hashes: Hashes,
                 ads: Vec<DataRun>,
-                chi2: String,
                 binary: Binary,
                 pprint: bool,
                 strings: Vec<String>
@@ -82,7 +81,6 @@ fn print_log(
             entropy,
             hashes,
             ads,
-            chi2,
             binary,
             strings
         ).report_pretty_log();
@@ -102,7 +100,6 @@ fn print_log(
             entropy,
             hashes,
             ads,
-            chi2,
             binary,
             strings
         ).report_log();
@@ -250,18 +247,6 @@ fn check_ordinal(dll: &str, func: &str) -> io::Result<String> {
         f = ordinals::imphash_resolve(dll, o).to_ascii_lowercase();
     }
     Ok(f)
-}
-
-
-fn get_chi2_observed(buffer: &[u8]) -> String {
-    let mut observed = vec![0; 256];
-    for byte in buffer.iter() {
-        observed[*byte as usize] += 1;
-    }
-    return observed.iter()
-            .map(|&x| x.to_string())
-            .collect::<Vec<String>>()
-            .join(",")
 }
 
 
@@ -420,7 +405,6 @@ fn get_sections(pex: &PE, path: &Path) -> io::Result<BinSections>{
         bs.entropy = get_entropy(&data)?;
         bs.md5 = format!("{:x}", md5::compute(&data)).to_lowercase();
         bs.ssdeep = get_ssdeep_hash(&data)?;
-        bs.chi2 = get_chi2_observed(&data);
         bss.sections.push(bs);
     }
     Ok(bss)
@@ -631,7 +615,6 @@ fn analyze_file(
     let mut hashes = Hashes::default();
     let mut strings: Vec<String> = Vec::new();
     let mut mime_type = String::new();
-    let mut chi2 = String::new();
     if max_size == 0 || bytes <= max_size {
         let buffer = read_file_bytes(&file)?;
         mime_type = get_mimetype(&buffer)?;
@@ -640,12 +623,11 @@ fn analyze_file(
         if strings_length > 0 {strings = get_strings(&buffer, strings_length)?;}
         entropy = shannon_entropy(&buffer);
         hashes = get_file_hashes(&buffer)?;
-        chi2 = get_chi2_observed(&buffer);
     }
     let p = path.to_string_lossy().into_owned();
     print_log(p, dir, fname, ext,
         bytes, mime_type, is_hidden,  is_link, link, ftimes.clone(), 
-        entropy, hashes, ads, chi2, bin, pprint, strings)?;
+        entropy, hashes, ads, bin, pprint, strings)?;
     Ok(())
 }
 
