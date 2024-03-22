@@ -447,7 +447,7 @@ fn get_pe(path: &Path, buffer: &Vec<u8>) -> io::Result<Binary> {
                 },
                 Object::Unknown(magic) => {  },
                 Object::COFF(_) => todo!(),
-                _ => todo!(),
+                _ => {},
             },
         Err(_e) => return Ok(bin),
     };
