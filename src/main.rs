@@ -166,7 +166,6 @@ fn get_file_hashes(buffer: &Vec<u8>) -> io::Result<Hashes> {
     hashes.sha1 = get_sha1(buffer)?;
     hashes.sha256 = get_sha256(buffer)?;
     hashes.ssdeep = get_ssdeep_hash(&buffer)?;
-    drop(buffer);
     Ok(hashes)
 }
 
@@ -314,7 +313,7 @@ fn parse_pe_exports(exports: &Vec<goblin::pe::export::Export>) -> io::Result<Exp
 
 
 fn get_date_string(timestamp: i64) -> io::Result<String> {
-    let dt = match chrono::NaiveDateTime::from_timestamp_opt(timestamp, 0) {
+    let dt = match DateTime::from_timestamp(timestamp, 0) {
             Some(s) => s.format("%Y-%m-%dT%H:%M:%S").to_string(),
             None => "".to_string()
         };
@@ -446,7 +445,9 @@ fn get_pe(path: &Path, buffer: &Vec<u8>) -> io::Result<Binary> {
                 Object::Archive(archive) => {
                     //println!("Archive file");
                 },
-                Object::Unknown(magic) => {  }
+                Object::Unknown(magic) => {  },
+                Object::COFF(_) => todo!(),
+                _ => todo!(),
             },
         Err(_e) => return Ok(bin),
     };
