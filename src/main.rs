@@ -389,7 +389,7 @@ fn read_section(path: &Path, start: u32, size: u32) -> io::Result<Vec<u8>> {
 }
 
 
-fn get_sections(pex: &PE, path: &Path) -> io::Result<BinSections>{
+fn get_sections(pex: &PE, path: &Path) -> io::Result<BinSections> {
     let mut bss = BinSections::default();
     for s in pex.sections.iter() {
         bss.total_sections += 1;
