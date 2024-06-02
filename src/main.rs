@@ -178,7 +178,10 @@ fn is_dotnet(imps: &Imports) -> io::Result<bool> {
     if imps.imports.len() == 1 {
         if imps.imports[0].count ==1 
             && imps.imports[0].lib == "mscoree.dll" 
-            && imps.imports[0].names[0].name == "_CorExeMain" {
+            && (
+                imps.imports[0].names[0].name == "_CorExeMain" 
+                || imps.imports[0].names[0].name == "_CorDllMain"
+            ) {
             return Ok(true);
         }
     }
