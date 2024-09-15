@@ -1,5 +1,5 @@
 [build]
-target = "x86_64-pc-windows-msvc"
+target = "x86_64-pc-windows-gnu"
 
 #
 # Statically Link so that C++ runtime is not required for running the binary
