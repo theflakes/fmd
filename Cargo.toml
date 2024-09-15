@@ -1,10 +1,10 @@
 [package]
 name = "fmd"
-version = "1.0.1"
+version = "1.0.2"
 edition = "2021"
 authors = ["Brian Kellogg"]
 description = "Parse file meta data for forensics purposes."
-repository = "https://github.com/forensicmatt/RustyLnk"
+repository = "https://github.com/theflakes/fmd"
 license = "MIT"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
