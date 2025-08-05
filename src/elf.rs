@@ -35,17 +35,8 @@ fn parse_elf_sections(elf: &elf::Elf, buffer: &[u8]) -> BinSections {
         }
         let section_data_to_hash: Vec<u8>;
         if sh.sh_type == elf::section_header::SHT_NOBITS {
-            // section.raw_size = 0;
-            // section.virt_size = sh.sh_size as u32;
-            // sections.total_virt_bytes += sh.sh_size as u32;
-            // For SHT_NOBITS sections (like .bss), hash an empty string
             section_data_to_hash = Vec::new();
         } else {
-            // section.raw_size = sh.sh_size as u32;
-            // section.virt_size = sh.sh_size as u32;
-            // sections.total_raw_bytes += sh.sh_size as u32;
-            // sections.total_virt_bytes += sh.sh_size as u32;
-
             let start = sh.sh_offset as usize;
             let end = (sh.sh_offset + sh.sh_size) as usize;
             if end <= buffer.len() {
