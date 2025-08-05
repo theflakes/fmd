@@ -89,14 +89,18 @@ impl Default for ExpHashes {
     fn default () -> ExpHashes {
         ExpHashes {
             md5: String::new(),
+            md5_sorted: String::new(),
             ssdeep: String::new(),
+            ssdeep_sorted: String::new()
         }
     }
 }
 #[derive(Serialize, Clone)]
 pub struct ExpHashes {
     pub md5: String,
+    pub md5_sorted: String,
     pub ssdeep: String,
+    pub ssdeep_sorted: String,
 }
 
 

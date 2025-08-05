@@ -112,16 +112,24 @@ fn get_elf_imphashes(imports: &Imports) -> ImpHashes {
 
 fn get_elf_exphashes(exports: &Exports) -> ExpHashes {
     let mut exphashes = ExpHashes::default();
+    let mut exphash_array: Vec<String> = Vec::new();
     let mut exphash_text = String::new();
 
     for name in &exports.names {
-        exphash_text.push_str(&name.to_lowercase());
+        let lower_name = name.to_lowercase();
+        exphash_text.push_str(&lower_name);
         exphash_text.push_str(",");
+        exphash_array.push(lower_name);
     }
 
     exphash_text = exphash_text.trim_end_matches(",").to_string();
     exphashes.md5 = format!("{:x}", md5::compute(exphash_text.as_bytes())).to_lowercase();
+    
+    let (exphash_text_sorted, md5_sorted) = get_hash_sorted(&mut exphash_array);
+    exphashes.md5_sorted = md5_sorted;
+
     exphashes.ssdeep = FuzzyHash::new(exphash_text.as_bytes()).to_string();
+    exphashes.ssdeep_sorted = FuzzyHash::new(exphash_text_sorted.as_bytes()).to_string();
 
     exphashes
 }
