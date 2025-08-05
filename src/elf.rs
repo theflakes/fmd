@@ -2,7 +2,6 @@ use goblin::elf;
 use crate::data_defs::{Binary, BinSection, BinSections, Imports, Exports, Import, Function, BinaryInfo, ElfInfo};
 use std::collections::HashMap;
 
-
 fn get_elf_file_type_name(e_type: u16) -> String {
     match e_type {
         elf::header::ET_NONE => "ET_NONE".to_string(),
@@ -13,7 +12,6 @@ fn get_elf_file_type_name(e_type: u16) -> String {
         _ => format!("UNKNOWN_ET_TYPE({})", e_type),
     }
 }
-
 
 fn parse_elf_header_info(elf: &elf::Elf, binary_info: &mut BinaryInfo) {
     binary_info.is_64 = elf.is_64;
@@ -26,7 +24,6 @@ fn parse_elf_header_info(elf: &elf::Elf, binary_info: &mut BinaryInfo) {
     binary_info.is_elf = true;
 }
 
-
 fn parse_elf_sections(elf: &elf::Elf) -> BinSections {
     let mut sections = BinSections::default();
     for sh in &elf.section_headers {
@@ -34,15 +31,22 @@ fn parse_elf_sections(elf: &elf::Elf) -> BinSections {
         if let Some(name) = elf.shdr_strtab.get_at(sh.sh_name) {
             section.name = name.to_string();
         }
-        section.raw_size = sh.sh_size as u32;
-        section.virt_size = sh.sh_size as u32;
+        if sh.sh_type == elf::section_header::SHT_NOBITS {
+            section.raw_size = 0;
+            section.virt_size = sh.sh_size as u32;
+            sections.total_virt_bytes += sh.sh_size as u32;
+        } else {
+            section.raw_size = sh.sh_size as u32;
+            section.virt_size = sh.sh_size as u32;
+            sections.total_raw_bytes += sh.sh_size as u32;
+            sections.total_virt_bytes += sh.sh_size as u32;
+        }
         section.virt_address = format!("0x{:02x}", sh.sh_addr);
         sections.sections.push(section);
     }
     sections.total_sections = elf.section_headers.len() as u16;
     sections
 }
-
 
 fn build_elf_version_map(elf: &elf::Elf) -> HashMap<u16, String> {
     let mut version_map: HashMap<u16, String> = HashMap::new();
@@ -57,7 +61,6 @@ fn build_elf_version_map(elf: &elf::Elf) -> HashMap<u16, String> {
     }
     version_map
 }
-
 
 fn parse_elf_imports(elf: &elf::Elf, version_map: &HashMap<u16, String>) -> Imports {
     let mut imports = Imports::default();
@@ -101,7 +104,6 @@ fn parse_elf_imports(elf: &elf::Elf, version_map: &HashMap<u16, String>) -> Impo
     imports
 }
 
-
 fn parse_elf_exports(elf: &elf::Elf) -> Exports {
     let mut exports = Exports::default();
     for sym in elf.dynsyms.iter() {
@@ -116,7 +118,6 @@ fn parse_elf_exports(elf: &elf::Elf) -> Exports {
     exports.count = exports.names.len();
     exports
 }
-
 
 pub fn get_elf(buffer: &[u8]) -> Binary {
     let mut bin = Binary::default();
