@@ -43,6 +43,7 @@ use std::os::windows::prelude::*;
 use std::collections::HashMap;
 use chrono::{DateTime, Utc};
 use lnk::{ShellLink, LinkInfo};
+use lnk::encoding::WINDOWS_1252;
 //use rand::distributions::{ChiSquared, IndependentSample, Sample};
 
 
@@ -434,9 +435,9 @@ fn get_binary(path: &Path, buffer: &Vec<u8>) -> io::Result<Binary> {
                     bin.binary_info = get_pe_file_info(path)?;
                     bin.binary_info.is_pe = true;
                     bin.timestamps.compile = get_date_string(pex.header.coff_header.time_date_stamp as i64)?;
-                    bin.timestamps.debug = match pex.debug_data {
-                        Some(d) => get_date_string(d.image_debug_directory.time_date_stamp as i64)?,
-                        None => "".to_string()};
+                    // bin.timestamps.debug = match pex.debug_data {
+                    //     Some(d) => get_date_string(d.image_debug_directory.time_date_stamp as i64)?,
+                    //     None => "".to_string()};
                     bin.linker.major_version = match pex.header.optional_header {
                         Some(d) => d.standard_fields.major_linker_version,
                         None => 0};
@@ -523,50 +524,41 @@ fn format_hotkey_text(hotkey: String) ->  std::io::Result<String> {
 */
 pub fn get_link_info(link_path: &Path) -> std::io::Result<(Link, bool)> {
     let mut link = Link::default();
-    let symlink= match ShellLink::open(link_path) {
+    let symlink= match ShellLink::open(link_path, WINDOWS_1252) {
         Ok(l) => l,
         Err(_e) => return Ok((link, false))
     };
-    link.rel_path = match symlink.relative_path() {
+    link.rel_path = match symlink.string_data().relative_path() {
         Some(p) => p.to_string(),
         None => String::new()
     };
-    let binding = LinkInfo::default();
-    let i = match symlink.link_info() {
-        Some(a) => a,
-        None => &binding
-    };
-    link.abs_path = match i.local_base_path() {
+    link.abs_path = get_abs_path(Path::new(&link.rel_path))?.to_string_lossy().into_owned();
+    link.arguments =  match symlink.string_data().command_line_arguments() {
         Some(a) => a.to_string(),
         None => String::new()
     };
-    link.arguments =  match symlink.arguments() {
+    link.working_dir = match symlink.string_data().working_dir() {
         Some(a) => a.to_string(),
         None => String::new()
     };
-    link.working_dir = match symlink.working_dir() {
-        Some(a) => a.to_string(),
-        None => String::new()
-    };
-    link.icon_location = match symlink.icon_location() {
+    link.icon_location = match symlink.string_data().icon_location() {
         Some(a) => a.to_string(),
         None => String::new()
     };
     link.hotkey = format_hotkey_text(format!("{:?}", symlink.header().hotkey()))?;
-    link.comment = match symlink.name() {
+    link.comment = match symlink.string_data().name_string() {
         Some(a) => a.to_string(),
         None => String::new()
     };
     link.show_command = format!("{:?}", symlink.header().show_command());
     link.flags = format!("{:?}", symlink.header().link_flags());
-    let volume = VolumeID::default();
-    let v = match i.volume_id() {
-        Some(a) => a,
-        None => &volume
-    };
-    link.drive_type = format!("{:?}", v.drive_type());
-    link.drive_serial_number = format!("{:?}", v.drive_serial_number());
-    link.volume_label = format!("{:?}", v.volume_label());
+    // let v = match symlink.link_info().) {
+    //     Some(a) => a,
+    //     None => &volume
+    // };
+    // link.drive_type = format!("{:?}", v.drive_type());
+    // link.drive_serial_number = format!("{:?}", v.drive_serial_number());
+    // link.volume_label = format!("{:?}", v.volume_label());
     Ok((link, true))
 }
 
@@ -685,6 +677,7 @@ fn is_file_or_dir(
 
 // get the absolute path if given a relative path
 fn get_abs_path(path: &Path) -> io::Result<std::path::PathBuf> {
+    if path == Path::new("") { return Ok(PathBuf::new()) }
     let abs = PathAbs::new(&path)?;
     Ok(dunce::simplified(&abs.as_path()).into())
 }
