@@ -2,6 +2,7 @@ use goblin::elf;
 use crate::data_defs::{Binary, BinSection, BinSections, Imports, Exports, Import, Function, BinaryInfo, ElfInfo};
 use std::collections::HashMap;
 
+
 fn get_elf_file_type_name(e_type: u16) -> String {
     match e_type {
         elf::header::ET_NONE => "ET_NONE".to_string(),
@@ -13,6 +14,7 @@ fn get_elf_file_type_name(e_type: u16) -> String {
     }
 }
 
+
 fn parse_elf_header_info(elf: &elf::Elf, binary_info: &mut BinaryInfo) {
     binary_info.is_64 = elf.is_64;
     binary_info.entry_point = format!("0x{:02x}", elf.entry);
@@ -23,6 +25,7 @@ fn parse_elf_header_info(elf: &elf::Elf, binary_info: &mut BinaryInfo) {
     binary_info.elf_info.object_version = elf.header.e_version as u8;
     binary_info.is_elf = true;
 }
+
 
 fn parse_elf_sections(elf: &elf::Elf) -> BinSections {
     let mut sections = BinSections::default();
@@ -48,6 +51,7 @@ fn parse_elf_sections(elf: &elf::Elf) -> BinSections {
     sections
 }
 
+
 fn build_elf_version_map(elf: &elf::Elf) -> HashMap<u16, String> {
     let mut version_map: HashMap<u16, String> = HashMap::new();
     if let Some(verneed_iter) = &elf.verneed {
@@ -61,6 +65,7 @@ fn build_elf_version_map(elf: &elf::Elf) -> HashMap<u16, String> {
     }
     version_map
 }
+
 
 fn parse_elf_imports(elf: &elf::Elf, version_map: &HashMap<u16, String>) -> Imports {
     let mut imports = Imports::default();
@@ -104,6 +109,7 @@ fn parse_elf_imports(elf: &elf::Elf, version_map: &HashMap<u16, String>) -> Impo
     imports
 }
 
+
 fn parse_elf_exports(elf: &elf::Elf) -> Exports {
     let mut exports = Exports::default();
     for sym in elf.dynsyms.iter() {
@@ -118,6 +124,7 @@ fn parse_elf_exports(elf: &elf::Elf) -> Exports {
     exports.count = exports.names.len();
     exports
 }
+
 
 pub fn get_elf(buffer: &[u8]) -> Binary {
     let mut bin = Binary::default();
