@@ -111,15 +111,11 @@ fn get_elf_imphashes(imports: &Imports) -> ImpHashes {
     let mut imphash_text = String::new();
 
     for imp_lib in &imports.imports {
-        let dll = imp_lib.lib.to_lowercase()
-            .replace(".dll", "")
-            .replace(".sys", "")
-            .replace(".drv", "")
-            .replace(".ocx", "");
+        let so = imp_lib.lib.to_lowercase();
 
         for func in &imp_lib.names {
             let mut temp = String::new();
-            temp.push_str(&dll);
+            temp.push_str(&so);
             temp.push_str(".");
             temp.push_str(&func.name.to_lowercase());
             temp.push_str(",");
