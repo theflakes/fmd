@@ -416,9 +416,9 @@ impl Default for Link {
             comment: String::new(),
             show_command: String::new(),
             flags: String::new(),
-            drive_type: String::new(),
-            drive_serial_number: String::new(),
-            volume_label: String::new(),
+            // drive_type: String::new(),
+            // drive_serial_number: String::new(),
+            // volume_label: String::new(),
         }
     }
 }
@@ -433,9 +433,9 @@ pub struct Link {
     pub comment: String,
     pub show_command: String,
     pub flags: String,
-    pub drive_type: String,
-    pub drive_serial_number: String,
-    pub volume_label: String,
+    // pub drive_type: String,
+    // pub drive_serial_number: String,
+    // pub volume_label: String,
 }
 
 
