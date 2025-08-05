@@ -2,6 +2,7 @@ use goblin::elf;
 use crate::data_defs::{Binary, BinSection, BinSections, Imports, Exports, Import, Function, BinaryInfo, ElfInfo, ImpHashes, ExpHashes};
 use std::collections::HashMap;
 use fuzzyhash::FuzzyHash;
+use entropy::shannon_entropy;
 
 fn get_elf_file_type_name(e_type: u16) -> String {
     match e_type {
@@ -25,23 +26,39 @@ fn parse_elf_header_info(elf: &elf::Elf, binary_info: &mut BinaryInfo) {
     binary_info.is_elf = true;
 }
 
-fn parse_elf_sections(elf: &elf::Elf) -> BinSections {
+fn parse_elf_sections(elf: &elf::Elf, buffer: &[u8]) -> BinSections {
     let mut sections = BinSections::default();
     for sh in &elf.section_headers {
         let mut section = BinSection::default();
         if let Some(name) = elf.shdr_strtab.get_at(sh.sh_name) {
             section.name = name.to_string();
         }
+        let section_data_to_hash: Vec<u8>;
         if sh.sh_type == elf::section_header::SHT_NOBITS {
-            section.raw_size = 0;
-            section.virt_size = sh.sh_size as u32;
-            sections.total_virt_bytes += sh.sh_size as u32;
+            // section.raw_size = 0;
+            // section.virt_size = sh.sh_size as u32;
+            // sections.total_virt_bytes += sh.sh_size as u32;
+            // For SHT_NOBITS sections (like .bss), hash an empty string
+            section_data_to_hash = Vec::new();
         } else {
-            section.raw_size = sh.sh_size as u32;
-            section.virt_size = sh.sh_size as u32;
-            sections.total_raw_bytes += sh.sh_size as u32;
-            sections.total_virt_bytes += sh.sh_size as u32;
+            // section.raw_size = sh.sh_size as u32;
+            // section.virt_size = sh.sh_size as u32;
+            // sections.total_raw_bytes += sh.sh_size as u32;
+            // sections.total_virt_bytes += sh.sh_size as u32;
+
+            let start = sh.sh_offset as usize;
+            let end = (sh.sh_offset + sh.sh_size) as usize;
+            if end <= buffer.len() {
+                section_data_to_hash = buffer[start..end].to_vec();
+            } else {
+                // Handle cases where section data extends beyond buffer (shouldn't happen for valid ELF)
+                section_data_to_hash = Vec::new();
+            }
         }
+        // Calculate MD5 and SSDeep for the determined section data
+        section.md5 = format!("{:x}", md5::compute(&section_data_to_hash)).to_lowercase();
+        section.ssdeep = FuzzyHash::new(&section_data_to_hash).to_string();
+        section.entropy = shannon_entropy(&section_data_to_hash);
         section.virt_address = format!("0x{:02x}", sh.sh_addr);
         sections.sections.push(section);
     }
@@ -197,7 +214,7 @@ pub fn get_elf(buffer: &[u8]) -> Binary {
     let mut bin = Binary::default();
     if let Ok(elf) = elf::Elf::parse(buffer) {
         parse_elf_header_info(&elf, &mut bin.binary_info);
-        bin.sections = parse_elf_sections(&elf);
+        bin.sections = parse_elf_sections(&elf, buffer);
         let version_map = build_elf_version_map(&elf);
         bin.imports = parse_elf_imports(&elf, &version_map);
         bin.exports = parse_elf_exports(&elf);
