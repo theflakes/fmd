@@ -193,9 +193,9 @@ pub struct BinTimestamps {
 }
 
 
-impl Default for PeFileInfo {
-    fn default () -> PeFileInfo {
-        PeFileInfo {
+impl Default for PeInfo {
+    fn default () -> PeInfo {
+        PeInfo {
             product_version: String::new(),
             original_filename: String::new(),
             file_description: String::new(),
@@ -203,12 +203,12 @@ impl Default for PeFileInfo {
             product_name: String::new(),
             company_name: String::new(),
             internal_name: String::new(),
-            legal_copyright: String::new()
+            legal_copyright: String::new(),
         }
     }
 }
 #[derive(Serialize, Clone)]
-pub struct PeFileInfo {
+pub struct PeInfo {
     pub product_version: String,
     pub original_filename: String,
     pub file_description: String,
@@ -216,8 +216,55 @@ pub struct PeFileInfo {
     pub product_name: String,
     pub company_name: String,
     pub internal_name: String,
-    pub legal_copyright: String
+    pub legal_copyright: String,
 }
+
+
+impl Default for ElfInfo {
+    fn default () -> ElfInfo {
+        ElfInfo {
+            os_abi: String::new(),
+            abi_version: 0,
+            file_type: String::new(),
+            object_version: 0,
+        }
+    }
+}
+#[derive(Serialize, Clone)]
+pub struct ElfInfo {
+    pub os_abi: String,
+    pub abi_version: u8,
+    pub file_type: String,
+    pub object_version: u8,
+}
+
+
+impl Default for BinaryInfo {
+    fn default () -> BinaryInfo {
+        BinaryInfo {
+            is_elf: false,
+            is_pe: false,
+            is_64: false,
+            is_dotnet: false,
+            is_lib: false,
+            entry_point: String::new(),
+            elf_info: ElfInfo::default(),
+            pe_info: PeInfo::default(),
+        }
+    }
+}
+#[derive(Serialize, Clone)]
+pub struct BinaryInfo {
+    pub is_elf: bool,
+    pub is_pe: bool,
+    pub is_64: bool,
+    pub is_dotnet: bool,
+    pub is_lib: bool,
+    pub entry_point: String,
+    pub elf_info: ElfInfo,
+    pub pe_info: PeInfo,
+}
+
 
 impl Default for BinSection {
     fn default () -> BinSection {
@@ -297,11 +344,7 @@ pub struct Exports {
 impl Default for Binary {
     fn default () -> Binary {
         Binary {
-            is_64: false,
-            is_dotnet: false,
-            is_lib: false,
-            entry_point: String::new(),
-            pe_info: PeFileInfo::default(),
+            binary_info: BinaryInfo::default(),
             timestamps: BinTimestamps::default(),
             sections: BinSections::default(),
             linker: BinLinker::default(),
@@ -312,11 +355,7 @@ impl Default for Binary {
 }
 #[derive(Serialize, Clone)]
 pub struct Binary {
-    pub is_64: bool,
-    pub is_dotnet: bool,
-    pub is_lib: bool,
-    pub entry_point: String,
-    pub pe_info: PeFileInfo,
+    pub binary_info: BinaryInfo,
     pub timestamps: BinTimestamps,
     pub linker: BinLinker,
     pub sections: BinSections,

@@ -1,13 +1,13 @@
 extern crate tree_magic;
 extern crate fuzzyhash;
-extern crate crypto;
 extern crate path_abs;
 extern crate dunce;
 extern crate goblin;
 extern crate entropy;
 extern crate exe;
-//extern crate rand;
 extern crate lnk;
+extern crate sha1;
+extern crate sha2;
 
 #[macro_use] extern crate lazy_static;
 
@@ -15,6 +15,7 @@ mod data_defs;
 mod ordinals;
 mod sector_reader;
 mod mft;
+mod elf;
 
 use data_defs::*;
 use lnk::linkinfo::{VolumeID, DriveType};
@@ -30,8 +31,8 @@ use std::{io, str};
 use std::env;
 use std::process;
 use std::borrow::Cow;
-use crypto::digest::Digest;
-use crypto::sha2::Sha256;
+use sha1::{Sha1, Digest};
+use sha2::Sha256;
 use std::fs::{self, File};
 use std::io::{BufReader, Read, Seek, Write, SeekFrom};
 use path_abs::{PathAbs, PathInfo};
@@ -146,16 +147,16 @@ fn get_md5(buffer: &Vec<u8>) -> io::Result<String> {
 
 
 fn get_sha1(buffer: &Vec<u8>) -> io::Result<String> {
-    let mut hasher = crypto::sha1::Sha1::new();
-    hasher.input(buffer);
-    Ok(hasher.result_str())
+    let mut hasher = Sha1::new();
+    hasher.update(buffer);
+    Ok(format!("{:x}", hasher.finalize()))
 }
 
 
 fn get_sha256(buffer: &Vec<u8>) -> io::Result<String> {
-    let mut hasher = crypto::sha2::Sha256::new();
-    hasher.input(buffer);
-    Ok(hasher.result_str())
+    let mut hasher = Sha256::new();
+    hasher.update(buffer);
+    Ok(format!("{:x}", hasher.finalize()))
 }
 
 
@@ -363,23 +364,23 @@ fn get_hashmap_value(
     The Goblin PE parser doesn't support parsing this PE structure, therefore using exe-rs
     Is not parsing .Net file info
 */
-fn get_pe_file_info(path: &Path) -> io::Result<PeFileInfo> {
-    let mut file_info = PeFileInfo::default();
-    let Ok(pefile) = exe::VecPE::from_disk_file(path) else { return Ok(file_info) };
-    let Ok(vs_version_check) = exe::VSVersionInfo::parse(&pefile) else { return Ok(file_info) };
+fn get_pe_file_info(path: &Path) -> io::Result<BinaryInfo> {
+    let mut info = BinaryInfo::default();
+    let Ok(pefile) = exe::VecPE::from_disk_file(path) else { return Ok(info) };
+    let Ok(vs_version_check) = exe::VSVersionInfo::parse(&pefile) else { return Ok(info) };
     let vs_version = vs_version_check;
     if let Some(string_file_info) = vs_version.string_file_info {
-        let Ok(string_map) = string_file_info.children[0].string_map() else { return Ok(file_info) };
-        file_info.product_version = get_hashmap_value(&string_map, "ProductVersion")?;
-        file_info.original_filename = get_hashmap_value(&string_map, "OriginalFilename")?;
-        file_info.file_description = get_hashmap_value(&string_map, "FileDescription")?;
-        file_info.file_version = get_hashmap_value(&string_map, "FileVersion")?;
-        file_info.product_name = get_hashmap_value(&string_map, "ProductName")?;
-        file_info.company_name = get_hashmap_value(&string_map, "CompanyName")?;
-        file_info.internal_name = get_hashmap_value(&string_map, "InternalName")?;
-        file_info.legal_copyright = get_hashmap_value(&string_map, "LegalCopyright")?;
+        let Ok(string_map) = string_file_info.children[0].string_map() else { return Ok(info) };
+        info.pe_info.product_version = get_hashmap_value(&string_map, "ProductVersion")?;
+        info.pe_info.original_filename = get_hashmap_value(&string_map, "OriginalFilename")?;
+        info.pe_info.file_description = get_hashmap_value(&string_map, "FileDescription")?;
+        info.pe_info.file_version = get_hashmap_value(&string_map, "FileVersion")?;
+        info.pe_info.product_name = get_hashmap_value(&string_map, "ProductName")?;
+        info.pe_info.company_name = get_hashmap_value(&string_map, "CompanyName")?;
+        info.pe_info.internal_name = get_hashmap_value(&string_map, "InternalName")?;
+        info.pe_info.legal_copyright = get_hashmap_value(&string_map, "LegalCopyright")?;
     }
-    Ok(file_info)
+    Ok(info)
 }
 
 
@@ -413,24 +414,25 @@ fn get_sections(pex: &PE, path: &Path) -> io::Result<BinSections> {
 }
 
 
-fn get_pe(path: &Path, buffer: &Vec<u8>) -> io::Result<Binary> {
+fn get_binary(path: &Path, buffer: &Vec<u8>) -> io::Result<Binary> {
     let mut bin = Binary::default();
-    if buffer.len() < 97 { return Ok(bin) } // smallest possible PE size, errors with smaller buffer size
+    if buffer.len() < 4 { return Ok(bin) } // ELF magic number is 4 bytes
     let object = match Object::parse(&buffer) {
         Ok(o) => 
             match o {
                 Object::Elf(elf) => {
-                    //println!("Elf binary");
+                    bin = elf::get_elf(&buffer);
                 },
                 Object::PE(pex) => {
-                    (bin.imports, bin.is_dotnet) = parse_pe_imports(&pex.imports)?;
-                    bin.entry_point = format!("0x{:02x}", pex.entry);
+                    (bin.imports, bin.binary_info.is_dotnet) = parse_pe_imports(&pex.imports)?;
+                    bin.binary_info.entry_point = format!("0x{:02x}", pex.entry);
                     bin.sections = get_sections(&pex, path)?;
                     (bin.imports.hashes, bin.imports.lib_count, bin.imports.func_count) = get_imphashes(&pex.imports)?;
-                    bin.is_64 = pex.is_64;
-                    bin.is_lib = pex.is_lib;
+                    bin.binary_info.is_64 = pex.is_64;
+                    bin.binary_info.is_lib = pex.is_lib;
                     bin.exports = parse_pe_exports(&pex.exports)?;
-                    bin.pe_info = get_pe_file_info(path)?;
+                    bin.binary_info = get_pe_file_info(path)?;
+                    bin.binary_info.is_pe = true;
                     bin.timestamps.compile = get_date_string(pex.header.coff_header.time_date_stamp as i64)?;
                     bin.timestamps.debug = match pex.debug_data {
                         Some(d) => get_date_string(d.image_debug_directory.time_date_stamp as i64)?,
@@ -623,7 +625,7 @@ fn analyze_file(
         let buffer = read_file_bytes(&file)?;
         mime_type = get_mimetype(&buffer)?;
         if int_mtypes && !INTERESTING_MIME_TYPES.contains(&mime_type.as_str()) { return Ok(())}
-        bin = get_pe(path, &buffer)?;
+        bin = get_binary(path, &buffer)?;
         if strings_length > 0 {strings = get_strings(&buffer, strings_length)?;}
         entropy = shannon_entropy(&buffer);
         hashes = get_file_hashes(&buffer)?;
