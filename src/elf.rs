@@ -4,6 +4,16 @@ use std::collections::HashMap;
 use fuzzyhash::FuzzyHash;
 use entropy::shannon_entropy;
 
+fn bytes_to_human_readable_string(data: &[u8]) -> String {
+    data.iter().map(|&byte| {
+        if byte >= 0x20 && byte <= 0x7E {
+            byte as char
+        } else {
+            ' '
+        }
+    }).collect()
+}
+
 fn get_elf_file_type_name(e_type: u16) -> String {
     match e_type {
         elf::header::ET_NONE => "ET_NONE".to_string(),
@@ -57,6 +67,12 @@ fn parse_elf_sections(elf: &elf::Elf, buffer: &[u8]) -> BinSections {
         section.md5 = format!("{:x}", md5::compute(&section_data_to_hash)).to_lowercase();
         section.ssdeep = FuzzyHash::new(&section_data_to_hash).to_string();
         section.entropy = shannon_entropy(&section_data_to_hash);
+
+        // Capture human-readable content for .comment and .note sections
+        if section.name == ".comment" || section.name.starts_with(".note") {
+            section.comment_or_note_content = Some(bytes_to_human_readable_string(&section_data_to_hash));
+        }
+
         section.virt_address = format!("0x{:02x}", sh.sh_addr);
         sections.sections.push(section);
     }
