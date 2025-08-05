@@ -182,16 +182,16 @@ pub struct FileTimestamps {
 }
 
 
-impl Default for BinTimestamps {
-    fn default () -> BinTimestamps {
-        BinTimestamps {
+impl Default for PeBinTimestamps {
+    fn default () -> PeBinTimestamps {
+        PeBinTimestamps {
             compile: String::new(),
             debug: String::new()
         }
     }
 }
 #[derive(Serialize, Clone)]
-pub struct BinTimestamps {
+pub struct PeBinTimestamps {
     pub compile: String,
     pub debug: String
 }
@@ -200,6 +200,7 @@ pub struct BinTimestamps {
 impl Default for PeInfo {
     fn default () -> PeInfo {
         PeInfo {
+            timestamps: PeBinTimestamps::default(),
             product_version: String::new(),
             original_filename: String::new(),
             file_description: String::new(),
@@ -213,6 +214,7 @@ impl Default for PeInfo {
 }
 #[derive(Serialize, Clone)]
 pub struct PeInfo {
+    pub timestamps: PeBinTimestamps,
     pub product_version: String,
     pub original_filename: String,
     pub file_description: String,
@@ -349,7 +351,6 @@ impl Default for Binary {
     fn default () -> Binary {
         Binary {
             binary_info: BinaryInfo::default(),
-            timestamps: BinTimestamps::default(),
             sections: BinSections::default(),
             linker: BinLinker::default(),
             imports: Imports::default(),
@@ -360,7 +361,6 @@ impl Default for Binary {
 #[derive(Serialize, Clone)]
 pub struct Binary {
     pub binary_info: BinaryInfo,
-    pub timestamps: BinTimestamps,
     pub linker: BinLinker,
     pub sections: BinSections,
     pub imports: Imports,

@@ -434,7 +434,7 @@ fn get_binary(path: &Path, buffer: &Vec<u8>) -> io::Result<Binary> {
                     bin.exports = parse_pe_exports(&pex.exports)?;
                     bin.binary_info = get_pe_file_info(path)?;
                     bin.binary_info.is_pe = true;
-                    bin.timestamps.compile = get_date_string(pex.header.coff_header.time_date_stamp as i64)?;
+                    bin.binary_info.pe_info.timestamps.compile = get_date_string(pex.header.coff_header.time_date_stamp as i64)?;
                     // bin.timestamps.debug = match pex.debug_data {
                     //     Some(d) => get_date_string(d.image_debug_directory.time_date_stamp as i64)?,
                     //     None => "".to_string()};
