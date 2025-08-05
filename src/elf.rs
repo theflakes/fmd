@@ -44,13 +44,13 @@ fn parse_elf_sections(elf: &elf::Elf) -> BinSections {
 }
 
 
-fn build_elf_version_map<'a>(elf: &elf::Elf<'a>) -> HashMap<u16, &'a str> {
-    let mut version_map: HashMap<u16, &'a str> = HashMap::new();
+fn build_elf_version_map(elf: &elf::Elf) -> HashMap<u16, String> {
+    let mut version_map: HashMap<u16, String> = HashMap::new();
     if let Some(verneed_iter) = &elf.verneed {
         for r in verneed_iter.iter() {
             if let Some(lib_name) = elf.dynstrtab.get_at(r.vn_file) {
                 for aux in r.iter() {
-                    version_map.insert(aux.vna_other, lib_name);
+                    version_map.insert(aux.vna_other, lib_name.to_string());
                 }
             }
         }
@@ -59,7 +59,7 @@ fn build_elf_version_map<'a>(elf: &elf::Elf<'a>) -> HashMap<u16, &'a str> {
 }
 
 
-fn parse_elf_imports<'a>(elf: &elf::Elf<'a>, version_map: &HashMap<u16, &'a str>) -> Imports {
+fn parse_elf_imports(elf: &elf::Elf, version_map: &HashMap<u16, String>) -> Imports {
     let mut imports = Imports::default();
     for (i, sym) in elf.dynsyms.iter().enumerate() {
         if sym.is_import() {
@@ -68,12 +68,12 @@ fn parse_elf_imports<'a>(elf: &elf::Elf<'a>, version_map: &HashMap<u16, &'a str>
                     .as_ref()
                     .and_then(|vs| vs.get_at(i))
                     .and_then(|versym| version_map.get(&versym.vs_val))
-                    .map(|s| *s)
+                    .map(|s| s.to_string())
                     .unwrap_or_else(|| {
                         if elf.libraries.len() == 1 {
-                            elf.libraries[0]
+                            elf.libraries[0].to_string()
                         } else {
-                            "unknown"
+                            "unknown".to_string()
                         }
                     });
 
@@ -102,7 +102,7 @@ fn parse_elf_imports<'a>(elf: &elf::Elf<'a>, version_map: &HashMap<u16, &'a str>
 }
 
 
-fn parse_elf_exports<'a>(elf: &elf::Elf<'a>) -> Exports {
+fn parse_elf_exports(elf: &elf::Elf) -> Exports {
     let mut exports = Exports::default();
     for sym in elf.dynsyms.iter() {
         if sym.st_bind() == elf::sym::STB_GLOBAL && sym.st_shndx as u32 != elf::section_header::SHN_UNDEF {
@@ -118,7 +118,7 @@ fn parse_elf_exports<'a>(elf: &elf::Elf<'a>) -> Exports {
 }
 
 
-pub fn get_elf<'a>(buffer: &'a [u8]) -> Binary {
+pub fn get_elf(buffer: &[u8]) -> Binary {
     let mut bin = Binary::default();
     if let Ok(elf) = elf::Elf::parse(buffer) {
         parse_elf_header_info(&elf, &mut bin.binary_info);
