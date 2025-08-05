@@ -35,14 +35,21 @@ fn parse_elf_sections(elf: &elf::Elf, buffer: &[u8]) -> BinSections {
         }
         let section_data_to_hash: Vec<u8>;
         if sh.sh_type == elf::section_header::SHT_NOBITS {
+            section.raw_size = 0;
+            section.virt_size = sh.sh_size as u32;
+            sections.total_virt_bytes += sh.sh_size as u32;
             section_data_to_hash = Vec::new();
         } else {
+            section.raw_size = sh.sh_size as u32;
+            section.virt_size = sh.sh_size as u32;
+            sections.total_raw_bytes += sh.sh_size as u32;
+            sections.total_virt_bytes += sh.sh_size as u32;
+
             let start = sh.sh_offset as usize;
             let end = (sh.sh_offset + sh.sh_size) as usize;
             if end <= buffer.len() {
                 section_data_to_hash = buffer[start..end].to_vec();
             } else {
-                // Handle cases where section data extends beyond buffer (shouldn't happen for valid ELF)
                 section_data_to_hash = Vec::new();
             }
         }
@@ -54,7 +61,7 @@ fn parse_elf_sections(elf: &elf::Elf, buffer: &[u8]) -> BinSections {
         sections.sections.push(section);
     }
     sections.total_sections = elf.section_headers.len() as u16;
-    sections
+    return sections
 }
 
 fn build_elf_version_map(elf: &elf::Elf) -> HashMap<u16, String> {
@@ -68,7 +75,7 @@ fn build_elf_version_map(elf: &elf::Elf) -> HashMap<u16, String> {
             }
         }
     }
-    version_map
+    return version_map
 }
 
 fn get_hash_sorted(hash_array: &mut Vec<String>) -> (String, String) {
@@ -80,7 +87,7 @@ fn get_hash_sorted(hash_array: &mut Vec<String>) -> (String, String) {
     imphash_text_sorted = imphash_text_sorted.trim_end_matches(",").to_string();
     let imphash_sorted = format!("{:x}", md5::compute(&imphash_text_sorted)).to_lowercase();
 
-    (imphash_text_sorted, imphash_sorted)
+    return (imphash_text_sorted, imphash_sorted)
 }
 
 fn get_elf_imphashes(imports: &Imports) -> ImpHashes {
@@ -115,7 +122,7 @@ fn get_elf_imphashes(imports: &Imports) -> ImpHashes {
     imphashes.ssdeep = FuzzyHash::new(imphash_text.as_bytes()).to_string();
     imphashes.ssdeep_sorted = FuzzyHash::new(imphash_text_sorted.as_bytes()).to_string();
 
-    imphashes
+    return imphashes
 }
 
 fn get_elf_exphashes(exports: &Exports) -> ExpHashes {
@@ -139,7 +146,7 @@ fn get_elf_exphashes(exports: &Exports) -> ExpHashes {
     exphashes.ssdeep = FuzzyHash::new(exphash_text.as_bytes()).to_string();
     exphashes.ssdeep_sorted = FuzzyHash::new(exphash_text_sorted.as_bytes()).to_string();
 
-    exphashes
+    return exphashes
 }
 
 fn parse_elf_imports(elf: &elf::Elf, version_map: &HashMap<u16, String>) -> Imports {
@@ -182,7 +189,7 @@ fn parse_elf_imports(elf: &elf::Elf, version_map: &HashMap<u16, String>) -> Impo
     imports.func_count = imports.imports.iter().map(|i| i.names.len()).sum();
     imports.lib_count = imports.imports.len();
     imports.hashes = get_elf_imphashes(&imports);
-    imports
+    return imports
 }
 
 fn parse_elf_exports(elf: &elf::Elf) -> Exports {
@@ -198,7 +205,7 @@ fn parse_elf_exports(elf: &elf::Elf) -> Exports {
     }
     exports.count = exports.names.len();
     exports.hashes = get_elf_exphashes(&exports);
-    exports
+    return exports
 }
 
 pub fn get_elf(buffer: &[u8]) -> Binary {
@@ -210,5 +217,5 @@ pub fn get_elf(buffer: &[u8]) -> Binary {
         bin.imports = parse_elf_imports(&elf, &version_map);
         bin.exports = parse_elf_exports(&elf);
     }
-    bin
+    return bin
 }
