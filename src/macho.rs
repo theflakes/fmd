@@ -56,7 +56,7 @@ fn parse_macho_sections(macho: &mach::MachO, buffer: &[u8]) -> BinSections {
     sections.total_sections = macho.segments.iter().map(|s| s.nsects).sum::<u32>() as u16;
     sections.total_raw_bytes = macho.segments.iter().map(|s| s.filesize).sum::<u64>() as u32;
     sections.total_virt_bytes = macho.segments.iter().map(|s| s.vmsize).sum::<u64>() as u32;
-    sections
+    return sections
 }
 
 fn get_hash_sorted(hash_array: &mut Vec<String>) -> (String, String) {
@@ -68,7 +68,7 @@ fn get_hash_sorted(hash_array: &mut Vec<String>) -> (String, String) {
     imphash_text_sorted = imphash_text_sorted.trim_end_matches(",").to_string();
     let imphash_sorted = format!("{:x}", md5::compute(&imphash_text_sorted)).to_lowercase();
 
-    (imphash_text_sorted, imphash_sorted)
+    return (imphash_text_sorted, imphash_sorted)
 }
 
 fn get_macho_imphashes(imports: &Imports) -> ImpHashes {
@@ -99,7 +99,7 @@ fn get_macho_imphashes(imports: &Imports) -> ImpHashes {
     imphashes.ssdeep = FuzzyHash::new(imphash_text.as_bytes()).to_string();
     imphashes.ssdeep_sorted = FuzzyHash::new(imphash_text_sorted.as_bytes()).to_string();
 
-    imphashes
+    return imphashes
 }
 
 fn get_macho_exphashes(exports: &Exports) -> ExpHashes {
@@ -123,7 +123,7 @@ fn get_macho_exphashes(exports: &Exports) -> ExpHashes {
     exphashes.ssdeep = FuzzyHash::new(exphash_text.as_bytes()).to_string();
     exphashes.ssdeep_sorted = FuzzyHash::new(exphash_text_sorted.as_bytes()).to_string();
 
-    exphashes
+    return exphashes
 }
 
 fn parse_macho_imports(macho: &mach::MachO) -> Imports {
@@ -151,7 +151,7 @@ fn parse_macho_imports(macho: &mach::MachO) -> Imports {
     imports.func_count = imports.imports.iter().map(|i| i.names.len()).sum();
     imports.lib_count = imports.imports.len();
     imports.hashes = get_macho_imphashes(&imports);
-    imports
+    return imports
 }
 
 fn parse_macho_exports(macho: &mach::MachO) -> Exports {
@@ -163,7 +163,7 @@ fn parse_macho_exports(macho: &mach::MachO) -> Exports {
     }
     exports.count = exports.names.len();
     exports.hashes = get_macho_exphashes(&exports);
-    exports
+    return exports
 }
 
 pub fn get_macho(buffer: &[u8]) -> Binary {
@@ -174,5 +174,5 @@ pub fn get_macho(buffer: &[u8]) -> Binary {
         bin.imports = parse_macho_imports(&macho);
         bin.exports = parse_macho_exports(&macho);
     }
-    bin
+    return bin
 }
