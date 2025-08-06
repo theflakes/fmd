@@ -1,6 +1,5 @@
-use crate::data_defs::{BinSection, BinSections, Binary, BinaryFormat, BinaryInfo, ElfInfo, ExpHashes, Exports, Function, ImpHashes, Import, Imports, Architecture};
-use crate::shared_utils;
 use goblin::elf;
+use crate::data_defs::{BinSection, BinSections, Binary, BinaryFormat, BinaryInfo, ElfInfo, ExpHashes, Exports, Function, ImpHashes, Import, Imports, Architecture};
 use std::collections::HashMap;
 use fuzzyhash::FuzzyHash;
 use entropy::shannon_entropy;
@@ -26,7 +25,19 @@ fn get_elf_file_type_name(e_type: u16) -> String {
     }
 }
 
-
+fn get_arch(e_machine: u16) -> Architecture {
+    match e_machine {
+        elf::header::EM_X86_64 => Architecture::X86_64,
+        elf::header::EM_386 => Architecture::X86,
+        elf::header::EM_ARM => Architecture::Arm,
+        elf::header::EM_AARCH64 => Architecture::AArch64,
+        elf::header::EM_MIPS => Architecture::Mips,
+        elf::header::EM_PPC => Architecture::PowerPC,
+        elf::header::EM_RISCV => Architecture::RiscV,
+        elf::header::EM_IA_64 => Architecture::Itanium,
+        _ => Architecture::Unknown,
+    }
+}
 
 fn parse_elf_header_info(elf: &elf::Elf, binary_info: &mut BinaryInfo) {
     binary_info.is_64 = elf.is_64;
@@ -37,7 +48,7 @@ fn parse_elf_header_info(elf: &elf::Elf, binary_info: &mut BinaryInfo) {
     binary_info.elf_info.file_type = get_elf_file_type_name(elf.header.e_type);
     binary_info.elf_info.object_version = elf.header.e_version as u8;
     binary_info.format = BinaryFormat::Elf;
-    binary_info.arch = shared_utils::get_arch_elf(elf.header.e_machine);
+    binary_info.arch = get_arch(elf.header.e_machine);
 }
 
 fn parse_elf_sections(elf: &elf::Elf, buffer: &[u8]) -> BinSections {

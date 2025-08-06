@@ -18,7 +18,6 @@ mod mft;
 mod elf;
 mod pe;
 mod macho;
-mod shared_utils;
 
 use data_defs::*;
 use lnk::linkinfo::{VolumeID, DriveType};
