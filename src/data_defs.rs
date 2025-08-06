@@ -293,6 +293,26 @@ pub struct ElfInfo {
     pub object_version: u8,
 }
 
+impl Default for MachOInfo {
+    fn default () -> MachOInfo {
+        MachOInfo {
+            file_type: String::new(),
+            flags: String::new(),
+            cpu_subtype: String::new(),
+            ncmds: 0,
+            sizeofcmds: 0,
+        }
+    }
+}
+ #[derive(Serialize, Clone)]
+pub struct MachOInfo {
+     pub file_type: String,
+     pub flags: String,
+     pub cpu_subtype: String,
+     pub ncmds: u32,
+     pub sizeofcmds: u32,
+}
+
 
 impl Default for BinaryInfo {
     fn default () -> BinaryInfo {
@@ -305,6 +325,7 @@ impl Default for BinaryInfo {
             entry_point: String::new(),
             elf_info: ElfInfo::default(),
             pe_info: PeInfo::default(),
+            macho_info: MachOInfo::default(),
         }
     }
 }
@@ -318,6 +339,7 @@ pub struct BinaryInfo {
     pub entry_point: String,
     pub elf_info: ElfInfo,
     pub pe_info: PeInfo,
+    pub macho_info: MachOInfo,
 }
 
 

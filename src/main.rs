@@ -17,6 +17,7 @@ mod sector_reader;
 mod mft;
 mod elf;
 mod pe;
+mod macho;
 
 use data_defs::*;
 use lnk::linkinfo::{VolumeID, DriveType};
@@ -205,8 +206,8 @@ fn get_binary(path: &Path, buffer: &Vec<u8>) -> io::Result<Binary> {
                 Object::PE(pex) => {
                     bin = pe::get_pe(&buffer, path);
                 },
-                Object::Mach(mach) => {
-                    //println!("Mach binary");
+                Object::Mach(macho) => {
+                    bin = macho::get_macho(&buffer);
                 },
                 Object::Archive(archive) => {
                     //println!("Archive file");
@@ -292,7 +293,18 @@ pub fn get_link_info(link_path: &Path) -> std::io::Result<(Link, bool)> {
         Some(p) => p.to_string(),
         None => String::new()
     };
-    link.abs_path = get_abs_path(Path::new(&link.rel_path))?.to_string_lossy().into_owned();
+    link.working_dir = match symlink.string_data().working_dir() {
+        Some(a) => a.to_string(),
+        None => String::new()
+    };
+
+    let target_path = if !link.working_dir.is_empty() {
+        PathBuf::from(&link.working_dir).join(&link.rel_path)
+    } else {
+        PathBuf::from(&link.rel_path)
+    };
+
+    link.abs_path = get_abs_path(&target_path)?.to_string_lossy().into_owned();
     link.arguments =  match symlink.string_data().command_line_arguments() {
         Some(a) => a.to_string(),
         None => String::new()
