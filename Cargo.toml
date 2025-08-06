@@ -9,7 +9,7 @@ license = "MIT"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [dependencies]
-tree_magic = "*"
+infer = "*"
 fuzzyhash = "*"
 serde = { version = "*", features = ["derive"] }
 serde_json = "*"

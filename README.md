@@ -15,7 +15,6 @@ https://github.com/frank2
 https://github.com/lilopkins/lnk-rs  
 https://docs.rs/fuzzyhash/latest/fuzzyhash/  
 https://dfir.science/2017/07/How-To-Fuzzy-Hashing-with-SSDEEP-(similarity-matching).html  
-https://docs.rs/tree_magic/latest/tree_magic/  
   
 To compile; install Rust and the MSVC 32 and/or 64 bit environment:
 ```

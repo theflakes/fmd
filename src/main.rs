@@ -1,4 +1,4 @@
-extern crate tree_magic;
+extern crate infer;
 extern crate fuzzyhash;
 extern crate path_abs;
 extern crate dunce;
@@ -117,8 +117,11 @@ fn open_file(file_path: &std::path::Path) -> std::io::Result<std::fs::File> {
 
 
 fn get_mimetype(buffer: &Vec<u8>) -> io::Result<String> {
-    let mtype = tree_magic::from_u8(&buffer);
-    Ok(mtype)
+    let kind = infer::get(buffer);
+    match kind {
+        Some(k) => Ok(k.mime_type().to_string()),
+        None => Ok("".to_string())
+    }
 }
 
 
