@@ -130,7 +130,8 @@ fn parse_macho_imports(macho: &mach::MachO) -> Imports {
     let mut imports = Imports::default();
     if let Ok(imports_data) = macho.imports() {
         for import in imports_data {
-            if let Some(existing_import) = imports.imports.iter_mut().find(|i| i.lib == import.dylib) {
+            if let Some(existing_import) = imports.imports.iter_mut()
+                                                        .find(|i| i.lib == import.dylib) {
                 existing_import.names.push(Function {
                     name: import.name.to_string(),
                     ..Default::default()
