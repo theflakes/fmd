@@ -15,6 +15,7 @@ lazy_static! {
 }
 
 pub static INTERESTING_MIME_TYPES: &'static [&'static str] = &[
+    "application/vnd.microsoft.portable-executable",
     "application/hta",
     "application/mac-binary",
     "application/macbinary",
@@ -26,6 +27,15 @@ pub static INTERESTING_MIME_TYPES: &'static [&'static str] = &[
     "application/x-ms-dos-executable",
     "application/x-msdownload",
     "application/x-sharedlib",
+    "application/x-elf",
+    "application/x-mach-binary",
+    "application/wasm",
+    "text/javascript",
+    "application/x-csh",
+    "application/x-shellscript",
+    "text/x-shellscript",
+    "text/x-nushell",
+    "application/x-nuscript",
 ];
 
 #[derive(Serialize, Clone, Debug, PartialEq, Default)]

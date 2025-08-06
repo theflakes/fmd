@@ -31,8 +31,8 @@ use std::{io, str};
 use std::env;
 use std::process;
 use std::borrow::Cow;
-use sha1::{Sha1, Digest};
-use sha2::Sha256;
+use sha1::{Sha1, Digest as Sha1Digest};
+use sha2::{Sha256, Digest as Sha2Digest};
 use std::fs::{self, File};
 use std::io::{BufReader, Read, Seek, Write, SeekFrom};
 use path_abs::{PathAbs, PathInfo};
@@ -563,6 +563,7 @@ fmd.exe <directory> --depth 1
 
 Mimetypes are determined by examining a file's contents.
     - Interesting mime types:
+        application/vnd.microsoft.portable-executable
         application/hta
         application/mac-binary
         application/macbinary
@@ -574,6 +575,15 @@ Mimetypes are determined by examining a file's contents.
         application/x-ms-dos-executable
         application/x-msdownload
         application/x-sharedlib
+        application/x-elf
+        application/x-mach-binary
+        application/wasm
+        text/javascript
+        application/x-csh
+        application/x-shellscript
+        text/x-shellscript
+        text/x-nushell
+        application/x-nuscript
 
 NOTE: 
     If passed a directory, all files in that directory will be analyzed.
@@ -596,7 +606,7 @@ NOTE:
     Certain forensic information can only be harvested when the file is analyzed on
     the filesystem of origin. 
     - e.g. timestamps and alternate data streams are lost when the file is moved 
-    off of the filesystem of origin.
+      off of the filesystem of origin.
     ";
     println!("{}", help);
     process::exit(1)

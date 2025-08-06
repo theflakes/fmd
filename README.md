@@ -57,18 +57,28 @@ fmd.exe <directory> --depth 1
     - This will work exactly as if the '--depth' 1 option was not specified.
 
 Mimetypes are determined by examining a file's contents.
-  - Interesting mime types:
-      application/hta
-      application/mac-binary
-      application/macbinary
-      application/octet-stream
-      application/x-binary
-      application/x-dosexec
-      application/x-executable
-      application/x-macbinary
-      application/x-ms-dos-executable
-      application/x-msdownload
-      application/x-sharedlib
+    - Interesting mime types:
+        application/vnd.microsoft.portable-executable
+        application/hta
+        application/mac-binary
+        application/macbinary
+        application/octet-stream
+        application/x-binary
+        application/x-dosexec
+        application/x-executable
+        application/x-macbinary
+        application/x-ms-dos-executable
+        application/x-msdownload
+        application/x-sharedlib
+        application/x-elf
+        application/x-mach-binary
+        application/wasm
+        text/javascript
+        application/x-csh
+        application/x-shellscript
+        text/x-shellscript
+        text/x-nushell
+        application/x-nuscript
 
 NOTE: 
     If passed a directory, all files in that directory will be analyzed.
@@ -86,12 +96,12 @@ NOTE:
     - 'total_raw_bytes' cumulative size in bytes of all raw, on disk, sections.
     - 'total_virt_bytes' cumulative size in bytes of all virtual, in memory, sections.
     - if 'total_virt_bytes' is much larger than 'total_raw_bytes', this can indicate
-    a packed binary.
+      a packed binary.
 
     Certain forensic information can only be harvested when the file is analyzed on
     the filesystem of origin. 
     - e.g. timestamps and alternate data streams are lost when the file is moved 
-    off of the filesystem of origin.
+      off of the filesystem of origin.
 ```
 
 ### Example output:
