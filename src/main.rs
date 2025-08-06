@@ -16,12 +16,12 @@ mod ordinals;
 mod sector_reader;
 mod mft;
 mod elf;
+mod pe;
 
 use data_defs::*;
 use lnk::linkinfo::{VolumeID, DriveType};
 use mft::*;
 use fuzzyhash::FuzzyHash;
-use goblin::pe::PE;
 use std::mem::replace;
 use std::path::{Path, PathBuf};
 use std::ptr::null;
@@ -44,7 +44,6 @@ use std::collections::HashMap;
 use chrono::{DateTime, Utc};
 use lnk::{ShellLink, LinkInfo};
 use lnk::encoding::WINDOWS_1252;
-//use rand::distributions::{ChiSquared, IndependentSample, Sample};
 
 
 // report out in json
@@ -171,161 +170,6 @@ fn get_file_hashes(buffer: &Vec<u8>) -> io::Result<Hashes> {
     Ok(hashes)
 }
 
-
-/*
-    detects if the binary is a .Net assembly
-    .Net assemblies will only have one lib and one function in imports
-*/
-fn is_dotnet(imps: &Imports) -> io::Result<bool> {
-    if imps.imports.len() == 1 {
-        if imps.imports[0].count ==1 
-            && imps.imports[0].lib == "mscoree.dll" 
-            && (
-                imps.imports[0].names[0].name == "_CorExeMain" 
-                || imps.imports[0].names[0].name == "_CorDllMain"
-            ) {
-            return Ok(true);
-        }
-    }
-    Ok(false)
-}
-
-fn is_function_interesting(dll: &str, func: &str) -> (bool, String) {
-    if DLLS.contains_key(dll) {
-        let funcs = match DLLS.get(dll) {
-            Some(it) => it,
-            None => return (false, String::new()),
-        };
-        for f in funcs {
-            if f.name.to_lowercase().eq(&func.to_lowercase()) {
-                return (true, f.desc.clone());
-            }
-        }
-    }
-    (false, String::new())
-}
-
-fn parse_pe_imports(imports: &Vec<goblin::pe::import::Import>) -> io::Result<(Imports, bool)> 
-{
-    let mut track_dlls:Vec<&str> = Vec::new();
-    let mut imps: Imports = Imports::default();
-    let mut func: Function = Function::default();
-    for i in imports.iter() {
-        if track_dlls.contains(&i.dll) { continue; }
-        track_dlls.push(i.dll);
-        let mut temp = Import::default();
-        temp.lib = i.dll.to_string();
-        for m in imports.iter() {
-            if i.dll != m.dll { continue; }
-            temp.count += 1;
-            func.name = m.name.to_string();
-            (func.more_interesting, func.info) = is_function_interesting(
-                                                    &i.dll.to_lowercase(),
-                                                    &func.name); 
-            temp.names.push(func.clone());
-        }
-        imps.imports.push(temp);
-    }
-    let is_dot_net = is_dotnet(&imps)?;
-    Ok((imps, is_dot_net))
-}
-
-
-fn get_hash_sorted(hash_array: &mut Vec<String>) -> io::Result<(String, String)> {
-    hash_array.sort();
-    let mut imphash_text_sorted = String::new();
-    for i in hash_array.iter() {
-        imphash_text_sorted.push_str(i);
-    }
-    imphash_text_sorted = imphash_text_sorted.trim_end_matches(",").to_string();
-    let imphash_sorted = format!("{:x}", md5::compute(&imphash_text_sorted)).to_lowercase();
-
-    Ok((imphash_text_sorted, imphash_sorted))
-}
-
-
-fn check_ordinal(dll: &str, func: &str) -> io::Result<String> {
-    let mut f: String = func.to_ascii_lowercase().replace("ordinal ", "");
-    if f.parse::<u32>().is_ok() {
-        let o = f.parse::<u32>().unwrap();
-        f = ordinals::imphash_resolve(dll, o).to_ascii_lowercase();
-    }
-    Ok(f)
-}
-
-
-fn get_imphashes(imports: &Vec<goblin::pe::import::Import>) 
-                        -> io::Result<(ImpHashes, usize, usize)> {
-    let mut imphash_array: Vec<String> = Vec::new();    // store in array for calculating imphash on sorted
-    let mut imphash_text = String::new();       // text imphash for imports in bin natural order
-    let mut total_dlls = 0;     // dlls imports are in the form of {"dll_name","function_name"} - one to one relationship
-    let mut track_dll = String::new();
-    for i in imports.iter() {
-        let mut temp = String::new();
-        if i.dll != track_dll { total_dlls += 1; }
-        let mut dll = i.dll.to_ascii_lowercase()
-            .replace(".dll", "")
-            .replace(".sys", "")
-            .replace(".drv", "")
-            .replace(".ocx", "").to_string();
-        temp.push_str(&dll);
-        temp.push_str(".");
-        let func = check_ordinal(i.dll, &i.name)?;
-        temp.push_str(&func);
-        temp.push_str(",");
-        imphash_text.push_str(&temp.to_string());
-        imphash_array.push(temp.to_string());
-        track_dll = i.dll.to_string();
-    }
-    let mut imphashes = ImpHashes::default();
-    imphash_text = imphash_text.trim_end_matches(",").to_string();
-    imphashes.md5 = format!("{:x}", md5::compute(imphash_text.clone())).to_lowercase();
-    let mut imphash_text_sorted = String::new();
-    (imphash_text_sorted, imphashes.md5_sorted) = get_hash_sorted(&mut imphash_array)?;
-    let imphash_bytes: Vec<u8> = imphash_text.as_bytes().to_vec();
-    let imphash_bytes_ordered: Vec<u8> = imphash_text_sorted.as_bytes().to_vec();
-    imphashes.ssdeep = get_ssdeep_hash(&imphash_bytes)?;
-    imphashes.ssdeep_sorted = get_ssdeep_hash(&imphash_bytes_ordered)?;
-    Ok((imphashes, total_dlls, imports.len()))
-}
-
-
-fn parse_pe_exports(exports: &Vec<goblin::pe::export::Export>) -> io::Result<Exports> {
-    let mut exps = Exports::default();
-    //let mut exphash_array: Vec<String> = Vec::new();
-    let mut exphash_text = String::new();
-    for e in exports.iter() {
-        exps.names.push(e.name.unwrap_or("").to_string());
-        let mut temp = String::new();
-        temp.push_str(&e.name.unwrap_or("").to_string());
-        temp.push_str(",");
-        //exphash_array.push(temp.to_string());
-        exphash_text.push_str(&temp.to_string());
-    }
-    exps.count = exports.len();
-    let mut exphashes = ExpHashes::default();
-    exphash_text = exphash_text.trim_end_matches(",").to_string();
-    exphashes.md5 = format!("{:x}", md5::compute(exphash_text.clone())).to_lowercase();
-    //let mut exphash_text_sorted = String::new();
-    //(exphash_text_sorted, exphashes.md5_sorted) = get_hash_sorted(&mut exphash_array)?;
-    let exphash_bytes: Vec<u8> = exphash_text.as_bytes().to_vec();
-    //let exphash_bytes_ordered: Vec<u8> = exphash_text_sorted.as_bytes().to_vec();
-    exphashes.ssdeep = get_ssdeep_hash(&exphash_bytes)?;
-    //exphashes.ssdeep_sorted = get_ssdeep_hash(&exphash_bytes_ordered)?;
-    exps.hashes = exphashes;
-    Ok(exps)
-}
-
-
-fn get_date_string(timestamp: i64) -> io::Result<String> {
-    let dt = match DateTime::from_timestamp(timestamp, 0) {
-            Some(s) => s.format("%Y-%m-%dT%H:%M:%S").to_string(),
-            None => "".to_string()
-        };
-    Ok(dt)
-}
-
-
 fn get_strings(buffer: &Vec<u8>, length: usize) -> io::Result<Vec<String>> {
     let mut results: Vec<String> = Vec::new();
     let mut chars: Vec<u8> = Vec::new();
@@ -346,75 +190,6 @@ fn get_strings(buffer: &Vec<u8>, length: usize) -> io::Result<Vec<String>> {
     Ok(results)
 }
 
-
-fn get_hashmap_value(
-                    string_map: &HashMap<String, String>, 
-                    value_name: &str
-                    ) -> io::Result<String> 
-{
-    let _v = match string_map.get(value_name) {
-        Some(v) => return Ok(v.to_string()),
-        None => return Ok("".to_string())
-    };
-}
-
-
-/*
-    See: https://github.com/frank2/exe-rs/blob/main/src/tests.rs
-
-    The Goblin PE parser doesn't support parsing this PE structure, therefore using exe-rs
-    Is not parsing .Net file info
-*/
-fn get_pe_file_info(path: &Path) -> io::Result<BinaryInfo> {
-    let mut info = BinaryInfo::default();
-    let Ok(pefile) = exe::VecPE::from_disk_file(path) else { return Ok(info) };
-    let Ok(vs_version_check) = exe::VSVersionInfo::parse(&pefile) else { return Ok(info) };
-    let vs_version = vs_version_check;
-    if let Some(string_file_info) = vs_version.string_file_info {
-        let Ok(string_map) = string_file_info.children[0].string_map() else { return Ok(info) };
-        info.pe_info.product_version = get_hashmap_value(&string_map, "ProductVersion")?;
-        info.pe_info.original_filename = get_hashmap_value(&string_map, "OriginalFilename")?;
-        info.pe_info.file_description = get_hashmap_value(&string_map, "FileDescription")?;
-        info.pe_info.file_version = get_hashmap_value(&string_map, "FileVersion")?;
-        info.pe_info.product_name = get_hashmap_value(&string_map, "ProductName")?;
-        info.pe_info.company_name = get_hashmap_value(&string_map, "CompanyName")?;
-        info.pe_info.internal_name = get_hashmap_value(&string_map, "InternalName")?;
-        info.pe_info.legal_copyright = get_hashmap_value(&string_map, "LegalCopyright")?;
-    }
-    Ok(info)
-}
-
-
-fn read_section(path: &Path, start: u32, size: u32) -> io::Result<Vec<u8>> {
-    let mut f = File::open(path)?;
-    f.seek(SeekFrom::Start(start as u64))?;
-    let mut buf = vec![0; size as usize];
-    f.read_exact(&mut buf)?;
-    Ok(buf)
-}
-
-
-fn get_sections(pex: &PE, path: &Path) -> io::Result<BinSections> {
-    let mut bss = BinSections::default();
-    for s in pex.sections.iter() {
-        bss.total_sections += 1;
-        bss.total_raw_bytes += s.size_of_raw_data;
-        bss.total_virt_bytes += s.virtual_size;
-        let mut bs: BinSection = BinSection::default();
-        bs.name = s.name().unwrap_or("").to_string();
-        bs.virt_address = format!("0x{:02x}", s.virtual_address);
-        bs.raw_size = s.size_of_raw_data;
-        bs.virt_size = s.virtual_size;
-        let data = read_section(path, s.pointer_to_raw_data, s.size_of_raw_data)?;
-        bs.entropy = get_entropy(&data)?;
-        bs.md5 = format!("{:x}", md5::compute(&data)).to_lowercase();
-        bs.ssdeep = get_ssdeep_hash(&data)?;
-        bss.sections.push(bs);
-    }
-    Ok(bss)
-}
-
-
 fn get_binary(path: &Path, buffer: &Vec<u8>) -> io::Result<Binary> {
     let mut bin = Binary::default();
     if buffer.len() < 4 { return Ok(bin) } // ELF magic number is 4 bytes
@@ -425,25 +200,7 @@ fn get_binary(path: &Path, buffer: &Vec<u8>) -> io::Result<Binary> {
                     bin = elf::get_elf(&buffer);
                 },
                 Object::PE(pex) => {
-                    (bin.imports, bin.binary_info.is_dotnet) = parse_pe_imports(&pex.imports)?;
-                    bin.binary_info.entry_point = format!("0x{:02x}", pex.entry);
-                    bin.sections = get_sections(&pex, path)?;
-                    (bin.imports.hashes, bin.imports.lib_count, bin.imports.func_count) = get_imphashes(&pex.imports)?;
-                    bin.binary_info.is_64 = pex.is_64;
-                    bin.binary_info.is_lib = pex.is_lib;
-                    bin.exports = parse_pe_exports(&pex.exports)?;
-                    bin.binary_info = get_pe_file_info(path)?;
-                    bin.binary_info.format = BinaryFormat::Pe;
-                    bin.binary_info.pe_info.timestamps.compile = get_date_string(pex.header.coff_header.time_date_stamp as i64)?;
-                    // bin.timestamps.debug = match pex.debug_data {
-                    //     Some(d) => get_date_string(d.image_debug_directory.time_date_stamp as i64)?,
-                    //     None => "".to_string()};
-                    bin.binary_info.pe_info.linker.major_version = match pex.header.optional_header {
-                        Some(d) => d.standard_fields.major_linker_version,
-                        None => 0};
-                    bin.binary_info.pe_info.linker.minor_version = match pex.header.optional_header {
-                        Some(d) => d.standard_fields.minor_linker_version,
-                        None => 0};
+                    bin = pe::get_pe(&buffer, path);
                 },
                 Object::Mach(mach) => {
                     //println!("Mach binary");
