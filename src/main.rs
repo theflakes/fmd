@@ -438,10 +438,10 @@ fn get_binary(path: &Path, buffer: &Vec<u8>) -> io::Result<Binary> {
                     // bin.timestamps.debug = match pex.debug_data {
                     //     Some(d) => get_date_string(d.image_debug_directory.time_date_stamp as i64)?,
                     //     None => "".to_string()};
-                    bin.linker.major_version = match pex.header.optional_header {
+                    bin.binary_info.pe_info.linker.major_version = match pex.header.optional_header {
                         Some(d) => d.standard_fields.major_linker_version,
                         None => 0};
-                    bin.linker.minor_version = match pex.header.optional_header {
+                    bin.binary_info.pe_info.linker.minor_version = match pex.header.optional_header {
                         Some(d) => d.standard_fields.minor_linker_version,
                         None => 0};
                 },

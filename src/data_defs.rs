@@ -182,25 +182,39 @@ pub struct FileTimestamps {
 }
 
 
-impl Default for PeBinTimestamps {
-    fn default () -> PeBinTimestamps {
-        PeBinTimestamps {
+impl Default for PeTimestamps {
+    fn default () -> PeTimestamps {
+        PeTimestamps {
             compile: String::new(),
             debug: String::new()
         }
     }
 }
 #[derive(Serialize, Clone)]
-pub struct PeBinTimestamps {
+pub struct PeTimestamps {
     pub compile: String,
     pub debug: String
+}
+
+impl Default for PeLinker {
+    fn default () -> PeLinker {
+        PeLinker {
+            major_version: 0,
+            minor_version: 0
+        }
+    }
+}
+#[derive(Serialize, Clone)]
+pub struct PeLinker {
+    pub major_version: u8,
+    pub minor_version: u8
 }
 
 
 impl Default for PeInfo {
     fn default () -> PeInfo {
         PeInfo {
-            timestamps: PeBinTimestamps::default(),
+            timestamps: PeTimestamps::default(),
             product_version: String::new(),
             original_filename: String::new(),
             file_description: String::new(),
@@ -209,12 +223,13 @@ impl Default for PeInfo {
             company_name: String::new(),
             internal_name: String::new(),
             legal_copyright: String::new(),
+            linker: PeLinker::default(),
         }
     }
 }
 #[derive(Serialize, Clone)]
 pub struct PeInfo {
-    pub timestamps: PeBinTimestamps,
+    pub timestamps: PeTimestamps,
     pub product_version: String,
     pub original_filename: String,
     pub file_description: String,
@@ -223,6 +238,7 @@ pub struct PeInfo {
     pub company_name: String,
     pub internal_name: String,
     pub legal_copyright: String,
+    pub linker: PeLinker,
 }
 
 
@@ -317,20 +333,6 @@ pub struct BinSections {
     pub sections: Vec<BinSection>
 }
 
-impl Default for BinLinker {
-    fn default () -> BinLinker {
-        BinLinker {
-            major_version: 0,
-            minor_version: 0
-        }
-    }
-}
-#[derive(Serialize, Clone)]
-pub struct BinLinker {
-    pub major_version: u8,
-    pub minor_version: u8
-}
-
 
 impl Default for Exports {
     fn default () -> Exports {
@@ -354,7 +356,6 @@ impl Default for Binary {
         Binary {
             binary_info: BinaryInfo::default(),
             sections: BinSections::default(),
-            linker: BinLinker::default(),
             imports: Imports::default(),
             exports: Exports::default()
         }
@@ -363,7 +364,6 @@ impl Default for Binary {
 #[derive(Serialize, Clone)]
 pub struct Binary {
     pub binary_info: BinaryInfo,
-    pub linker: BinLinker,
     pub sections: BinSections,
     pub imports: Imports,
     pub exports: Exports
