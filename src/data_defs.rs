@@ -28,6 +28,29 @@ pub static INTERESTING_MIME_TYPES: &'static [&'static str] = &[
     "application/x-sharedlib",
 ];
 
+#[derive(Serialize, Clone, Debug, PartialEq, Default)]
+pub enum BinaryFormat {
+    Elf,
+    Pe,
+    MachO,
+    #[default] // Sets Unknown as the default variant
+    Unknown,
+}
+
+#[derive(Serialize, Clone, Debug, PartialEq, Default)]
+pub enum Architecture {
+    X86,       // 32-bit Intel/AMD
+    X86_64,    // 64-bit Intel/AMD
+    Arm,       // 32-bit ARM
+    AArch64,   // 64-bit ARM (sometimes called ARM64)
+    Mips,
+    PowerPC,
+    RiscV,
+    Itanium,   // IA-64
+    #[default] // Sets Unknown as the default variant
+    Unknown,
+}
+
 fn get_time_iso8601() -> io::Result<String> {
     let now = SystemTime::now();
     let now: DateTime<Utc> = now.into();
@@ -264,8 +287,8 @@ pub struct ElfInfo {
 impl Default for BinaryInfo {
     fn default () -> BinaryInfo {
         BinaryInfo {
-            is_elf: false,
-            is_pe: false,
+            format: BinaryFormat::Unknown,
+            arch: Architecture::Unknown,
             is_64: false,
             is_dotnet: false,
             is_lib: false,
@@ -277,8 +300,8 @@ impl Default for BinaryInfo {
 }
 #[derive(Serialize, Clone)]
 pub struct BinaryInfo {
-    pub is_elf: bool,
-    pub is_pe: bool,
+    pub format: BinaryFormat,
+    pub arch: Architecture,
     pub is_64: bool,
     pub is_dotnet: bool,
     pub is_lib: bool,

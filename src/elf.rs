@@ -1,5 +1,5 @@
 use goblin::elf;
-use crate::data_defs::{Binary, BinSection, BinSections, Imports, Exports, Import, Function, BinaryInfo, ElfInfo, ImpHashes, ExpHashes};
+use crate::data_defs::{BinSection, BinSections, Binary, BinaryFormat, BinaryInfo, ElfInfo, ExpHashes, Exports, Function, ImpHashes, Import, Imports, Architecture};
 use std::collections::HashMap;
 use fuzzyhash::FuzzyHash;
 use entropy::shannon_entropy;
@@ -25,15 +25,30 @@ fn get_elf_file_type_name(e_type: u16) -> String {
     }
 }
 
+fn get_arch(e_machine: u16) -> Architecture {
+    match e_machine {
+        elf::header::EM_X86_64 => Architecture::X86_64,
+        elf::header::EM_386 => Architecture::X86,
+        elf::header::EM_ARM => Architecture::Arm,
+        elf::header::EM_AARCH64 => Architecture::AArch64,
+        elf::header::EM_MIPS => Architecture::Mips,
+        elf::header::EM_PPC => Architecture::PowerPC,
+        elf::header::EM_RISCV => Architecture::RiscV,
+        elf::header::EM_IA_64 => Architecture::Itanium,
+        _ => Architecture::Unknown,
+    }
+}
+
 fn parse_elf_header_info(elf: &elf::Elf, binary_info: &mut BinaryInfo) {
     binary_info.is_64 = elf.is_64;
-    binary_info.entry_point = format!("0x{:02x}", elf.entry);
+    binary_info.entry_point = format!("0x{:x}", elf.entry);
     binary_info.is_lib = elf.header.e_type == elf::header::ET_DYN;
     binary_info.elf_info.os_abi = format!("{:?}", elf.header.e_ident[elf::header::EI_OSABI]);
     binary_info.elf_info.abi_version = elf.header.e_ident[elf::header::EI_ABIVERSION];
     binary_info.elf_info.file_type = get_elf_file_type_name(elf.header.e_type);
     binary_info.elf_info.object_version = elf.header.e_version as u8;
-    binary_info.is_elf = true;
+    binary_info.format = BinaryFormat::Elf;
+    binary_info.arch = get_arch(elf.header.e_machine);
 }
 
 fn parse_elf_sections(elf: &elf::Elf, buffer: &[u8]) -> BinSections {
@@ -73,7 +88,7 @@ fn parse_elf_sections(elf: &elf::Elf, buffer: &[u8]) -> BinSections {
             section.comment_or_note_content = Some(bytes_to_human_readable_string(&section_data_to_hash));
         }
 
-        section.virt_address = format!("0x{:02x}", sh.sh_addr);
+        section.virt_address = format!("0x{:x}", sh.sh_addr);
         sections.sections.push(section);
     }
     sections.total_sections = elf.section_headers.len() as u16;
