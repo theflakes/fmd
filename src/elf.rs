@@ -85,7 +85,7 @@ fn parse_elf_sections(elf: &elf::Elf, buffer: &[u8]) -> BinSections {
 
         // Capture human-readable content for .comment and .note sections
         if section.name == ".comment" || section.name.starts_with(".note") {
-            section.comment_or_note_content = Some(bytes_to_human_readable_string(&section_data_to_hash));
+            section.elf_comment_or_note_content = Some(bytes_to_human_readable_string(&section_data_to_hash));
         }
 
         section.virt_address = format!("0x{:x}", sh.sh_addr);

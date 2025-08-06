@@ -106,19 +106,19 @@ fn is_dotnet(imps: &Imports) -> io::Result<bool> {
     Ok(false)
 }
 
-fn is_function_interesting(dll: &str, func: &str) -> (bool, String) {
+fn is_function_interesting(dll: &str, func: &str) -> (Option<bool>, String) {
     if DLLS.contains_key(dll) {
         let funcs = match DLLS.get(dll) {
             Some(it) => it,
-            None => return (false, String::new()),
+            None => return (None, String::new()),
         };
         for f in funcs {
             if f.name.to_lowercase().eq(&func.to_lowercase()) {
-                return (true, f.desc.clone());
+                return (Some(true), f.desc.clone());
             }
         }
     }
-    (false, String::new())
+    (None, String::new())
 }
 
 fn parse_pe_imports(imports: &Vec<goblin::pe::import::Import>) -> io::Result<(Imports, bool)> 

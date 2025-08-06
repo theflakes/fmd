@@ -128,19 +128,19 @@ pub struct ExpHashes {
 
 
 impl Default for Function {
-    fn default () -> Function {
+    fn default() -> Function {
         Function {
             name: String::new(),
-            more_interesting: false,
-            info: String::new()
+            more_interesting: None,
+            info: String::new(),
         }
     }
 }
-#[derive(Serialize, Clone)]
+#[derive(Serialize, Clone, Debug)]
 pub struct Function {
     pub name: String,
-    pub more_interesting: bool,
-    pub info: String
+    pub more_interesting: Option<bool>,
+    pub info: String,
 }
 
 
@@ -321,7 +321,7 @@ impl Default for BinSection {
             virt_address: String::new(),
             raw_size: 0,
             virt_size: 0,
-            comment_or_note_content: None,
+            elf_comment_or_note_content: None,
         }
     }
 }
@@ -334,7 +334,7 @@ pub struct BinSection {
     pub virt_address: String,
     pub raw_size: u32,
     pub virt_size: u32,
-    pub comment_or_note_content: Option<String>,
+    pub elf_comment_or_note_content: Option<String>,
 }
 
 
