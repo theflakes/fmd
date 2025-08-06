@@ -1,20 +1,12 @@
 use crate::data_defs::{BinSection, BinSections, Binary, BinaryFormat, BinaryInfo, MachOInfo, ExpHashes, Exports, Function, ImpHashes, Import, Imports, Architecture};
 use goblin::mach::{self, cputype, header, Mach};
+use crate::shared_utils;
 use std::collections::HashMap;
 use fuzzyhash::FuzzyHash;
 use entropy::shannon_entropy;
 use std::str;
 
-fn get_arch(cputype: u32) -> Architecture {
-    match cputype {
-        cputype::CPU_TYPE_X86_64 => Architecture::X86_64,
-        cputype::CPU_TYPE_X86 => Architecture::X86,
-        cputype::CPU_TYPE_ARM => Architecture::Arm,
-        cputype::CPU_TYPE_ARM64 => Architecture::AArch64,
-        cputype::CPU_TYPE_POWERPC => Architecture::PowerPC,
-        _ => Architecture::Unknown,
-    }
-}
+
 
 fn parse_macho_header_info(macho: &mach::MachO, binary_info: &mut BinaryInfo) {
     binary_info.is_64 = macho.is_64;
@@ -26,7 +18,7 @@ fn parse_macho_header_info(macho: &mach::MachO, binary_info: &mut BinaryInfo) {
     binary_info.macho_info.ncmds = macho.header.ncmds as u32;
     binary_info.macho_info.sizeofcmds = macho.header.sizeofcmds as u32;
     binary_info.format = BinaryFormat::MachO;
-    binary_info.arch = get_arch(macho.header.cputype);
+    binary_info.arch = shared_utils::get_arch_macho(macho.header.cputype);
 }
 
 fn parse_macho_sections(macho: &mach::MachO, buffer: &[u8]) -> BinSections {

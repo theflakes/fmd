@@ -1,5 +1,6 @@
 use crate::data_defs::{BinSection, BinSections, Binary, BinaryFormat, BinaryInfo, PeInfo, ExpHashes, Exports, Function, ImpHashes, Import, Imports, Architecture, PeTimestamps, PeLinker, DLLS};
 use crate::ordinals;
+use crate::shared_utils;
 use std::path::{Path, PathBuf};
 use std::io::{self, Write, Read, Seek, SeekFrom};
 use std::fs::File;
@@ -34,17 +35,7 @@ fn get_ssdeep_hash(mut buffer: &Vec<u8>) -> io::Result<String> {
     Ok(ssdeep.to_string())
 }
 
-fn get_arch(machine: u16) -> Architecture {
-    match machine {
-        pe::header::COFF_MACHINE_X86_64 => Architecture::X86_64,
-        pe::header::COFF_MACHINE_X86 => Architecture::X86,
-        pe::header::COFF_MACHINE_ARM => Architecture::Arm,
-        pe::header::COFF_MACHINE_ARMNT => Architecture::AArch64,
-        pe::header::COFF_MACHINE_POWERPC => Architecture::PowerPC,
-        pe::header::COFF_MACHINE_IA64 => Architecture::Itanium,
-        _ => Architecture::Unknown,
-    }
-}
+
 
 fn get_pe_file_info(path: &Path, binary_info: &mut BinaryInfo) -> io::Result<()> {
     let Ok(pefile) = exe::VecPE::from_disk_file(path) else { return Ok(()) };
@@ -234,7 +225,7 @@ pub fn get_pe(buffer: &[u8], path: &Path) -> Binary {
         bin.exports = parse_pe_exports(&pe.exports).unwrap();
         get_pe_file_info(path, &mut bin.binary_info).unwrap();
         bin.binary_info.format = BinaryFormat::Pe;
-        bin.binary_info.arch = get_arch(pe.header.coff_header.machine);
+        bin.binary_info.arch = shared_utils::get_arch_pe(pe.header.coff_header.machine);
         bin.binary_info.pe_info.timestamps.compile = get_date_string(pe.header.coff_header.time_date_stamp as i64).unwrap();
         bin.binary_info.pe_info.linker.major_version = match pe.header.optional_header {
             Some(d) => d.standard_fields.major_linker_version,
