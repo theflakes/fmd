@@ -1,4 +1,5 @@
-use crate::data_defs::{BinSection, BinSections, Binary, BinaryFormat, BinaryInfo, MachOInfo, ExpHashes, Exports, Function, ImpHashes, Import, Imports, Architecture};
+use crate::data_defs::{BinSection, BinSections, Binary, BinaryFormat, BinaryInfo, MachOInfo, 
+                    ExpHashes, Exports, Function, ImpHashes, Import, Imports, Architecture};
 use goblin::mach::{self, cputype, header, Mach};
 use std::collections::HashMap;
 use fuzzyhash::FuzzyHash;

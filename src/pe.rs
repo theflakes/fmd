@@ -1,4 +1,6 @@
-use crate::data_defs::{BinSection, BinSections, Binary, BinaryFormat, BinaryInfo, PeInfo, ExpHashes, Exports, Function, ImpHashes, Import, Imports, Architecture, PeTimestamps, PeLinker, DLLS};
+use crate::data_defs::{BinSection, BinSections, Binary, BinaryFormat, BinaryInfo, PeInfo, 
+                    ExpHashes, Exports, Function, ImpHashes, Import, Imports, Architecture, 
+                    PeTimestamps, PeLinker, DLLS};
 use crate::ordinals;
 use std::path::{Path, PathBuf};
 use std::io::{self, Write, Read, Seek, SeekFrom};
