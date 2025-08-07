@@ -2,7 +2,7 @@
 File metadata / forensic tool.  
 fmd = File Metadata  
 
-Currently supports parsing Windows LNK files, PE and Elf binaries.
+Currently supports parsing Windows LNK files, PE, Mach-O, and Elf binaries.
 
 #### **Understanding MS PE analysis**
 https://practicalsecurityanalytics.com/threat-hunting-with-function-imports/
