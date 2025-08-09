@@ -616,6 +616,8 @@ pub fn build_interesting_funcs() -> HashMap<String, Vec<Func>> {
     let func = Func::default();
     let mut dlls: HashMap<String, Vec<Func>> = HashMap::new();
 
+    // PE
+
     // advapi32.dll
     let funcs: Vec<Func> = [
         func.create("accept", "Permits an incoming connection attempt on a socket."),
@@ -844,6 +846,52 @@ pub fn build_interesting_funcs() -> HashMap<String, Vec<Func>> {
         func.create("inet_addr", "Converts a string containing an IPv4 dotted-decimal address into a proper address for the IN_ADDR structure."),
     ].to_vec();
     dlls.insert("ws2_32.dll".to_string(), funcs);
+
+    // ELF
+
+    // libc – core system calls & memory ops
+    let funcs_libc: Vec<Func> = [
+        func.create("dlopen", "Open a shared object and return a handle."),
+        func.create("dlsym", "Look up a symbol in the shared object referenced by a handle."),
+        func.create("dlclose", "Close a shared object opened with dlopen."),
+        func.create("_dl_iterate_phdr", "Iterate over program headers of loaded modules (used for introspection)."),
+        func.create("mprotect", "Change protection on memory pages – often used in exploits."),
+        func.create("execve", "Execute a program, replacing the current process image."),
+        func.create("ptrace", "Trace and manipulate other processes – key forensic indicator."),
+    ].to_vec();
+    dlls.insert("libc.so.6".to_string(), funcs_libc);
+
+    // libdl – dynamic linking helpers
+    let funcs_libdl: Vec<Func> = [
+        func.create("__libc_dlerror", "Return error message from last dl* call."),
+        func.create("__libc_dlopen_mode", "Internal helper for dlopen with mode flags."),
+    ].to_vec();
+    dlls.insert("libdl.so.2".to_string(), funcs_libdl);
+
+    // libpthread – threading primitives
+    let funcs_pthread: Vec<Func> = [
+        func.create("pthread_create", "Create a new thread."),
+        func.create("pthread_join", "Wait for a thread to terminate."),
+        func.create("pthread_mutex_lock", "Lock a mutex."),
+        func.create("pthread_mutex_unlock", "Unlock a mutex."),
+        func.create("pthread_cond_wait", "Wait on a condition variable."),
+    ].to_vec();
+    dlls.insert("libpthread.so.0".to_string(), funcs_pthread);
+
+    // libcrypto – cryptographic primitives
+    let funcs_crypto: Vec<Func> = [
+        func.create("EVP_encrypt_init_ex", "Initialize encryption context (OpenSSL)."),
+        func.create("EVP_decrypt_update", "Decrypt data chunk (OpenSSL)."),
+        func.create("RAND_bytes", "Generate random bytes (OpenSSL)."),
+    ].to_vec();
+    dlls.insert("libcrypto.so.1.1".to_string(), funcs_crypto);
+
+    // libm – math functions that can be abused
+    let funcs_math: Vec<Func> = [
+        func.create("__ieee754_sqrt", "Square root implementation."),
+        func.create("__pow10f", "Compute 10^x for float."),
+    ].to_vec();
+    dlls.insert("libm.so.6".to_string(), funcs_math);
 
     return dlls
 }
