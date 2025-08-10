@@ -1,7 +1,7 @@
 use goblin::elf;
 use crate::data_defs::{BinSection, BinSections, Binary, BinaryFormat, BinaryInfo, 
                     ElfInfo, ExpHashes, Exports, Function, ImpHashes, Import, 
-                    Imports, Architecture};
+                    Imports, Architecture, is_function_interesting};
 use std::collections::HashMap;
 use fuzzyhash::FuzzyHash;
 use entropy::shannon_entropy;
@@ -180,9 +180,11 @@ fn get_elf_exphashes(exports: &Exports) -> ExpHashes {
 
 fn parse_elf_imports(elf: &elf::Elf, version_map: &HashMap<u16, String>) -> Imports {
     let mut imports = Imports::default();
+
     for (i, sym) in elf.dynsyms.iter().enumerate() {
         if sym.is_import() {
             if let Some(name) = elf.dynstrtab.get_at(sym.st_name) {
+                // Resolve the providing library (or fall back to “unknown”)
                 let lib_name = elf.versym
                     .as_ref()
                     .and_then(|vs| vs.get_at(i))
@@ -196,29 +198,36 @@ fn parse_elf_imports(elf: &elf::Elf, version_map: &HashMap<u16, String>) -> Impo
                         }
                     });
 
-                if let Some(import) = imports.imports.iter_mut().find(|i| i.lib == lib_name) {
-                    import.names.push(Function {
-                        name: name.to_string(),
-                        ..Default::default()
-                    });
+                let (more_interesting, info) = is_function_interesting(
+                    &lib_name.to_lowercase(),
+                    &name,
+                );
+
+                let func = Function {
+                    name: name.to_string(),
+                    more_interesting,
+                    info,
+                    ..Default::default()
+                };
+
+                if let Some(import) = imports.imports.iter_mut().find(|imp| imp.lib == lib_name) {
+                    import.names.push(func);
                     import.count += 1;
                 } else {
                     imports.imports.push(Import {
                         lib: lib_name.to_string(),
                         count: 1,
-                        names: vec![Function {
-                            name: name.to_string(),
-                            ..Default::default()
-                        }],
+                        names: vec![func],
                     });
                 }
             }
         }
     }
+
     imports.func_count = imports.imports.iter().map(|i| i.names.len()).sum();
     imports.lib_count = imports.imports.len();
     imports.hashes = get_elf_imphashes(&imports);
-    return imports
+    imports
 }
 
 fn parse_elf_exports(elf: &elf::Elf) -> Exports {

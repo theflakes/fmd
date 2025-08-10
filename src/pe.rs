@@ -1,6 +1,6 @@
 use crate::data_defs::{BinSection, BinSections, Binary, BinaryFormat, BinaryInfo, PeInfo, 
                     ExpHashes, Exports, Function, ImpHashes, Import, Imports, Architecture, 
-                    PeTimestamps, PeLinker, DLLS};
+                    PeTimestamps, PeLinker, DLLS, is_function_interesting};
 use crate::ordinals;
 use std::path::{Path, PathBuf};
 use std::io::{self, Write, Read, Seek, SeekFrom};
@@ -106,21 +106,6 @@ fn is_dotnet(imps: &Imports) -> io::Result<bool> {
         }
     }
     Ok(false)
-}
-
-fn is_function_interesting(dll: &str, func: &str) -> (Option<bool>, String) {
-    if DLLS.contains_key(dll) {
-        let funcs = match DLLS.get(dll) {
-            Some(it) => it,
-            None => return (None, String::new()),
-        };
-        for f in funcs {
-            if f.name.to_lowercase().eq(&func.to_lowercase()) {
-                return (Some(true), f.desc.clone());
-            }
-        }
-    }
-    (None, String::new())
 }
 
 fn parse_pe_imports(imports: &Vec<goblin::pe::import::Import>) -> io::Result<(Imports, bool)> 

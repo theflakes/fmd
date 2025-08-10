@@ -580,6 +580,22 @@ impl MetaData {
 }
 
 
+pub fn is_function_interesting(dll: &str, func: &str) -> (Option<bool>, String) {
+    if DLLS.contains_key(dll) {
+        let funcs = match DLLS.get(dll) {
+            Some(it) => it,
+            None => return (None, String::new()),
+        };
+        for f in funcs {
+            if f.name.to_lowercase().eq(&func.to_lowercase()) {
+                return (Some(true), f.desc.clone());
+            }
+        }
+    }
+    (None, String::new())
+}
+
+
 /*
     Information to include on interesting binary imported functions
     Research by Jason Langston
