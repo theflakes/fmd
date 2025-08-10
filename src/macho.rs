@@ -1,5 +1,6 @@
 use crate::data_defs::{BinSection, BinSections, Binary, BinaryFormat, BinaryInfo, MachOInfo, 
-                    ExpHashes, Exports, Function, ImpHashes, Import, Imports, Architecture};
+                    ExpHashes, Exports, Function, ImpHashes, Import, Imports, Architecture, 
+                    is_function_interesting};
 use goblin::mach::{self, cputype, header, Mach};
 use std::collections::HashMap;
 use fuzzyhash::FuzzyHash;
@@ -129,31 +130,40 @@ fn get_macho_exphashes(exports: &Exports) -> ExpHashes {
 
 fn parse_macho_imports(macho: &mach::MachO) -> Imports {
     let mut imports = Imports::default();
+
     if let Ok(imports_data) = macho.imports() {
         for import in imports_data {
+            let (more_interesting, info) = is_function_interesting(
+                &import.dylib.to_lowercase(),
+                &import.name,
+            );
+
+            let func = Function {
+                name: import.name.to_string(),
+                more_interesting,
+                info,
+                ..Default::default()
+            };
+
             if let Some(existing_import) = imports.imports.iter_mut()
-                                                        .find(|i| i.lib == import.dylib) {
-                existing_import.names.push(Function {
-                    name: import.name.to_string(),
-                    ..Default::default()
-                });
+                                                          .find(|i| i.lib == import.dylib) {
+                existing_import.names.push(func);
                 existing_import.count += 1;
             } else {
                 imports.imports.push(Import {
                     lib: import.dylib.to_string(),
                     count: 1,
-                    names: vec![Function {
-                        name: import.name.to_string(),
-                        ..Default::default()
-                    }],
+                    names: vec![func],
                 });
             }
         }
     }
+
+    // Populate aggregate counters and hashes (unchanged)
     imports.func_count = imports.imports.iter().map(|i| i.names.len()).sum();
-    imports.lib_count = imports.imports.len();
-    imports.hashes = get_macho_imphashes(&imports);
-    return imports
+    imports.lib_count   = imports.imports.len();
+    imports.hashes      = get_macho_imphashes(&imports);
+    imports
 }
 
 fn parse_macho_exports(macho: &mach::MachO) -> Exports {
