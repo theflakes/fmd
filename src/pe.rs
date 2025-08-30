@@ -11,6 +11,8 @@ use fuzzyhash::FuzzyHash;
 use entropy::shannon_entropy;
 use goblin::pe;
 use exe;
+use anyhow::{Context, Result};
+
 
 fn get_arch(machine: u16) -> Architecture {
     match machine {
@@ -24,10 +26,11 @@ fn get_arch(machine: u16) -> Architecture {
     }
 }
 
+
 fn get_hashmap_value(
                     string_map: &HashMap<String, String>, 
                     value_name: &str
-                    ) -> io::Result<String> 
+                    ) -> Result<String> 
 {
     let _v = match string_map.get(value_name) {
         Some(v) => return Ok(v.to_string()),
@@ -35,7 +38,8 @@ fn get_hashmap_value(
     };
 }
 
-fn get_date_string(timestamp: i64) -> io::Result<String> {
+
+fn get_date_string(timestamp: i64) -> Result<String> {
     let dt = match DateTime::from_timestamp(timestamp, 0) {
             Some(s) => s.format("%Y-%m-%dT%H:%M:%S").to_string(),
             None => "".to_string()
@@ -43,12 +47,14 @@ fn get_date_string(timestamp: i64) -> io::Result<String> {
     Ok(dt)
 }
 
-fn get_ssdeep_hash(mut buffer: &Vec<u8>) -> io::Result<String> {
+
+fn get_ssdeep_hash(mut buffer: &Vec<u8>) -> Result<String> {
     let ssdeep = FuzzyHash::new(buffer);
     Ok(ssdeep.to_string())
 }
 
-fn get_pe_file_info(path: &Path, binary_info: &mut BinaryInfo) -> io::Result<()> {
+
+fn get_pe_file_info(path: &Path, binary_info: &mut BinaryInfo) -> Result<()> {
     let Ok(pefile) = exe::VecPE::from_disk_file(path) else { return Ok(()) };
     let Ok(vs_version_check) = exe::VSVersionInfo::parse(&pefile) else { return Ok(()) };
     let vs_version = vs_version_check;
@@ -66,7 +72,8 @@ fn get_pe_file_info(path: &Path, binary_info: &mut BinaryInfo) -> io::Result<()>
     Ok(())
 }
 
-fn read_section(path: &Path, start: u32, size: u32) -> io::Result<Vec<u8>> {
+
+fn read_section(path: &Path, start: u32, size: u32) -> Result<Vec<u8>> {
     let mut f = File::open(path)?;
     f.seek(SeekFrom::Start(start as u64))?;
     let mut buf = vec![0; size as usize];
@@ -74,7 +81,8 @@ fn read_section(path: &Path, start: u32, size: u32) -> io::Result<Vec<u8>> {
     Ok(buf)
 }
 
-fn get_sections(pex: &pe::PE, path: &Path) -> io::Result<BinSections> {
+
+fn get_sections(pex: &pe::PE, path: &Path) -> Result<BinSections> {
     let mut bss = BinSections::default();
     for s in pex.sections.iter() {
         bss.total_sections += 1;
@@ -94,7 +102,8 @@ fn get_sections(pex: &pe::PE, path: &Path) -> io::Result<BinSections> {
     Ok(bss)
 }
 
-fn is_dotnet(imps: &Imports) -> io::Result<bool> {
+
+fn is_dotnet(imps: &Imports) -> Result<bool> {
     if imps.imports.len() == 1 {
         if imps.imports[0].count ==1 
             && imps.imports[0].lib == "mscoree.dll" 
@@ -108,7 +117,8 @@ fn is_dotnet(imps: &Imports) -> io::Result<bool> {
     Ok(false)
 }
 
-fn parse_pe_imports(imports: &Vec<goblin::pe::import::Import>) -> io::Result<(Imports, bool)> 
+
+fn parse_pe_imports(imports: &Vec<goblin::pe::import::Import>) -> Result<(Imports, bool)> 
 {
     let mut track_dlls:Vec<&str> = Vec::new();
     let mut imps: Imports = Imports::default();
@@ -133,7 +143,8 @@ fn parse_pe_imports(imports: &Vec<goblin::pe::import::Import>) -> io::Result<(Im
     Ok((imps, is_dot_net))
 }
 
-fn get_hash_sorted(hash_array: &mut Vec<String>) -> io::Result<(String, String)> {
+
+fn get_hash_sorted(hash_array: &mut Vec<String>) -> Result<(String, String)> {
     hash_array.sort();
     let mut imphash_text_sorted = String::new();
     for i in hash_array.iter() {
@@ -145,7 +156,8 @@ fn get_hash_sorted(hash_array: &mut Vec<String>) -> io::Result<(String, String)>
     Ok((imphash_text_sorted, imphash_sorted))
 }
 
-fn check_ordinal(dll: &str, func: &str) -> io::Result<String> {
+
+fn check_ordinal(dll: &str, func: &str) -> Result<String> {
     let mut f: String = func.to_ascii_lowercase().replace("ordinal ", "");
     if f.parse::<u32>().is_ok() {
         let o = f.parse::<u32>().unwrap();
@@ -154,8 +166,9 @@ fn check_ordinal(dll: &str, func: &str) -> io::Result<String> {
     Ok(f)
 }
 
+
 fn get_imphashes(imports: &Vec<goblin::pe::import::Import>) 
-                        -> io::Result<(ImpHashes, usize, usize)> {
+                        -> Result<(ImpHashes, usize, usize)> {
     let mut imphash_array: Vec<String> = Vec::new();
     let mut imphash_text = String::new();
     let mut total_dlls = 0;
@@ -189,7 +202,8 @@ fn get_imphashes(imports: &Vec<goblin::pe::import::Import>)
     Ok((imphashes, total_dlls, imports.len()))
 }
 
-fn parse_pe_exports(exports: &Vec<goblin::pe::export::Export>) -> io::Result<Exports> {
+
+fn parse_pe_exports(exports: &Vec<goblin::pe::export::Export>) -> Result<Exports> {
     let mut exps = Exports::default();
     let mut exphash_text = String::new();
     for e in exports.iter() {
@@ -209,7 +223,8 @@ fn parse_pe_exports(exports: &Vec<goblin::pe::export::Export>) -> io::Result<Exp
     Ok(exps)
 }
 
-pub fn get_pe(buffer: &[u8], path: &Path) -> Binary {
+
+pub fn get_pe(buffer: &[u8], path: &Path) -> Result<Binary> {
     let mut bin = Binary::default();
     if let Ok(pe) = pe::PE::parse(&buffer) {
         (bin.imports, bin.binary_info.is_dotnet) = parse_pe_imports(&pe.imports).unwrap();
@@ -232,5 +247,5 @@ pub fn get_pe(buffer: &[u8], path: &Path) -> Binary {
             None => 0
         };
     }
-    bin
+    Ok(bin)
 }

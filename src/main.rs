@@ -45,6 +45,7 @@ use std::collections::HashMap;
 use chrono::{DateTime, Utc};
 use lnk::{ShellLink, LinkInfo};
 use lnk::encoding::WINDOWS_1252;
+use anyhow::{Context, Result};
 
 
 // report out in json
@@ -112,12 +113,12 @@ fn print_log(
 
 
 // get handle to a file
-fn open_file(file_path: &std::path::Path) -> std::io::Result<std::fs::File> {
+fn open_file(file_path: &std::path::Path) -> Result<File> {
     Ok(File::open(&file_path)?)
 }
 
 
-fn get_mimetype(buffer: &Vec<u8>) -> io::Result<String> {
+fn get_mimetype(buffer: &[u8]) -> Result<String> {
     let kind = infer::get(buffer);
     match kind {
         Some(k) => Ok(k.mime_type().to_string()),
@@ -130,14 +131,14 @@ fn get_mimetype(buffer: &Vec<u8>) -> io::Result<String> {
     See:    https://github.com/rustysec/fuzzyhash-rs
             https://docs.rs/fuzzyhash/latest/fuzzyhash/
 */
-fn get_ssdeep_hash(mut buffer: &Vec<u8>) -> io::Result<String> {
+fn get_ssdeep_hash(mut buffer: &Vec<u8>) -> Result<String> {
     let ssdeep = FuzzyHash::new(buffer);
     Ok(ssdeep.to_string())
 }
 
 
 // read in file as byte vector
-fn read_file_bytes(mut file: &File) -> std::io::Result<Vec<u8>> {
+fn read_file_bytes(mut file: &File) -> Result<Vec<u8>> {
     let mut buffer = Vec::new();
     file.rewind(); // need to reset to beginning of file if file has already been read
     file.read_to_end(&mut buffer)?;
@@ -145,19 +146,19 @@ fn read_file_bytes(mut file: &File) -> std::io::Result<Vec<u8>> {
 }
 
 
-fn get_md5(buffer: &Vec<u8>) -> io::Result<String> {
+fn get_md5(buffer: &Vec<u8>) -> Result<String> {
     Ok(format!("{:x}", md5::compute(buffer)).to_lowercase())
 }
 
 
-fn get_sha1(buffer: &Vec<u8>) -> io::Result<String> {
+fn get_sha1(buffer: &Vec<u8>) -> Result<String> {
     let mut hasher = Sha1::new();
     hasher.update(buffer);
     Ok(format!("{:x}", hasher.finalize()))
 }
 
 
-fn get_sha256(buffer: &Vec<u8>) -> io::Result<String> {
+fn get_sha256(buffer: &Vec<u8>) -> Result<String> {
     let mut hasher = Sha256::new();
     hasher.update(buffer);
     Ok(format!("{:x}", hasher.finalize()))
@@ -165,7 +166,7 @@ fn get_sha256(buffer: &Vec<u8>) -> io::Result<String> {
 
 
 // get metadata for the file's content (md5, sha1, ...)
-fn get_file_hashes(buffer: &Vec<u8>) -> io::Result<Hashes> {
+fn get_file_hashes(buffer: &Vec<u8>) -> Result<Hashes> {
     let mut hashes = Hashes::default();
     hashes.md5 = get_md5(buffer)?;
     hashes.sha1 = get_sha1(buffer)?;
@@ -174,7 +175,7 @@ fn get_file_hashes(buffer: &Vec<u8>) -> io::Result<Hashes> {
     Ok(hashes)
 }
 
-fn get_strings(buffer: &Vec<u8>, length: usize) -> io::Result<Vec<String>> {
+fn get_strings(buffer: &Vec<u8>, length: usize) -> Result<Vec<String>> {
     let mut results: Vec<String> = Vec::new();
     let mut chars: Vec<u8> = Vec::new();
     let ascii = 32..126;
@@ -194,20 +195,23 @@ fn get_strings(buffer: &Vec<u8>, length: usize) -> io::Result<Vec<String>> {
     Ok(results)
 }
 
-fn get_binary(path: &Path, buffer: &Vec<u8>) -> io::Result<Binary> {
+fn get_binary(path: &Path, buffer: &Vec<u8>) -> Result<Binary> {
     let mut bin = Binary::default();
     if buffer.len() < 4 { return Ok(bin) } // ELF magic number is 4 bytes
     let object = match Object::parse(&buffer) {
         Ok(o) => 
             match o {
                 Object::Elf(elf) => {
-                    bin = elf::get_elf(&buffer);
+                    bin = elf::get_elf(&buffer)
+                        .context("Failed to parse ELF!")?;
                 },
                 Object::PE(pex) => {
-                    bin = pe::get_pe(&buffer, path);
+                    bin = pe::get_pe(&buffer, path)
+                        .context("Failed to parse PE!")?;
                 },
                 Object::Mach(macho) => {
-                    bin = macho::get_macho(&buffer);
+                    bin = macho::get_macho(&buffer)
+                        .context("Failed to parse Mach‑O!")?;
                 },
                 Object::Archive(archive) => {
                     //println!("Archive file");
@@ -229,13 +233,13 @@ fn get_entropy(buffer: &Vec<u8>) -> io::Result<f32> {
 
 
 // get date into the format we need
-fn format_date(time: DateTime::<Utc>) -> io::Result<String> {
+fn format_date(time: DateTime::<Utc>) -> Result<String> {
     Ok(time.format("%Y-%m-%dT%H:%M:%S.%3f").to_string())
 }
 
 
 // is a file or directory hidden
-fn is_hidden(file_path: &Path) -> io::Result<bool> {
+fn is_hidden(file_path: &Path) -> Result<bool> {
     let metadata = fs::metadata(file_path)?;
     let attributes = metadata.file_attributes();
     
@@ -248,7 +252,7 @@ fn is_hidden(file_path: &Path) -> io::Result<bool> {
 }
 
 
-fn get_file_times<'a>(path: &Path) -> io::Result<FileTimestamps> {
+fn get_file_times<'a>(path: &Path) -> Result<FileTimestamps> {
     let mut ftimes = FileTimestamps::default();
     let metadata = match fs::metadata(&path) {
         Ok(m) => m,
@@ -263,7 +267,7 @@ fn get_file_times<'a>(path: &Path) -> io::Result<FileTimestamps> {
 }
 
 
-fn format_hotkey_text(hotkey: String) ->  std::io::Result<String> {
+fn format_hotkey_text(hotkey: String) -> Result<String> {
     let mk = hotkey
         .replace("HotkeyFlags { low_byte: ", "")
         .replace(", high_byte: ", " ")
@@ -283,7 +287,7 @@ fn format_hotkey_text(hotkey: String) ->  std::io::Result<String> {
 /*
     determine if a file is a symlink or not
 */
-pub fn get_link_info(link_path: &Path) -> std::io::Result<(Link, bool)> {
+pub fn get_link_info(link_path: &Path) -> Result<(Link, bool)> {
     let mut link = Link::default();
     let symlink= match ShellLink::open(link_path, WINDOWS_1252) {
         Ok(l) => l,
@@ -335,7 +339,7 @@ pub fn get_link_info(link_path: &Path) -> std::io::Result<(Link, bool)> {
 }
 
 
-fn get_dir_fname_ext(path: &Path) -> io::Result<(String, String, String)> {
+fn get_dir_fname_ext(path: &Path) -> Result<(String, String, String)> {
     let dir = match path.parent() {
         Some(a) => a.to_string_lossy().into_owned(),
         None => String::new()
@@ -369,7 +373,7 @@ fn analyze_file(
         path: &Path, pprint: bool, strings_length: usize, 
         max_size: u64, extensions: &Vec<String>, not_exts: bool,
         int_mtypes: bool
-    ) -> io::Result<()> 
+    ) -> Result<()> 
 {
     let (dir, fname, ext) = get_dir_fname_ext(path)?;
     if check_extensions(not_exts, extensions, &ext) { return Ok(()) }
@@ -406,7 +410,7 @@ fn is_file_or_dir(
         path: &Path, pprint: bool, depth: usize, mut current_depth: usize, 
         strings_length: usize, max_size: u64, extensions: &Vec<String>, 
         not_exts: bool, int_mtypes: bool
-    ) -> io::Result<()> 
+    ) -> Result<()> 
 {
     if path.is_file() {
         match analyze_file(path, pprint, strings_length, 
@@ -448,14 +452,14 @@ fn is_file_or_dir(
 
 
 // get the absolute path if given a relative path
-fn get_abs_path(path: &Path) -> io::Result<std::path::PathBuf> {
+fn get_abs_path(path: &Path) -> Result<std::path::PathBuf> {
     if path == Path::new("") { return Ok(PathBuf::new()) }
     let abs = PathAbs::new(&path)?;
     Ok(dunce::simplified(&abs.as_path()).into())
 }
 
 
-fn convert_to_path(target: &str) -> io::Result<PathBuf> {
+fn convert_to_path(target: &str) -> Result<PathBuf> {
     let path = Path::new(target);
     if !path.exists() {
         println!("\nNot found!\n");
@@ -465,7 +469,7 @@ fn convert_to_path(target: &str) -> io::Result<PathBuf> {
 }
 
 
-fn main() -> io::Result<()> {
+fn main() -> Result<()> {
     let (file_path, 
         pprint, 
         depth, 
@@ -490,7 +494,7 @@ fn main() -> io::Result<()> {
 }
 
 
-fn get_args() -> io::Result<(String, bool, usize, usize, u64, Vec<String>, bool, bool)> {
+fn get_args() -> Result<(String, bool, usize, usize, u64, Vec<String>, bool, bool)> {
     let args: Vec<String> = env::args().collect();
     let mut file_path = String::new();
     let mut pprint = false;

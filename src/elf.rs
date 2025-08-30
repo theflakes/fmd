@@ -5,6 +5,8 @@ use crate::data_defs::{BinSection, BinSections, Binary, BinaryFormat, BinaryInfo
 use std::collections::HashMap;
 use fuzzyhash::FuzzyHash;
 use entropy::shannon_entropy;
+use anyhow::{anyhow, Result};
+
 
 fn bytes_to_human_readable_string(data: &[u8]) -> String {
     data.iter().map(|&byte| {
@@ -16,6 +18,7 @@ fn bytes_to_human_readable_string(data: &[u8]) -> String {
     }).collect()
 }
 
+
 fn get_elf_file_type_name(e_type: u16) -> String {
     match e_type {
         elf::header::ET_NONE => "ET_NONE".to_string(),
@@ -26,6 +29,7 @@ fn get_elf_file_type_name(e_type: u16) -> String {
         _ => format!("UNKNOWN_ET_TYPE({})", e_type),
     }
 }
+
 
 fn get_arch(e_machine: u16) -> Architecture {
     match e_machine {
@@ -41,6 +45,7 @@ fn get_arch(e_machine: u16) -> Architecture {
     }
 }
 
+
 fn parse_elf_header_info(elf: &elf::Elf, binary_info: &mut BinaryInfo) {
     binary_info.is_64 = elf.is_64;
     binary_info.entry_point = format!("0x{:x}", elf.entry);
@@ -53,13 +58,17 @@ fn parse_elf_header_info(elf: &elf::Elf, binary_info: &mut BinaryInfo) {
     binary_info.arch = get_arch(elf.header.e_machine);
 }
 
-fn parse_elf_sections(elf: &elf::Elf, buffer: &[u8]) -> BinSections {
+
+fn parse_elf_sections(elf: &elf::Elf, buffer: &[u8]) -> Result<BinSections> {
     let mut sections = BinSections::default();
     for sh in &elf.section_headers {
         let mut section = BinSection::default();
+
         if let Some(name) = elf.shdr_strtab.get_at(sh.sh_name) {
             section.name = name.to_string();
         }
+
+        // Determine the data that will be hashed
         let section_data_to_hash: Vec<u8>;
         if sh.sh_type == elf::section_header::SHT_NOBITS {
             section.raw_size = 0;
@@ -80,22 +89,25 @@ fn parse_elf_sections(elf: &elf::Elf, buffer: &[u8]) -> BinSections {
                 section_data_to_hash = Vec::new();
             }
         }
-        // Calculate MD5 and SSDeep for the determined section data
+
+        // Hashes & entropy
         section.md5 = format!("{:x}", md5::compute(&section_data_to_hash)).to_lowercase();
         section.ssdeep = FuzzyHash::new(&section_data_to_hash).to_string();
         section.entropy = shannon_entropy(&section_data_to_hash);
 
-        // Capture human-readable content for .comment and .note sections
+        // Human‑readable content for .comment/.note
         if section.name == ".comment" || section.name.starts_with(".note") {
-            section.elf_comment_or_note_content = Some(bytes_to_human_readable_string(&section_data_to_hash));
+            section.elf_comment_or_note_content =
+                Some(bytes_to_human_readable_string(&section_data_to_hash));
         }
 
         section.virt_address = format!("0x{:x}", sh.sh_addr);
         sections.sections.push(section);
     }
     sections.total_sections = elf.section_headers.len() as u16;
-    return sections
+    Ok(sections)
 }
+
 
 fn build_elf_version_map(elf: &elf::Elf) -> HashMap<u16, String> {
     let mut version_map: HashMap<u16, String> = HashMap::new();
@@ -111,6 +123,7 @@ fn build_elf_version_map(elf: &elf::Elf) -> HashMap<u16, String> {
     return version_map
 }
 
+
 fn get_hash_sorted(hash_array: &mut Vec<String>) -> (String, String) {
     hash_array.sort();
     let mut imphash_text_sorted = String::new();
@@ -122,6 +135,7 @@ fn get_hash_sorted(hash_array: &mut Vec<String>) -> (String, String) {
 
     return (imphash_text_sorted, imphash_sorted)
 }
+
 
 fn get_elf_imphashes(imports: &Imports) -> ImpHashes {
     let mut imphash_array: Vec<String> = Vec::new();
@@ -154,6 +168,7 @@ fn get_elf_imphashes(imports: &Imports) -> ImpHashes {
     return imphashes
 }
 
+
 fn get_elf_exphashes(exports: &Exports) -> ExpHashes {
     let mut exphashes = ExpHashes::default();
     let mut exphash_array: Vec<String> = Vec::new();
@@ -177,6 +192,7 @@ fn get_elf_exphashes(exports: &Exports) -> ExpHashes {
 
     return exphashes
 }
+
 
 fn parse_elf_imports(elf: &elf::Elf, version_map: &HashMap<u16, String>) -> Imports {
     let mut imports = Imports::default();
@@ -230,6 +246,7 @@ fn parse_elf_imports(elf: &elf::Elf, version_map: &HashMap<u16, String>) -> Impo
     imports
 }
 
+
 fn parse_elf_exports(elf: &elf::Elf) -> Exports {
     let mut exports = Exports::default();
     for sym in elf.dynsyms.iter() {
@@ -246,14 +263,15 @@ fn parse_elf_exports(elf: &elf::Elf) -> Exports {
     return exports
 }
 
-pub fn get_elf(buffer: &[u8]) -> Binary {
+
+pub fn get_elf(buffer: &[u8]) -> Result<Binary> {
     let mut bin = Binary::default();
-    if let Ok(elf) = elf::Elf::parse(buffer) {
-        parse_elf_header_info(&elf, &mut bin.binary_info);
-        bin.sections = parse_elf_sections(&elf, buffer);
-        let version_map = build_elf_version_map(&elf);
-        bin.imports = parse_elf_imports(&elf, &version_map);
-        bin.exports = parse_elf_exports(&elf);
+    if let Ok(elf_obj) = elf::Elf::parse(buffer) {
+        parse_elf_header_info(&elf_obj, &mut bin.binary_info);
+        bin.sections = parse_elf_sections(&elf_obj, buffer)?;
+        let version_map = build_elf_version_map(&elf_obj);
+        bin.imports = parse_elf_imports(&elf_obj, &version_map);
+        bin.exports = parse_elf_exports(&elf_obj);
     }
-    return bin
+    Ok(bin)
 }
