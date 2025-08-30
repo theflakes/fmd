@@ -313,10 +313,6 @@ pub fn get_link_info(link_path: &Path) -> Result<(Link, bool)> {
         Some(a) => a.to_string(),
         None => String::new()
     };
-    link.working_dir = match symlink.string_data().working_dir() {
-        Some(a) => a.to_string(),
-        None => String::new()
-    };
     link.icon_location = match symlink.string_data().icon_location() {
         Some(a) => a.to_string(),
         None => String::new()
