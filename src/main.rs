@@ -20,6 +20,7 @@ mod pe;
 mod macho;
 
 use data_defs::*;
+use lnk::extradata::ExtraDataBlock;
 use mft::*;
 use fuzzyhash::FuzzyHash;
 use std::path::{Path, PathBuf};
@@ -208,7 +209,7 @@ fn get_binary(path: &Path, buffer: &Vec<u8>) -> Result<Binary> {
                 Object::Archive(_archive) => {
                     //println!("Archive file");
                 },
-                Object::Unknown(_magic) => todo!{ },
+                Object::Unknown(_magic) => {},
                 Object::COFF(_) => todo!(),
                 _ => {},
             },
@@ -285,22 +286,34 @@ pub fn get_link_info(link_path: &Path) -> Result<(Link, bool)> {
         Ok(l) => l,
         Err(_e) => return Ok((link, false))
     };
-    link.rel_path = match symlink.string_data().relative_path() {
-        Some(p) => p.to_string(),
-        None => String::new()
-    };
     link.working_dir = match symlink.string_data().working_dir() {
         Some(a) => a.to_string(),
         None => String::new()
     };
-
-    let target_path = if !link.working_dir.is_empty() {
-        PathBuf::from(&link.working_dir).join(&link.rel_path)
-    } else {
-        PathBuf::from(&link.rel_path)
+    link.rel_path = match symlink.string_data().relative_path() {
+        Some(p) => p.to_string(),
+        None => String::new()
     };
 
+    let target_path = PathBuf::from(&link.rel_path);
     link.abs_path = get_abs_path(&target_path)?.to_string_lossy().into_owned();
+    if link.abs_path.is_empty() {
+        for block in symlink.extra_data().blocks() {
+            match block {
+                ExtraDataBlock::EnvironmentProps(target_id) => {
+                    if let Some(unicode_target) = target_id.target_unicode() {
+                        link.abs_path = unicode_target.to_string();
+                        break;
+                    } else  {
+                        link.abs_path = target_id.target_ansi().to_string();
+                        break;
+                    }
+                }
+                _ => continue,
+            }
+        }
+    }
+    
     link.arguments =  match symlink.string_data().command_line_arguments() {
         Some(a) => a.to_string(),
         None => String::new()
