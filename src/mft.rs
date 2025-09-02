@@ -88,7 +88,7 @@ pub fn get_fname(path: &Path, mut ftimes: FileTimestamps) -> Result<(FileTimesta
         ntfs: &ntfs,
     };
     for dir in dirs {
-        cd(dir, &mut info);
+        _ = cd(dir, &mut info);
     }
     let file = parse_file_arg(filename, &mut info)?;
 

@@ -140,7 +140,7 @@ fn get_ssdeep_hash(mut buffer: &Vec<u8>) -> Result<String> {
 // read in file as byte vector
 fn read_file_bytes(mut file: &File) -> Result<Vec<u8>> {
     let mut buffer = Vec::new();
-    file.rewind(); // need to reset to beginning of file if file has already been read
+    let _ = file.rewind(); // need to reset to beginning of file if file has already been read
     file.read_to_end(&mut buffer)?;
     Ok(buffer)
 }
@@ -227,9 +227,9 @@ fn get_binary(path: &Path, buffer: &Vec<u8>) -> Result<Binary> {
 }
 
 
-fn get_entropy(buffer: &Vec<u8>) -> io::Result<f32> {
-    Ok(shannon_entropy(buffer))
-}
+// fn get_entropy(buffer: &Vec<u8>) -> io::Result<f32> {
+//     Ok(shannon_entropy(buffer))
+// }
 
 
 // get date into the format we need
@@ -373,10 +373,23 @@ fn analyze_file(
 {
     let (dir, fname, ext) = get_dir_fname_ext(path)?;
     if check_extensions(not_exts, extensions, &ext) { return Ok(()) }
-    let mut ftimes = get_file_times(&path)?;
-    let mut ads: Vec<DataRun> = Vec::new();
+    
+    // Get file times first
+    let ftimes = get_file_times(&path)?;
+    
+    // Get link info and ADS data - using a more robust approach for error handling
     let (link, is_link) = get_link_info(path)?;
-    (ftimes, ads) = get_fname(path, ftimes).unwrap();
+    
+    // Try to get MFT analysis results (this might return an error)
+    let mut ads: Vec<DataRun> = Vec::new();
+    let mut timestamps_for_printing = ftimes.clone();
+    
+    if let Ok((fts, mft_ads)) = get_fname(path, ftimes) {
+        // Use the returned timestamps and ADS data
+        timestamps_for_printing = fts;
+        ads = mft_ads;  // This properly assigns the ads value
+    } 
+    
     let file = open_file(&path)?;
     let bytes = file.metadata().unwrap().len();
     let is_hidden = is_hidden(&path)?;
@@ -385,6 +398,7 @@ fn analyze_file(
     let mut hashes = Hashes::default();
     let mut strings: Vec<String> = Vec::new();
     let mut mime_type = String::new();
+    
     if max_size == 0 || bytes <= max_size {
         let buffer = read_file_bytes(&file)?;
         mime_type = get_mimetype(&buffer)?;
@@ -394,10 +408,12 @@ fn analyze_file(
         entropy = shannon_entropy(&buffer);
         hashes = get_file_hashes(&buffer)?;
     }
+    
     let p = path.to_string_lossy().into_owned();
     print_log(p, dir, fname, ext,
-        bytes, mime_type, is_hidden,  is_link, link, ftimes.clone(), 
+        bytes, mime_type, is_hidden,  is_link, link, timestamps_for_printing, 
         entropy, hashes, ads, bin, pprint, strings)?;
+    
     Ok(())
 }
 

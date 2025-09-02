@@ -1,8 +1,7 @@
-use crate::data_defs::{BinSection, BinSections, Binary, BinaryFormat, BinaryInfo, MachOInfo, 
-                    ExpHashes, Exports, Function, ImpHashes, Import, Imports, Architecture, 
+use crate::data_defs::{BinSection, BinSections, Binary, BinaryFormat, BinaryInfo, ExpHashes, 
+                    Exports, Function, ImpHashes, Import, Imports, Architecture, 
                     is_function_interesting};
 use goblin::mach::{self, cputype, header, Mach};
-use std::collections::HashMap;
 use fuzzyhash::FuzzyHash;
 use entropy::shannon_entropy;
 use std::str;
