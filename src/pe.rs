@@ -1,17 +1,17 @@
-use crate::data_defs::{BinSection, BinSections, Binary, BinaryFormat, BinaryInfo, PeInfo, 
-                    ExpHashes, Exports, Function, ImpHashes, Import, Imports, Architecture, 
-                    PeTimestamps, PeLinker, DLLS, is_function_interesting};
+use crate::data_defs::{BinSection, BinSections, Binary, BinaryFormat, BinaryInfo, ExpHashes, 
+                        Exports, Function, ImpHashes, Import, Imports, Architecture, 
+                        is_function_interesting};
 use crate::ordinals;
-use std::path::{Path, PathBuf};
-use std::io::{self, Write, Read, Seek, SeekFrom};
+use std::path::Path;
+use std::io::{Read, Seek, SeekFrom};
 use std::fs::File;
 use std::collections::HashMap;
-use chrono::{DateTime, Utc};
+use chrono::DateTime;
 use fuzzyhash::FuzzyHash;
 use entropy::shannon_entropy;
 use goblin::pe;
 use exe;
-use anyhow::{Context, Result};
+use anyhow::Result;
 
 
 fn get_arch(machine: u16) -> Architecture {
@@ -48,7 +48,7 @@ fn get_date_string(timestamp: i64) -> Result<String> {
 }
 
 
-fn get_ssdeep_hash(mut buffer: &Vec<u8>) -> Result<String> {
+fn get_ssdeep_hash(buffer: &Vec<u8>) -> Result<String> {
     let ssdeep = FuzzyHash::new(buffer);
     Ok(ssdeep.to_string())
 }
@@ -176,7 +176,7 @@ fn get_imphashes(imports: &Vec<goblin::pe::import::Import>)
     for i in imports.iter() {
         let mut temp = String::new();
         if i.dll != track_dll { total_dlls += 1; }
-        let mut dll = i.dll.to_ascii_lowercase()
+        let dll = i.dll.to_ascii_lowercase()
             .replace(".dll", "")
             .replace(".sys", "")
             .replace(".drv", "")
@@ -193,8 +193,8 @@ fn get_imphashes(imports: &Vec<goblin::pe::import::Import>)
     let mut imphashes = ImpHashes::default();
     imphash_text = imphash_text.trim_end_matches(",").to_string();
     imphashes.md5 = format!("{:x}", md5::compute(imphash_text.clone())).to_lowercase();
-    let mut imphash_text_sorted = String::new();
-    (imphash_text_sorted, imphashes.md5_sorted) = get_hash_sorted(&mut imphash_array)?;
+    let (imphash_text_sorted, sorted_md5) = get_hash_sorted(&mut imphash_array)?;
+    imphashes.md5_sorted = sorted_md5;
     let imphash_bytes: Vec<u8> = imphash_text.as_bytes().to_vec();
     let imphash_bytes_ordered: Vec<u8> = imphash_text_sorted.as_bytes().to_vec();
     imphashes.ssdeep = get_ssdeep_hash(&imphash_bytes)?;

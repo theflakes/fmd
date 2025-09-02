@@ -20,30 +20,22 @@ mod pe;
 mod macho;
 
 use data_defs::*;
-use lnk::linkinfo::{VolumeID, DriveType};
 use mft::*;
 use fuzzyhash::FuzzyHash;
-use std::mem::replace;
 use std::path::{Path, PathBuf};
-use std::ptr::null;
-use std::str::from_utf8;
-use std::sync::Arc;
 use std::{io, str};
 use std::env;
 use std::process;
-use std::borrow::Cow;
 use sha1::{Sha1, Digest as Sha1Digest};
 use sha2::{Sha256, Digest as Sha2Digest};
 use std::fs::{self, File};
-use std::io::{BufReader, Read, Seek, Write, SeekFrom};
+use std::io::{Read, Seek};
 use path_abs::{PathAbs, PathInfo};
-use std::time::SystemTime;
-use goblin::{error, Object};
+use goblin::Object;
 use entropy::shannon_entropy;
 use std::os::windows::prelude::*;
-use std::collections::HashMap;
 use chrono::{DateTime, Utc};
-use lnk::{ShellLink, LinkInfo};
+use lnk::ShellLink;
 use lnk::encoding::WINDOWS_1252;
 use anyhow::{Context, Result};
 
@@ -131,7 +123,7 @@ fn get_mimetype(buffer: &[u8]) -> Result<String> {
     See:    https://github.com/rustysec/fuzzyhash-rs
             https://docs.rs/fuzzyhash/latest/fuzzyhash/
 */
-fn get_ssdeep_hash(mut buffer: &Vec<u8>) -> Result<String> {
+fn get_ssdeep_hash(buffer: &Vec<u8>) -> Result<String> {
     let ssdeep = FuzzyHash::new(buffer);
     Ok(ssdeep.to_string())
 }
@@ -198,25 +190,25 @@ fn get_strings(buffer: &Vec<u8>, length: usize) -> Result<Vec<String>> {
 fn get_binary(path: &Path, buffer: &Vec<u8>) -> Result<Binary> {
     let mut bin = Binary::default();
     if buffer.len() < 4 { return Ok(bin) } // ELF magic number is 4 bytes
-    let object = match Object::parse(&buffer) {
+    let _ = match Object::parse(&buffer) {
         Ok(o) => 
             match o {
-                Object::Elf(elf) => {
+                Object::Elf(_elf) => {
                     bin = elf::get_elf(&buffer)
                         .context("Failed to parse ELF!")?;
                 },
-                Object::PE(pex) => {
+                Object::PE(_pex) => {
                     bin = pe::get_pe(&buffer, path)
                         .context("Failed to parse PE!")?;
                 },
-                Object::Mach(macho) => {
+                Object::Mach(_macho) => {
                     bin = macho::get_macho(&buffer)
                         .context("Failed to parse Mach‑O!")?;
                 },
-                Object::Archive(archive) => {
+                Object::Archive(_archive) => {
                     //println!("Archive file");
                 },
-                Object::Unknown(magic) => {  },
+                Object::Unknown(_magic) => todo!{ },
                 Object::COFF(_) => todo!(),
                 _ => {},
             },
@@ -339,11 +331,11 @@ fn get_dir_fname_ext(path: &Path) -> Result<(String, String, String)> {
     let dir = match path.parent() {
         Some(a) => a.to_string_lossy().into_owned(),
         None => String::new()
-    };;
+    };
     let fname = match path.file_name() {
         Some(a) => a.to_string_lossy().into_owned(),
         None => String::new()
-    };;
+    };
     let ext = match path.extension() {
         Some(a) => a.to_string_lossy().into_owned(),
         None => String::new()

@@ -4,7 +4,7 @@ extern crate whoami;
 
 use chrono::{DateTime, Utc};
 use serde::Serialize;
-use std::{env, time::SystemTime, io};
+use std::{time::SystemTime, io};
 use is_elevated::is_elevated;
 use std::collections::HashMap;
 

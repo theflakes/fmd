@@ -3,20 +3,18 @@ use crate::{data_defs, sector_reader};
 
 use std::path::Path;
 use std::{io, str};
-use ntfs::attribute_value::{NtfsAttributeValue, NtfsResidentAttributeValue};
+use ntfs::attribute_value::NtfsAttributeValue;
 use ntfs::indexes::NtfsFileNameIndex;
 use ntfs::structured_values::{
-    NtfsAttributeList, NtfsFileName, NtfsFileNamespace, NtfsStandardInformation, NtfsStructuredValueFromResidentAttributeValue
-};
-use ntfs::{Ntfs, NtfsAttribute, NtfsAttributeType, NtfsFile, NtfsReadSeek, NtfsTime,};
-use serde::de::Error;
-use std::io::{BufReader, Read, Seek, Write};
+        NtfsFileName, NtfsFileNamespace
+    };
+use ntfs::{Ntfs, NtfsAttribute, NtfsAttributeType, NtfsFile, NtfsReadSeek,};
+use std::io::{BufReader, Read, Seek};
 use sector_reader::SectorReader;
 use data_defs::FileTimestamps;
-use anyhow::{anyhow, bail, Context, Result};
+use anyhow::{bail, Result};
 use epochs::windows_file;
-use is_elevated::is_elevated;
-use std::fs::{self, File};
+use std::fs::File;
 
 
 struct CommandInfo<'n, T>
@@ -47,7 +45,7 @@ where
     //let mut ftimes = FileTimestamps::default();
     let file_name = match attribute.structured_value::<_, NtfsFileName>(&mut info.fs){
         Ok(f) => f,
-        Err(e) => return
+        Err(_e) => return
     };
     ftimes.access_fn = get_fn_times(file_name.access_time().nt_timestamp() as i64);
     ftimes.create_fn = get_fn_times(file_name.creation_time().nt_timestamp() as i64);
@@ -56,13 +54,13 @@ where
 }
 
 
-fn get_fs(file_path: &String, root: String) -> Result<(BufReader<SectorReader<File>>), io::Error> {
+fn get_fs(root: String) -> Result<BufReader<SectorReader<File>>, io::Error> {
     let f = match File::open(root) {
         Ok(it) => it,
         Err(e) => return Err(e),
     };
     let sr = SectorReader::new(f, 4096)?;
-    let mut fs = BufReader::new(sr);
+    let fs = BufReader::new(sr);
     Ok(fs)
 }
 
@@ -74,7 +72,7 @@ pub fn get_fname(path: &Path, mut ftimes: FileTimestamps) -> Result<(FileTimesta
     let dirs = temp[1].split("\\");
     let filename = file_path.split("\\").last().unwrap_or("");
     let root = r"\\.\".to_owned() + temp[0] + r":";
-    let mut fs = match get_fs(file_path, root.clone()) {
+    let mut fs = match get_fs(root.clone()) {
         Ok(f) => f,
         Err(_e) => return Ok((ftimes, ads))
     };
@@ -92,7 +90,7 @@ pub fn get_fname(path: &Path, mut ftimes: FileTimestamps) -> Result<(FileTimesta
     }
     let file = parse_file_arg(filename, &mut info)?;
 
-    let mut fs = match get_fs(file_path, root) {
+    let mut fs = match get_fs(root) {
         Ok(f) => f,
         Err(_e) => return Ok((ftimes, ads))
     };
@@ -234,12 +232,11 @@ where
 
 
 fn bytes_to_string(bytes: &Vec<u8>) -> io::Result<String> {
-    let mut s = String::new();
-    if bytes.len() >= 256 {
-        s = String::from_utf8_lossy(&bytes[0..255]).into_owned();
+    let s = if bytes.len() >= 256 {
+        String::from_utf8_lossy(&bytes[0..255]).into_owned()
     } else {
-        s = String::from_utf8_lossy(bytes).into_owned();
-    }
+        String::from_utf8_lossy(bytes).into_owned()
+    };
 
     let first_bytes_as_string = s.as_str()
                                         .replace('\u{0}', ".")
@@ -264,7 +261,7 @@ where
         let ty = a.ty()?;
         if ty == NtfsAttributeType::Data {
             let att = a;
-            let stream = NtfsAttributeValue::from(att.value(fs)?);
+            let _stream = NtfsAttributeValue::from(att.value(fs)?);
 
             data.name = att.name()?.to_string_lossy();
             data.bytes = att.value_length();

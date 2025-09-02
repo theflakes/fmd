@@ -1,11 +1,11 @@
 use goblin::elf;
 use crate::data_defs::{BinSection, BinSections, Binary, BinaryFormat, BinaryInfo, 
-                    ElfInfo, ExpHashes, Exports, Function, ImpHashes, Import, 
-                    Imports, Architecture, is_function_interesting};
+                    ExpHashes, Exports, Function, ImpHashes, Import, Imports, 
+                    Architecture, is_function_interesting};
 use std::collections::HashMap;
 use fuzzyhash::FuzzyHash;
 use entropy::shannon_entropy;
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 
 
 fn bytes_to_human_readable_string(data: &[u8]) -> String {
