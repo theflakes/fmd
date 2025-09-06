@@ -45,6 +45,7 @@ Options:
                         to the specified subdirectory depth
     -e, --extensions *  Quoted list of comma seperated extensions
                         - Any extensions not in the list will be ignored
+    -h, --help          Show this help message
     -i, --int_mtypes    Only analyze files that are more interesting mime types
     -m, --maxsize #     Max file size in bytes to perform content analysis on
                         - Any file larger than this will not have the following run: 
