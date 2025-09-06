@@ -28,7 +28,7 @@ use std::{io, str};
 use std::env;
 use std::process;
 use sha1::{Sha1, Digest as Sha1Digest};
-use sha2::{Sha256, Digest as Sha2Digest};
+use sha2::{Sha256};
 use std::fs::{self, File};
 use std::io::{Read, Seek};
 use path_abs::{PathAbs, PathInfo};
