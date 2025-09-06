@@ -499,7 +499,7 @@ pub struct Link {
 impl Default for RunTimeEnv {
     fn default () -> RunTimeEnv {
         RunTimeEnv {
-            timestamp: get_time_iso8601().unwrap(),
+            timestamp: get_time_iso8601().unwrap_or("1970-01-01T02:00:00+02:00Z".to_owned()),
             device_type: DEVICE_TYPE.to_string(),
             run_as_admin: is_elevated(),
         }

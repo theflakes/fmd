@@ -160,7 +160,7 @@ fn get_hash_sorted(hash_array: &mut Vec<String>) -> Result<(String, String)> {
 fn check_ordinal(dll: &str, func: &str) -> Result<String> {
     let mut f: String = func.to_ascii_lowercase().replace("ordinal ", "");
     if f.parse::<u32>().is_ok() {
-        let o = f.parse::<u32>().unwrap();
+        let o = f.parse::<u32>()?;
         f = ordinals::imphash_resolve(dll, o).to_ascii_lowercase();
     }
     Ok(f)
@@ -227,17 +227,17 @@ fn parse_pe_exports(exports: &Vec<goblin::pe::export::Export>) -> Result<Exports
 pub fn get_pe(buffer: &[u8], path: &Path) -> Result<Binary> {
     let mut bin = Binary::default();
     if let Ok(pe) = pe::PE::parse(&buffer) {
-        (bin.imports, bin.binary_info.is_dotnet) = parse_pe_imports(&pe.imports).unwrap();
+        (bin.imports, bin.binary_info.is_dotnet) = parse_pe_imports(&pe.imports)?;
         bin.binary_info.entry_point = format!("0x{:x}", pe.entry);
-        bin.sections = get_sections(&pe, path).unwrap();
-        (bin.imports.hashes, bin.imports.lib_count, bin.imports.func_count) = get_imphashes(&pe.imports).unwrap();
+        bin.sections = get_sections(&pe, path)?;
+        (bin.imports.hashes, bin.imports.lib_count, bin.imports.func_count) = get_imphashes(&pe.imports)?;
         bin.binary_info.is_64 = pe.is_64;
         bin.binary_info.is_lib = pe.is_lib;
-        bin.exports = parse_pe_exports(&pe.exports).unwrap();
-        get_pe_file_info(path, &mut bin.binary_info).unwrap();
+        bin.exports = parse_pe_exports(&pe.exports)?;
+        get_pe_file_info(path, &mut bin.binary_info)?;
         bin.binary_info.format = BinaryFormat::Pe;
         bin.binary_info.arch = get_arch(pe.header.coff_header.machine);
-        bin.binary_info.pe_info.timestamps.compile = get_date_string(pe.header.coff_header.time_date_stamp as i64).unwrap();
+        bin.binary_info.pe_info.timestamps.compile = get_date_string(pe.header.coff_header.time_date_stamp as i64)?;
         bin.binary_info.pe_info.linker.major_version = match pe.header.optional_header {
             Some(d) => d.standard_fields.major_linker_version,
             None => 0

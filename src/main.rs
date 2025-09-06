@@ -396,7 +396,7 @@ fn analyze_file(
     } 
     
     let file = open_file(&path)?;
-    let bytes = file.metadata().unwrap().len();
+    let bytes = file.metadata()?.len();
     let is_hidden = is_hidden(&path)?;
     let mut bin = Binary::default();
     let mut entropy: f32 = 0.0;

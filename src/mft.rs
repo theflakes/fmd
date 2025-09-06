@@ -99,7 +99,7 @@ pub fn get_fname(path: &Path, mut ftimes: FileTimestamps) -> Result<(FileTimesta
     let mut attributes = file.attributes();
     while let Some(attribute_item) = attributes.next(&mut info.fs) {
         let attribute_item = attribute_item?;
-        let attribute = attribute_item.to_attribute().unwrap();
+        let attribute = attribute_item.to_attribute()?;
         match attribute.ty() {
             Ok(NtfsAttributeType::StandardInformation) => continue,
             Ok(NtfsAttributeType::FileName) => {
@@ -121,7 +121,7 @@ where
     let index = info
         .current_directory
         .last()
-        .unwrap()
+        .ok_or_else(|| anyhow::anyhow!("No current directory"))?
         .directory_index(&mut info.fs)?;
     let mut finder = index.finder();
     let maybe_entry = NtfsFileNameIndex::find(&mut finder, info.ntfs, &mut info.fs, arg);
@@ -130,7 +130,10 @@ where
         return Ok(());
     }
 
-    let entry = maybe_entry.unwrap()?;
+    let entry = match maybe_entry {
+            Some(val) => val,
+            None => return Ok(()),
+        }?;
     let file_name = entry
         .key()
         .expect("key must exist for a found Index Entry")?;
@@ -143,7 +146,8 @@ where
     let file_name = best_file_name(
         info,
         &file,
-        info.current_directory.last().unwrap().file_record_number(),
+        info.current_directory
+            .last().ok_or_else(|| anyhow::anyhow!("No parent directory"))?.file_record_number(),
     )?;
     if !info.current_directory_string.is_empty() {
         info.current_directory_string += "\\";
@@ -216,7 +220,7 @@ where
         let index = info
             .current_directory
             .last()
-            .unwrap()
+            .ok_or_else(|| anyhow::anyhow!("No current directory"))?
             .directory_index(&mut info.fs)?;
         let mut finder = index.finder();
 
