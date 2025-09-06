@@ -530,6 +530,7 @@ fn get_args() -> Result<(String, bool, usize, usize, u64, Vec<String>, bool, boo
         match arg.as_str() {
             "-d" | "--depth" => get_depth = true,
             "-e" | "--extensions" => get_exts = true,
+            "-h" | "--help" => print_help(),
             "-i" | "--int_mtypes" => int_mtypes = true,
             "-m" | "--maxsize" => get_size = true,
             "-p" | "--pretty" => pprint = true,
