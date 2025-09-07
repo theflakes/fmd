@@ -560,7 +560,8 @@ fn get_args() -> Result<(String, bool, usize, usize, u64, Vec<String>, bool, boo
             }
         }
     }
-    Ok((file_path.clone(), pprint, depth, strings, max_size, exts_vec, not_exts, int_mtypes))
+    Ok((file_path.clone(), pprint, depth, strings, 
+        max_size, exts_vec, not_exts, int_mtypes))
 }
 
 
