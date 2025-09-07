@@ -111,8 +111,8 @@ NOTE:
 ```
 {
   "runtime_env": {
-    "timestamp": "2023-01-11T18:05:10.395464700+00:00",
-    "device_type": "Windows 10.0.22621 (Workstation)",
+    "timestamp": "2025-09-07T13:27:08.779338800+00:00",
+    "device_type": "Windows 10.0.26100 (Workstation)",
     "run_as_admin": true
   },
   "path": "C:\\Users\\thefl\\Downloads\\RunAsService.exe",
@@ -120,7 +120,7 @@ NOTE:
   "filename": "RunAsService.exe",
   "extension": "exe",
   "bytes": 23552,
-  "mime_type": "application/x-executable",
+  "mime_type": "application/vnd.microsoft.portable-executable",
   "is_hidden": false,
   "is_link": false,
   "link": {
@@ -132,19 +132,16 @@ NOTE:
     "hotkey": "",
     "comment": "",
     "show_command": "",
-    "flags": "",
-    "drive_type": "",
-    "drive_serial_number": "",
-    "volume_label": ""
+    "flags": ""
   },
   "timestamps": {
-    "access_fn": "2022-12-24T16:48:24.647",
-    "access_si": "2023-01-11T18:05:01.372",
-    "create_fn": "2022-12-24T16:48:23.883",
-    "create_si": "2022-12-24T16:48:23.883",
-    "modify_fn": "2022-12-24T16:48:24.647",
-    "modify_si": "2022-12-24T16:50:51.951",
-    "mft_record": "2022-12-24T16:48:24.647"
+    "access_fn": "2025-09-07T13:21:58.059",
+    "access_si": "2025-09-07T13:27:08.305",
+    "create_fn": "2025-09-07T13:21:57.540",
+    "create_si": "2025-09-07T13:21:57.540",
+    "modify_fn": "2025-09-07T13:21:58.059",
+    "modify_si": "2025-09-07T13:27:02.470",
+    "mft_record": "2025-09-07T13:21:58.059"
   },
   "entropy": 4.623817,
   "hashes": {
@@ -161,8 +158,8 @@ NOTE:
     },
     {
       "name": "evil",
-      "bytes": 34,
-      "first_256_bytes": "\"this is hiding info in an ADS\" \r\n"
+      "bytes": 25,
+      "first_256_bytes": "\"This is very evil!!!\" \r\n"
     },
     {
       "name": "SmartScreen",
@@ -171,32 +168,49 @@ NOTE:
     },
     {
       "name": "Zone.Identifier",
-      "bytes": 123,
-      "first_256_bytes": "[ZoneTransfer]\r\nZoneId=3\r\nReferrerUrl=http://runasservice.com/\r\nHostUrl=http://runasservice.com/Download/RunAsService.exe\r\n"
+      "bytes": 132,
+      "first_256_bytes": "[ZoneTransfer]\r\nZoneId=3\r\nReferrerUrl=http://runasservice.com/Download/\r\nHostUrl=http://runasservice.com/Download/RunAsService.exe\r\n"
     }
   ],
   "binary": {
-    "is_64": false,
-    "is_dotnet": true,
-    "is_lib": false,
-    "entry_point": "0x6fbe",
-    "pe_info": {
-      "product_version": "1.0.0.0",
-      "original_filename": "1.0.0.0",
-      "file_description": "ServiceInstaller",
-      "file_version": "1.0.0.0",
-      "product_name": "ServiceInstaller",
-      "company_name": "Microsoft",
-      "internal_name": "RunAsService.exe",
-      "legal_copyright": "Copyright © Microsoft 2011"
-    },
-    "timestamps": {
-      "compile": "2017-10-05T22:25:06",
-      "debug": "2017-10-05T22:25:06"
-    },
-    "linker": {
-      "major_version": 48,
-      "minor_version": 0
+    "binary_info": {
+      "format": "Pe",
+      "arch": "X86",
+      "is_64": false,
+      "is_dotnet": true,
+      "is_lib": false,
+      "entry_point": "0x6fbe",
+      "elf_info": {
+        "os_abi": "",
+        "abi_version": 0,
+        "file_type": "",
+        "object_version": 0
+      },
+      "macho_info": {
+        "file_type": "",
+        "flags": "",
+        "cpu_subtype": "",
+        "ncmds": 0,
+        "sizeofcmds": 0
+      },
+      "pe_info": {
+        "timestamps": {
+          "compile": "2017-10-05T22:25:06",
+          "debug": ""
+        },
+        "product_version": "1.0.0.0",
+        "original_filename": "RunAsService.exe",
+        "file_description": "ServiceInstaller",
+        "file_version": "1.0.0.0",
+        "product_name": "ServiceInstaller",
+        "company_name": "Microsoft",
+        "internal_name": "RunAsService.exe",
+        "legal_copyright": "Copyright © Microsoft 2011",
+        "linker": {
+          "major_version": 48,
+          "minor_version": 0
+        }
+      }
     },
     "sections": {
       "total_sections": 3,
@@ -210,7 +224,8 @@ NOTE:
           "ssdeep": "192:Pu/f5epBk4pkW8KUnm9VtD0wsbNL0+zM+LMU4MjnNVWcA/4bsJji+v:PcuNDlF9VtDZsb10+zMKMU4MjnNJc",
           "virt_address": "0x2000",
           "raw_size": 20480,
-          "virt_size": 20420
+          "virt_size": 20420,
+          "elf_comment_or_note_content": null
         },
         {
           "name": ".rsrc",
@@ -219,7 +234,8 @@ NOTE:
           "ssdeep": "24:eGDR4QymZWBFhZhNmCkWXUcnY3agPN8qPt/dq3ojZ8PAlEbNFjMyiipW3:e4imZWBFhlopa4FPtlq3ojZ8JbNtmMa",
           "virt_address": "0x8000",
           "raw_size": 2048,
-          "virt_size": 1888
+          "virt_size": 1888,
+          "elf_comment_or_note_content": null
         },
         {
           "name": ".reloc",
@@ -228,7 +244,8 @@ NOTE:
           "ssdeep": "3:0:",
           "virt_address": "0xa000",
           "raw_size": 512,
-          "virt_size": 12
+          "virt_size": 12,
+          "elf_comment_or_note_content": null
         }
       ]
     },
@@ -246,12 +263,22 @@ NOTE:
           "lib": "mscoree.dll",
           "count": 1,
           "names": [
-            "_CorExeMain"
+            {
+              "name": "_CorExeMain",
+              "more_interesting": null,
+              "info": ""
+            }
           ]
         }
       ]
     },
     "exports": {
+      "hashes": {
+        "md5": "d41d8cd98f00b204e9800998ecf8427e",
+        "md5_sorted": "",
+        "ssdeep": "3::",
+        "ssdeep_sorted": ""
+      },
       "count": 0,
       "names": []
     }

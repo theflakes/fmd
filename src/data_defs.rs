@@ -338,8 +338,8 @@ pub struct BinaryInfo {
     pub is_lib: bool,
     pub entry_point: String,
     pub elf_info: ElfInfo,
-    pub pe_info: PeInfo,
     pub macho_info: MachOInfo,
+    pub pe_info: PeInfo,
 }
 
 
