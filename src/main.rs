@@ -106,8 +106,8 @@ fn print_log(
 
 
 // get handle to a file
-fn open_file(file_path: &std::path::Path) -> Result<File> {
-    Ok(File::open(&file_path)?)
+pub fn open_file(file_path: &std::path::Path) -> std::io::Result<std::fs::File> {
+    File::options().read(true).write(false).open(&file_path)
 }
 
 
