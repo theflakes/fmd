@@ -310,10 +310,7 @@ NOTE:
     "hotkey": "NO_MODIFIER-NoKeyAssigned",
     "comment": "not evil, please just run me",
     "show_command": "ShowNormal",
-    "flags": "HAS_LINK_TARGET_ID_LIST | HAS_LINK_INFO | HAS_WORKING_DIR | HAS_ARGUMENTS | HAS_ICON_LOCATION | IS_UNICODE | ENABLE_TARGET_METADATA",
-    "drive_type": "DriveFixed",
-    "drive_serial_number": "1963598570",
-    "volume_label": "\"Bkps\""
+    "flags": "HAS_LINK_TARGET_ID_LIST | HAS_LINK_INFO | HAS_WORKING_DIR | HAS_ARGUMENTS | HAS_ICON_LOCATION | IS_UNICODE | ENABLE_TARGET_METADATA"
   },
   "timestamps": {
     "access_fn": "2023-01-11T15:23:46.799",
