@@ -17,6 +17,9 @@ https://github.com/frank2
 https://github.com/lilopkins/lnk-rs  
 https://docs.rs/fuzzyhash/latest/fuzzyhash/  
 https://dfir.science/2017/07/How-To-Fuzzy-Hashing-with-SSDEEP-(similarity-matching).html  
+
+#### LNK Analysis
+https://windowsir.blogspot.com/2025/09/ransomware-artifacts.html
   
 To compile; install Rust and the MSVC 32 and/or 64 bit environment:
 ```
