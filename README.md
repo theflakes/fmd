@@ -1,26 +1,26 @@
 # fmd
-File metadata / forensic tool.  
-fmd = File Metadata  
+File metadata / forensic tool.
+fmd = File Metadata
 
 Currently supports parsing Windows LNK files, PE, Mach-O, and Elf binaries.
 
 #### **Understanding MS PE analysis**
 https://practicalsecurityanalytics.com/threat-hunting-with-function-imports/
-https://resources.infosecinstitute.com/topic/malware-researchers-handbook/  
-http://www.hacktohell.org/2012/04/analysing-pe-files.html  
-https://tstillz.medium.com/basic-static-analysis-part-1-9c24497790b6  
-https://upload.wikimedia.org/wikipedia/commons/1/1b/Portable_Executable_32_bit_Structure_in_SVG_fixed.svg  
-https://0xrick.github.io/win-internals/pe5/  
+https://resources.infosecinstitute.com/topic/malware-researchers-handbook/
+http://www.hacktohell.org/2012/04/analysing-pe-files.html
+https://tstillz.medium.com/basic-static-analysis-part-1-9c24497790b6
+https://upload.wikimedia.org/wikipedia/commons/1/1b/Portable_Executable_32_bit_Structure_in_SVG_fixed.svg
+https://0xrick.github.io/win-internals/pe5/
 
-**See**:  
-https://github.com/frank2  
-https://github.com/lilopkins/lnk-rs  
-https://docs.rs/fuzzyhash/latest/fuzzyhash/  
-https://dfir.science/2017/07/How-To-Fuzzy-Hashing-with-SSDEEP-(similarity-matching).html  
+**See**:
+https://github.com/frank2
+https://github.com/lilopkins/lnk-rs
+https://docs.rs/fuzzyhash/latest/fuzzyhash/
+https://dfir.science/2017/07/How-To-Fuzzy-Hashing-with-SSDEEP-(similarity-matching).html
 
 #### LNK Analysis
 https://windowsir.blogspot.com/2025/09/ransomware-artifacts.html
-  
+
 To compile; install Rust and the MSVC 32 and/or 64 bit environment:
 ```
 x32:        cargo build --release --target i686-pc-windows-msvc
@@ -37,7 +37,7 @@ Authors: Brian Kellogg
 License: MIT
 Purpose: Pull various file metadata.
 
-Usage: 
+Usage:
     fmd [--pretty | -p] ([--strings|-s] #) <file path> ([--depth | -d] #)
     fmd --pretty --depth 3 --extensions 'exe,dll,pif,ps1,bat,com'
     fmd --pretty --depth 3 --extensions 'not:exe,dll,pif,ps1,bat,com'
@@ -51,7 +51,7 @@ Options:
     -h, --help          Show this help message
     -i, --int_mtypes    Only analyze files that are more interesting mime types
     -m, --maxsize #     Max file size in bytes to perform content analysis on
-                        - Any file larger than this will not have the following run: 
+                        - Any file larger than this will not have the following run:
                           hashing, entropy, mime type, strings, PE analysis
     -p, --pretty        Pretty print JSON
     -s, --strings #     Look for strings of length # or longer
@@ -64,34 +64,53 @@ fmd.exe <directory> --depth 1
 
 Mimetypes are determined by examining a file's contents.
     - Interesting mime types:
-        application/vnd.microsoft.portable-executable
-        application/hta
-        application/mac-binary
-        application/macbinary
-        application/octet-stream
-        application/x-binary
-        application/x-dosexec
-        application/x-executable
-        application/x-macbinary
-        application/x-ms-dos-executable
-        application/x-msdownload
-        application/x-sharedlib
-        application/x-elf
-        application/x-mach-binary
-        application/wasm
-        text/javascript
-        application/x-csh
-        application/x-shellscript
-        text/x-shellscript
-        text/x-nushell
-        application/x-nuscript
+      "application/vnd.microsoft.portable-executable",
+      "application/hta",
+      "application/mac-binary",
+      "application/macbinary",
+      "application/octet-stream",
+      "application/x-binary",
+      "application/x-dosexec",
+      "application/x-executable",
+      "application/x-macbinary",
+      "application/x-ms-dos-executable",
+      "application/x-msdownload",
+      "application/x-sharedlib",
+      "application/x-elf",
+      "application/x-mach-binary",
+      "application/wasm",
+      "text/javascript",
+      "application/x-csh",
+      "application/x-shellscript",
+      "text/x-shellscript",
+      "text/x-nushell",
+      "application/x-nuscript",
+      "application/x-java-archive",
+      "application/x-jar",
+      "application/vnd.android.package-archive",
+      "application/x-ms-wizard",
+      "application/x-ms-application",
+      "application/x-dynamic-link-library",
+      "application/x-executable",
+      "application/x-mac-package",
+      "application/x-mach-o",
+      "application/x-pkcs7-cert",
+      "application/x-pkcs12",
+      "application/x-rpm",
+      "application/x-debian-package",
+      "application/x-tar",
+      "application/x-gtar",
+      "application/x-iso9660-image",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
 
-NOTE: 
+NOTE:
     If passed a directory, all files in that directory will be analyzed.
     Harvesting $FILE_NAME timestamps can only be done by running this tool elevated.
     The 'run_as_admin' field shows if the tool was run elevated.
 
-    Harvesting Alternate Data Stream (ADS) information can only be done by running 
+    Harvesting Alternate Data Stream (ADS) information can only be done by running
     this tool elevated. ADS information is acquired by directly accessing the NTFS which
     requires elevation.
 
@@ -105,8 +124,8 @@ NOTE:
       a packed binary.
 
     Certain forensic information can only be harvested when the file is analyzed on
-    the filesystem of origin. 
-    - e.g. timestamps and alternate data streams are lost when the file is moved 
+    the filesystem of origin.
+    - e.g. timestamps and alternate data streams are lost when the file is moved
       off of the filesystem of origin.
 ```
 
