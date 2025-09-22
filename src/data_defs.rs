@@ -1214,18 +1214,6 @@ pub fn build_interesting_funcs() -> HashMap<String, Vec<Func>> {
     .to_vec();
     dlls.insert("msvcrt.dll".to_string(), funcs);
 
-    // ntdll.dll
-    let funcs: Vec<Func> = [
-        func.create("ntreadfile", "Reads data from a file handle."),
-        func.create("ntwritefile", "Writes data to a file handle."),
-        func.create(
-            "rtlntstatustodoserror",
-            "Converts NT status code to DOS error code.",
-        ),
-    ]
-    .to_vec();
-    dlls.insert("ntdll.dll".to_string(), funcs);
-
     // WebKit framework - Web browser engine functions
     let funcs: Vec<Func> = [
         func.create("WKWebView", "Create and manage web view components."),
@@ -1240,18 +1228,6 @@ pub fn build_interesting_funcs() -> HashMap<String, Vec<Func>> {
     dlls.insert("WebKit.framework".to_string(), funcs);
 
     // Additional libraries for completeness
-
-    // ntdll.dll - Core Windows system calls
-    let funcs: Vec<Func> = [
-        func.create("ntcreatefile", "Creates or opens a file or I/O device."),
-        func.create(
-            "ntqueryinformationfile",
-            "Queries information about a file object.",
-        ),
-        func.create("ntreadfile", "Reads data from a file handle."),
-    ]
-    .to_vec();
-    dlls.insert("ntdll.dll".to_string(), funcs);
 
     // wsock32.dll - Windows socket functions (legacy)
     let funcs: Vec<Func> = [
@@ -1277,6 +1253,55 @@ pub fn build_interesting_funcs() -> HashMap<String, Vec<Func>> {
     dlls.insert("librt.so.1".to_string(), funcs);
 
     // libssl.so.1.1 - SSL/TLS functions
+    let funcs: Vec<Func> = [
+        func.create("ssl_connect", "Initiate SSL/TLS connection."),
+        func.create("ssl_write", "Write data to an SSL/TLS connection."),
+        func.create("ssl_read", "Read data from an SSL/TLS connection."),
+    ]
+    .to_vec();
+    dlls.insert("libssl.so.1.1".to_string(), funcs);
+
+    // Windows DLLs - PE format functions
+    let funcs: Vec<Func> = [
+        func.create("ntcreatefile", "Creates or opens a file or I/O device."),
+        func.create(
+            "ntqueryinformationfile",
+            "Queries information about a file object.",
+        ),
+        func.create("ntreadfile", "Reads data from a file handle."),
+        func.create("ntwritefile", "Writes data to a file handle."),
+        func.create(
+            "rtlntstatustodoserror",
+            "Converts NT status code to DOS error code.",
+        ),
+    ]
+    .to_vec();
+    dlls.insert("ntdll.dll".to_string(), funcs);
+
+    // Windows socket functions (legacy)
+    let funcs: Vec<Func> = [
+        func.create(
+            "wsaconnect",
+            "Establishes a connection to a specified socket.",
+        ),
+        func.create("wsend", "Sends data over a socket."),
+        func.create("wrecv", "Receives data from a socket."),
+    ]
+    .to_vec();
+    dlls.insert("wsock32.dll".to_string(), funcs);
+
+    // Linux ELF libraries
+    let funcs: Vec<Func> = [
+        func.create("clock_gettime", "Get current time of specified clock."),
+        func.create(
+            "pthread_timedjoin_np",
+            "Wait for a thread to terminate with timeout.",
+        ),
+    ]
+    .to_vec();
+    dlls.insert("librt.so.1".to_string(), funcs);
+
+    // OpenSSL functions
     let funcs: Vec<Func> = [
         func.create("ssl_connect", "Initiate SSL/TLS connection."),
         func.create("ssl_write", "Write data to an SSL/TLS connection."),
