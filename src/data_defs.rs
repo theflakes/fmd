@@ -1,15 +1,14 @@
-extern crate serde;             // needed for json serialization
-extern crate serde_json;        // needed for json serialization
+extern crate serde; // needed for json serialization
+extern crate serde_json; // needed for json serialization
 extern crate whoami;
 
 use chrono::{DateTime, Utc};
-use serde::Serialize;
-use std::{time::SystemTime, io};
 use is_elevated::is_elevated;
+use serde::Serialize;
 use std::collections::HashMap;
+use std::{io, time::SystemTime};
 
-
-lazy_static! { 
+lazy_static! {
     pub static ref DEVICE_TYPE: String = whoami::distro();
     pub static ref DLLS: HashMap<String, Vec<Func>> = build_interesting_funcs();
 }
@@ -49,14 +48,14 @@ pub enum BinaryFormat {
 
 #[derive(Serialize, Clone, Debug, PartialEq, Default)]
 pub enum Architecture {
-    X86,       // 32-bit Intel/AMD
-    X86_64,    // 64-bit Intel/AMD
-    Arm,       // 32-bit ARM
-    AArch64,   // 64-bit ARM (sometimes called ARM64)
+    X86,     // 32-bit Intel/AMD
+    X86_64,  // 64-bit Intel/AMD
+    Arm,     // 32-bit ARM
+    AArch64, // 64-bit ARM (sometimes called ARM64)
     Mips,
     PowerPC,
     RiscV,
-    Itanium,   // IA-64
+    Itanium, // IA-64
     #[default] // Sets Unknown as the default variant
     Unknown,
 }
@@ -68,44 +67,40 @@ fn get_time_iso8601() -> io::Result<String> {
 }
 
 /*
-    Help provided by Yandros on using traits: 
+    Help provided by Yandros on using traits:
         https://users.rust-lang.org/t/refactor-struct-fn-with-macro/40093
 */
 type Str = ::std::borrow::Cow<'static, str>;
-trait Loggable : Serialize {
+trait Loggable: Serialize {
     /// convert struct to json
-    fn to_log (self: &'_ Self) -> Str  {
+    fn to_log(self: &'_ Self) -> Str {
         ::serde_json::to_string(&self)
             .ok()
             .map_or("<failed to serialize>".into(), Into::into)
     }
-    fn to_pretty_log (self: &'_ Self) -> Str {
+    fn to_pretty_log(self: &'_ Self) -> Str {
         ::serde_json::to_string_pretty(&self)
             .ok()
             .map_or("<failed to serialize>".into(), Into::into)
     }
-    
+
     // convert struct to json and report it out
-    fn write_log (self: &'_ Self)
-    {
+    fn write_log(self: &'_ Self) {
         println!("{}", self.to_log());
     }
-    fn write_pretty_log (self: &'_ Self)
-    {
+    fn write_pretty_log(self: &'_ Self) {
         println!("{}", self.to_pretty_log());
     }
 }
-impl<T : ?Sized + Serialize> Loggable for T {}
-
-
+impl<T: ?Sized + Serialize> Loggable for T {}
 
 impl Default for ImpHashes {
-    fn default () -> ImpHashes {
+    fn default() -> ImpHashes {
         ImpHashes {
             md5: String::new(),
             md5_sorted: String::new(),
             ssdeep: String::new(),
-            ssdeep_sorted: String::new()
+            ssdeep_sorted: String::new(),
         }
     }
 }
@@ -114,17 +109,16 @@ pub struct ImpHashes {
     pub md5: String,
     pub md5_sorted: String,
     pub ssdeep: String,
-    pub ssdeep_sorted: String
+    pub ssdeep_sorted: String,
 }
 
-
 impl Default for ExpHashes {
-    fn default () -> ExpHashes {
+    fn default() -> ExpHashes {
         ExpHashes {
             md5: String::new(),
             md5_sorted: String::new(),
             ssdeep: String::new(),
-            ssdeep_sorted: String::new()
+            ssdeep_sorted: String::new(),
         }
     }
 }
@@ -135,7 +129,6 @@ pub struct ExpHashes {
     pub ssdeep: String,
     pub ssdeep_sorted: String,
 }
-
 
 impl Default for Function {
     fn default() -> Function {
@@ -153,13 +146,12 @@ pub struct Function {
     pub info: String,
 }
 
-
 impl Default for Import {
-    fn default () -> Import {
+    fn default() -> Import {
         Import {
             lib: String::new(),
             count: 0,
-            names: Vec::new()
+            names: Vec::new(),
         }
     }
 }
@@ -167,17 +159,16 @@ impl Default for Import {
 pub struct Import {
     pub lib: String,
     pub count: u32,
-    pub names: Vec<Function>
+    pub names: Vec<Function>,
 }
 
-
 impl Default for Imports {
-    fn default () -> Imports {
+    fn default() -> Imports {
         Imports {
             hashes: ImpHashes::default(),
             lib_count: 0,
             func_count: 0,
-            imports: Vec::new()
+            imports: Vec::new(),
         }
     }
 }
@@ -189,9 +180,8 @@ pub struct Imports {
     pub imports: Vec<Import>,
 }
 
-
 impl Default for FileTimestamps {
-    fn default () -> FileTimestamps {
+    fn default() -> FileTimestamps {
         FileTimestamps {
             access_fn: String::new(),
             access_si: String::new(),
@@ -199,7 +189,7 @@ impl Default for FileTimestamps {
             create_si: String::new(),
             modify_fn: String::new(),
             modify_si: String::new(),
-            mft_record: String::new()
+            mft_record: String::new(),
         }
     }
 }
@@ -211,41 +201,39 @@ pub struct FileTimestamps {
     pub create_si: String,
     pub modify_fn: String,
     pub modify_si: String,
-    pub mft_record: String
+    pub mft_record: String,
 }
 
-
 impl Default for PeTimestamps {
-    fn default () -> PeTimestamps {
+    fn default() -> PeTimestamps {
         PeTimestamps {
             compile: String::new(),
-            debug: String::new()
+            debug: String::new(),
         }
     }
 }
 #[derive(Serialize, Clone)]
 pub struct PeTimestamps {
     pub compile: String,
-    pub debug: String
+    pub debug: String,
 }
 
 impl Default for PeLinker {
-    fn default () -> PeLinker {
+    fn default() -> PeLinker {
         PeLinker {
             major_version: 0,
-            minor_version: 0
+            minor_version: 0,
         }
     }
 }
 #[derive(Serialize, Clone)]
 pub struct PeLinker {
     pub major_version: u8,
-    pub minor_version: u8
+    pub minor_version: u8,
 }
 
-
 impl Default for PeInfo {
-    fn default () -> PeInfo {
+    fn default() -> PeInfo {
         PeInfo {
             timestamps: PeTimestamps::default(),
             product_version: String::new(),
@@ -274,9 +262,8 @@ pub struct PeInfo {
     pub linker: PeLinker,
 }
 
-
 impl Default for ElfInfo {
-    fn default () -> ElfInfo {
+    fn default() -> ElfInfo {
         ElfInfo {
             os_abi: String::new(),
             abi_version: 0,
@@ -294,7 +281,7 @@ pub struct ElfInfo {
 }
 
 impl Default for MachOInfo {
-    fn default () -> MachOInfo {
+    fn default() -> MachOInfo {
         MachOInfo {
             file_type: String::new(),
             flags: String::new(),
@@ -304,18 +291,17 @@ impl Default for MachOInfo {
         }
     }
 }
- #[derive(Serialize, Clone)]
+#[derive(Serialize, Clone)]
 pub struct MachOInfo {
-     pub file_type: String,
-     pub flags: String,
-     pub cpu_subtype: String,
-     pub ncmds: u32,
-     pub sizeofcmds: u32,
+    pub file_type: String,
+    pub flags: String,
+    pub cpu_subtype: String,
+    pub ncmds: u32,
+    pub sizeofcmds: u32,
 }
 
-
 impl Default for BinaryInfo {
-    fn default () -> BinaryInfo {
+    fn default() -> BinaryInfo {
         BinaryInfo {
             format: BinaryFormat::Unknown,
             arch: Architecture::Unknown,
@@ -342,9 +328,8 @@ pub struct BinaryInfo {
     pub pe_info: PeInfo,
 }
 
-
 impl Default for BinSection {
-    fn default () -> BinSection {
+    fn default() -> BinSection {
         BinSection {
             name: String::new(),
             entropy: 0.0,
@@ -369,14 +354,13 @@ pub struct BinSection {
     pub elf_comment_or_note_content: Option<String>,
 }
 
-
 impl Default for BinSections {
-    fn default () -> BinSections {
+    fn default() -> BinSections {
         BinSections {
             total_sections: 0,
             total_raw_bytes: 0,
             total_virt_bytes: 0,
-            sections: Vec::new()
+            sections: Vec::new(),
         }
     }
 }
@@ -385,16 +369,15 @@ pub struct BinSections {
     pub total_sections: u16,
     pub total_raw_bytes: u32,
     pub total_virt_bytes: u32,
-    pub sections: Vec<BinSection>
+    pub sections: Vec<BinSection>,
 }
 
-
 impl Default for Exports {
-    fn default () -> Exports {
+    fn default() -> Exports {
         Exports {
             hashes: ExpHashes::default(),
             count: 0,
-            names: Vec::new()
+            names: Vec::new(),
         }
     }
 }
@@ -402,17 +385,16 @@ impl Default for Exports {
 pub struct Exports {
     pub hashes: ExpHashes,
     pub count: usize,
-    pub names: Vec<String>
+    pub names: Vec<String>,
 }
 
-
 impl Default for Binary {
-    fn default () -> Binary {
+    fn default() -> Binary {
         Binary {
             binary_info: BinaryInfo::default(),
             sections: BinSections::default(),
             imports: Imports::default(),
-            exports: Exports::default()
+            exports: Exports::default(),
         }
     }
 }
@@ -421,17 +403,16 @@ pub struct Binary {
     pub binary_info: BinaryInfo,
     pub sections: BinSections,
     pub imports: Imports,
-    pub exports: Exports
+    pub exports: Exports,
 }
 
-
 impl Default for Hashes {
-    fn default () -> Hashes {
+    fn default() -> Hashes {
         Hashes {
             md5: String::new(),
             sha1: String::new(),
             sha256: String::new(),
-            ssdeep: String::new()
+            ssdeep: String::new(),
         }
     }
 }
@@ -440,16 +421,15 @@ pub struct Hashes {
     pub md5: String,
     pub sha1: String,
     pub sha256: String,
-    pub ssdeep: String
+    pub ssdeep: String,
 }
 
-
 impl Default for DataRun {
-    fn default () -> DataRun {
+    fn default() -> DataRun {
         DataRun {
             name: String::new(),
             bytes: 0,
-            first_256_bytes: String::new()
+            first_256_bytes: String::new(),
         }
     }
 }
@@ -457,12 +437,11 @@ impl Default for DataRun {
 pub struct DataRun {
     pub name: String,
     pub bytes: u64,
-    pub first_256_bytes: String
+    pub first_256_bytes: String,
 }
 
-
 impl Default for Link {
-    fn default () -> Link {
+    fn default() -> Link {
         Link {
             rel_path: String::new(),
             abs_path: String::new(),
@@ -495,9 +474,8 @@ pub struct Link {
     // pub volume_label: String,
 }
 
-
 impl Default for RunTimeEnv {
-    fn default () -> RunTimeEnv {
+    fn default() -> RunTimeEnv {
         RunTimeEnv {
             timestamp: get_time_iso8601().unwrap_or("1970-01-01T02:00:00+02:00Z".to_owned()),
             device_type: DEVICE_TYPE.to_string(),
@@ -511,7 +489,6 @@ pub struct RunTimeEnv {
     pub device_type: String,
     pub run_as_admin: bool,
 }
-
 
 #[derive(Serialize)]
 pub struct MetaData {
@@ -530,26 +507,27 @@ pub struct MetaData {
     pub hashes: Hashes,
     pub ads: Vec<DataRun>,
     pub binary: Binary,
-    pub strings: Vec<String>
+    pub strings: Vec<String>,
 }
 impl MetaData {
     pub fn new(
-            runtime_env: RunTimeEnv,
-            path: String,
-            directory: String,
-            filename: String,
-            extension: String,
-            bytes: u64,
-            mime_type: String,
-            is_hidden: bool,
-            is_link: bool,
-            link: Link,
-            timestamps: FileTimestamps,
-            entropy: f32,
-            hashes: Hashes,
-            ads: Vec<DataRun>,
-            binary: Binary,
-            strings: Vec<String>) -> MetaData {
+        runtime_env: RunTimeEnv,
+        path: String,
+        directory: String,
+        filename: String,
+        extension: String,
+        bytes: u64,
+        mime_type: String,
+        is_hidden: bool,
+        is_link: bool,
+        link: Link,
+        timestamps: FileTimestamps,
+        entropy: f32,
+        hashes: Hashes,
+        ads: Vec<DataRun>,
+        binary: Binary,
+        strings: Vec<String>,
+    ) -> MetaData {
         MetaData {
             runtime_env,
             path,
@@ -566,7 +544,7 @@ impl MetaData {
             hashes,
             ads,
             binary,
-            strings
+            strings,
         }
     }
     // convert struct to json and report it out
@@ -578,7 +556,6 @@ impl MetaData {
         self.write_pretty_log()
     }
 }
-
 
 pub fn is_function_interesting(dll: &str, func: &str) -> (Option<bool>, String) {
     if DLLS.contains_key(dll) {
@@ -595,13 +572,12 @@ pub fn is_function_interesting(dll: &str, func: &str) -> (Option<bool>, String) 
     (None, String::new())
 }
 
-
 /*
     Information to include on interesting binary imported functions
     Research by Jason Langston
 */
 impl Default for Func {
-    fn default () -> Func {
+    fn default() -> Func {
         Func {
             name: String::new(),
             desc: String::new(),
@@ -614,13 +590,8 @@ pub struct Func {
     pub desc: String,
 }
 impl Func {
-    pub fn new(
-            name: String,
-            desc: String) -> Func {
-        Func {
-            name,
-            desc
-        }
+    pub fn new(name: String, desc: String) -> Func {
+        Func { name, desc }
     }
 
     pub fn create(&self, name: &str, desc: &str) -> Func {
@@ -647,21 +618,29 @@ pub fn build_interesting_funcs() -> HashMap<String, Vec<Func>> {
 
     // crypt32.dll
     let funcs: Vec<Func> = [
-        func.create("bitblt", "Performs a bit-block transfer of color data from one device context to another."),
-        func.create("certopensystemstorea", "Opens the most common system certificate store using ANSI character encoding."),
-    ].to_vec();
+        func.create(
+            "bitblt",
+            "Performs a bit-block transfer of color data from one device context to another.",
+        ),
+        func.create(
+            "certopensystemstorea",
+            "Opens the most common system certificate store using ANSI character encoding.",
+        ),
+    ]
+    .to_vec();
     dlls.insert("crypt32.dll".to_string(), funcs);
 
     // gdi32.dll
-    let funcs: Vec<Func> = [
-        func.create("bind", "Associates a local address with a socket."),
-    ].to_vec();
+    let funcs: Vec<Func> =
+        [func.create("bind", "Associates a local address with a socket.")].to_vec();
     dlls.insert("gdi32.dll".to_string(), funcs);
 
     // icmp.dll
-    let funcs: Vec<Func> = [
-        func.create("IcmpCreateFile", "Opens a handle on which IPv4 ICMP echo requests can be issued."),
-    ].to_vec();
+    let funcs: Vec<Func> = [func.create(
+        "IcmpCreateFile",
+        "Opens a handle on which IPv4 ICMP echo requests can be issued.",
+    )]
+    .to_vec();
     dlls.insert("icmp.dll".to_string(), funcs);
 
     // kernel32.dll
@@ -756,22 +735,35 @@ pub fn build_interesting_funcs() -> HashMap<String, Vec<Func>> {
 
     // mpr.dll
     let funcs: Vec<Func> = [
-        func.create("certopensystemstorew", "Opens the most common system certification store. This is the Unicode version."),
-        func.create("wnetuseconnectionw", "Makes a connection to a network resource. This is the Unicode version."),
-    ].to_vec();
+        func.create(
+            "certopensystemstorew",
+            "Opens the most common system certification store. This is the Unicode version.",
+        ),
+        func.create(
+            "wnetuseconnectionw",
+            "Makes a connection to a network resource. This is the Unicode version.",
+        ),
+    ]
+    .to_vec();
     dlls.insert("mpr.dll".to_string(), funcs);
 
     // mscoree.dll
-    let funcs: Vec<Func> = [
-        func.create("controlservice", "Sends a control code to a service."),
-    ].to_vec();
+    let funcs: Vec<Func> =
+        [func.create("controlservice", "Sends a control code to a service.")].to_vec();
     dlls.insert("mscoree.dll".to_string(), funcs);
 
     // netapi32.dll
     let funcs: Vec<Func> = [
-        func.create("NetShareEnum", "Retrieves information about each shared resource on a server."),
-        func.create("NetWkstaGetInfo", "Returns information about the configuration of a workstation."),
-    ].to_vec();
+        func.create(
+            "NetShareEnum",
+            "Retrieves information about each shared resource on a server.",
+        ),
+        func.create(
+            "NetWkstaGetInfo",
+            "Returns information about the configuration of a workstation.",
+        ),
+    ]
+    .to_vec();
     dlls.insert("netapi32.dll".to_string(), funcs);
 
     // oleaut32.dll
@@ -794,16 +786,25 @@ pub fn build_interesting_funcs() -> HashMap<String, Vec<Func>> {
     dlls.insert("oleaut32.dll".to_string(), funcs);
 
     // rpcrt4.dll
-    let funcs: Vec<Func> = [
-        func.create("AdjustTokenPrivileges", "Enables or disables privileges in the specified access token."),
-    ].to_vec();
+    let funcs: Vec<Func> = [func.create(
+        "AdjustTokenPrivileges",
+        "Enables or disables privileges in the specified access token.",
+    )]
+    .to_vec();
     dlls.insert("rpcrt4.dll".to_string(), funcs);
 
     // urlmon.dll
     let funcs: Vec<Func> = [
-        func.create("URLDownloadToFileA", "Downloads the specified resource to a local file. This is the ANSI version."),
-        func.create("URLDownloadToFileW", "Downloads the specified resource to a local file. This is the Unicode version."),
-    ].to_vec();
+        func.create(
+            "URLDownloadToFileA",
+            "Downloads the specified resource to a local file. This is the ANSI version.",
+        ),
+        func.create(
+            "URLDownloadToFileW",
+            "Downloads the specified resource to a local file. This is the Unicode version.",
+        ),
+    ]
+    .to_vec();
     dlls.insert("urlmon.dll".to_string(), funcs);
 
     // user32.dll
@@ -813,9 +814,11 @@ pub fn build_interesting_funcs() -> HashMap<String, Vec<Func>> {
     dlls.insert("user32.dll".to_string(), funcs);
 
     // vbe7.dll
-    let funcs: Vec<Func> = [
-        func.create("__vbaexcepthandler", "Internal exception handler used by Visual Basic for Applications runtime."),
-    ].to_vec();
+    let funcs: Vec<Func> = [func.create(
+        "__vbaexcepthandler",
+        "Internal exception handler used by Visual Basic for Applications runtime.",
+    )]
+    .to_vec();
     dlls.insert("vbe7.dll".to_string(), funcs);
 
     // winhttp.dll
@@ -868,20 +871,40 @@ pub fn build_interesting_funcs() -> HashMap<String, Vec<Func>> {
     // libc – core system calls & memory ops
     let funcs: Vec<Func> = [
         func.create("dlopen", "Open a shared object and return a handle."),
-        func.create("dlsym", "Look up a symbol in the shared object referenced by a handle."),
+        func.create(
+            "dlsym",
+            "Look up a symbol in the shared object referenced by a handle.",
+        ),
         func.create("dlclose", "Close a shared object opened with dlopen."),
-        func.create("_dl_iterate_phdr", "Iterate over program headers of loaded modules (used for introspection)."),
-        func.create("mprotect", "Change protection on memory pages – often used in exploits."),
-        func.create("execve", "Execute a program, replacing the current process image."),
-        func.create("ptrace", "Trace and manipulate other processes – key forensic indicator."),
-    ].to_vec();
+        func.create(
+            "_dl_iterate_phdr",
+            "Iterate over program headers of loaded modules (used for introspection).",
+        ),
+        func.create(
+            "mprotect",
+            "Change protection on memory pages – often used in exploits.",
+        ),
+        func.create(
+            "execve",
+            "Execute a program, replacing the current process image.",
+        ),
+        func.create(
+            "ptrace",
+            "Trace and manipulate other processes – key forensic indicator.",
+        ),
+    ]
+    .to_vec();
     dlls.insert("libc.so.6".to_string(), funcs);
 
     // libdl – dynamic linking helpers
     let funcs: Vec<Func> = [
         func.create("__libc_dlerror", "Return error message from last dl* call."),
-        func.create("__libc_dlopen_mode", "Internal helper for dlopen with mode flags."),
-    ].to_vec();
+        func.create(
+            "__libc_dlopen_mode",
+            "Internal helper for dlopen with mode flags.",
+        ),
+    ]
+    .to_vec();
     dlls.insert("libdl.so.2".to_string(), funcs);
 
     // libpthread – threading primitives
@@ -891,23 +914,97 @@ pub fn build_interesting_funcs() -> HashMap<String, Vec<Func>> {
         func.create("pthread_mutex_lock", "Lock a mutex."),
         func.create("pthread_mutex_unlock", "Unlock a mutex."),
         func.create("pthread_cond_wait", "Wait on a condition variable."),
-    ].to_vec();
+    ]
+    .to_vec();
     dlls.insert("libpthread.so.0".to_string(), funcs);
 
     // libcrypto – cryptographic primitives
     let funcs: Vec<Func> = [
-        func.create("EVP_encrypt_init_ex", "Initialize encryption context (OpenSSL)."),
+        func.create(
+            "EVP_encrypt_init_ex",
+            "Initialize encryption context (OpenSSL).",
+        ),
         func.create("EVP_decrypt_update", "Decrypt data chunk (OpenSSL)."),
         func.create("RAND_bytes", "Generate random bytes (OpenSSL)."),
-    ].to_vec();
+    ]
+    .to_vec();
     dlls.insert("libcrypto.so.1.1".to_string(), funcs);
 
     // libm – math functions that can be abused
     let funcs: Vec<Func> = [
         func.create("__ieee754_sqrt", "Square root implementation."),
         func.create("__pow10f", "Compute 10^x for float."),
-    ].to_vec();
+    ]
+    .to_vec();
     dlls.insert("libm.so.6".to_string(), funcs);
 
-    return dlls
+    // Mach-O
+
+    // libSystem.B.dylib - Core system library functions
+    let funcs: Vec<Func> = [
+        func.create("dyld", "Dynamic linker function used to load libraries."),
+        func.create("malloc", "Memory allocation function used by applications."),
+        func.create("free", "Memory deallocation function used by applications."),
+        func.create("pthread_create", "Create a new thread in the system."),
+        func.create("pthread_join", "Wait for a thread to terminate."),
+    ]
+    .to_vec();
+    dlls.insert("libSystem.B.dylib".to_string(), funcs);
+
+    // libcurl.dylib - Network operations with forensic significance
+    let funcs: Vec<Func> = [
+        func.create("curl_easy_init", "Initialize an HTTP connection handle."),
+        func.create("curl_easy_perform", "Perform a network request operation."),
+        func.create(
+            "curl_easy_getinfo",
+            "Retrieve information from completed transfers.",
+        ),
+        func.create("curl_easy_cleanup", "Clean up curl handle resources."),
+    ]
+    .to_vec();
+    dlls.insert("libcurl.dylib".to_string(), funcs);
+
+    // SecurityFoundation framework - Security functions
+    let funcs: Vec<Func> = [
+        func.create(
+            "SecTrustEvaluate",
+            "Evaluate certificate trust relationships.",
+        ),
+        func.create("SecKeyGenerate", "Generate cryptographic keys."),
+        func.create(
+            "SecRandomCopyBytes",
+            "Generate random bytes for security operations.",
+        ),
+    ]
+    .to_vec();
+    dlls.insert("SecurityFoundation.framework".to_string(), funcs);
+
+    // CoreFoundation framework - Core system functions
+    let funcs: Vec<Func> = [
+        func.create(
+            "CFStringCreateWithCString",
+            "Create a string from C-style string.",
+        ),
+        func.create("CFDictionaryGetValue", "Get value from dictionary entry."),
+        func.create(
+            "CFArrayGetValueAtIndex",
+            "Get value at specific array index.",
+        ),
+    ]
+    .to_vec();
+    dlls.insert("CoreFoundation.framework".to_string(), funcs);
+
+    // WebKit framework - Web browser engine functions
+    let funcs: Vec<Func> = [
+        func.create("WKWebView", "Create and manage web view components."),
+        func.create("WebFrame", "Manage frame manipulation operations."),
+        func.create(
+            "WebKitEvaluateJavaScript",
+            "Execute JavaScript in web context.",
+        ),
+    ]
+    .to_vec();
+    dlls.insert("WebKit.framework".to_string(), funcs);
+
+    return dlls;
 }
