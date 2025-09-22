@@ -611,8 +611,20 @@ pub fn build_interesting_funcs() -> HashMap<String, Vec<Func>> {
         func.create("createmutexa", "Creates or opens a named or unnamed mutex object."),
         func.create("createprocessa", "Creates a new process and its primary thread. The new process runs in the security context of the calling process."),
         func.create("createprocessw", "Creates a new process and its primary thread. The new process runs in the security context of the calling process. This is the Unicode version of CreateProcessA."),
+        func.create("regopenkeyexa", "Opens a registry key with specified access rights."),
+        func.create("regqueryvalueexa", "Queries information about a registry value."),
+        func.create("gettokeninformation", "Retrieves information about a token, including user privileges and group memberships."),
+        func.create("openprocesstoken", "Opens the primary token of a process for use by the calling thread."),
     ].to_vec();
     dlls.insert("advapi32.dll".to_string(), funcs);
+
+    // comdlg32.dll
+    let funcs: Vec<Func> = [
+        func.create("choosefonta", "Displays a font selection dialog box."),
+        func.create("choosecolora", "Displays a color selection dialog box."),
+    ]
+    .to_vec();
+    dlls.insert("comdlg32.dll".to_string(), funcs);
 
     // crypt32.dll
     let funcs: Vec<Func> = [
@@ -728,6 +740,76 @@ pub fn build_interesting_funcs() -> HashMap<String, Vec<Func>> {
         func.create("LoadLibraryExW", "Loads the specified module into the address space of the calling process, with additional control over loading behavior. This is the Unicode version."),
         func.create("LoadLibraryW", "Loads the specified module into the address space of the calling process. This is the Unicode version."),
         func.create("VirtualAllocEx", "Reserves, commits, or changes the state of a region of memory within the virtual address space of a specified process. The function initializes the memory it allocates to zero."),
+        func.create("createthread", "Creates a new thread in the current process."),
+        func.create("waitforsingleobject", "Waits for an object to be signaled."),
+        func.create("readfile", "Reads data from a file handle."),
+        func.create("writefile", "Writes data to a file handle."),
+        func.create("closehandle", "Closes handles opened with CreateFile or similar functions."),
+        func.create("addvectoredexceptionhandler", "Adds a vectored exception handler to the process."),
+        func.create("createfilemappinga", "Creates or opens a named or unnamed file mapping object for a specified file. This is the ANSI version."),
+        func.create("createfilew", "Creates or opens a file or I/O device with Unicode characters."),
+        func.create("createtoolhelp32snapshot", "Takes a snapshot of the specified processes, heaps, modules, and threads used by the system."),
+        func.create("duplicatehandle", "Duplicates an object handle for use in another process."),
+        func.create("exitprocess", "Terminates the calling process."),
+        func.create("findclose", "Closes a search handle opened with FindFirstFile."),
+        func.create("findfirstfileexw", "Searches a directory for a file or subdirectory with a name and attributes that match those specified. This is the Unicode version."),
+        func.create("findnextfilew", "Continues a file search from a previous call to the FindFirstFile, FindFirstFileEx, or FindFirstFileTransacted function. This is the Unicode version."),
+        func.create("formatmessagew", "Formats a message string using the specified parameters."),
+        func.create("freelibrary", "Frees a loaded dynamic-link library (DLL)."),
+        func.create("getcommandlinew", "Retrieves the command line for the current process."),
+        func.create("getconsolemode", "Retrieves the console mode of the specified console output handle."),
+        func.create("getconsoleoutputcp", "Retrieves the code page used by the console output handle."),
+        func.create("getcurrentdirectoryw", "Retrieves the current directory path for the calling process."),
+        func.create("getcurrentprocess", "Returns a handle to the current process."),
+        func.create("getcurrentthread", "Returns a handle to the current thread."),
+        func.create("getenvironmentvariablew", "Retrieves the value of an environment variable."),
+        func.create("getfileinformationbyhandle", "Retrieves information about a file from its handle."),
+        func.create("getfileinformationbyhandleex", "Retrieves extended information about a file from its handle."),
+        func.create("getfinalpathnamebyhandlew", "Retrieves the final path of a file by its handle."),
+        func.create("getfullpathnamew", "Retrieves the full path name for a specified file."),
+        func.create("getlasterror", "Retrieves the last error that occurred in the calling thread."),
+        func.create("getmodulefilenamew", "Retrieves the fully qualified path for the file that contains the specified module. The module must have been loaded by the current process. This is the Unicode version."),
+        func.create("getmodulehandlea", "Retrieves a module handle for the specified module. The module must have been loaded by the calling process. This is the ANSI version."),
+        func.create("getmodulehandlew", "Retrieves a module handle for the specified module. The module must have been loaded by the calling process. This is the Unicode version."),
+        func.create("getprocaddress", "Retrieves the address of an exported function or variable from the specified dynamic-link library (DLL)."),
+        func.create("getprocessheap", "Returns a handle to the heap used by the current process."),
+        func.create("getstdhandle", "Retrieves a handle to the standard input, output, or error device for the calling process."),
+        func.create("getsystimepreciseasfiletime", "Retrieves the system time with high precision and converts it to file time format."),
+        func.create("heapalloc", "Allocates memory from the heap."),
+        func.create("heapfree", "Frees memory allocated by HeapAlloc or HeapReAlloc."),
+        func.create("heaprealloc", "Reallocates memory in the heap."),
+        func.create("initoncebegininitialize", "Initializes a once-only initialization object."),
+        func.create("initoncecomplete", "Completes an initialization of a once-only initialization object."),
+        func.create("loadlibraryexw", "Loads the specified module into the address space of the calling process, with additional control over loading behavior. This is the Unicode version."),
+        func.create("mapviewoffile", "Maps a view of a file in memory."),
+        func.create("module32firstw", "Retrieves information about the first module in the specified process."),
+        func.create("module32nextw", "Retrieves information about the next module in the specified process."),
+        func.create("multbytetowidechar", "Converts a multibyte string to a wide-character string."),
+        func.create("rtlcapturecontext", "Captures the current execution context of the calling thread."),
+        func.create("rtllookupfunctionentry", "Looks up a function entry in a stack frame."),
+        func.create("rtlvirtualunwind", "Performs virtual unwinding of a stack frame."),
+        func.create("setfileinformationbyhandle", "Sets information about a file using its handle."),
+        func.create("setfilepointerex", "Sets the file pointer to the specified offset and returns the new position."),
+        func.create("setlasterror", "Sets the last error that occurred in the calling thread."),
+        func.create("setthreadstackguarantee", "Sets the minimum stack size guaranteed for a thread."),
+        func.create("setunhandledexceptionfilter", "Sets the unhandled exception filter for the process."),
+        func.create("sleep", "Suspends execution of the calling thread for the specified interval."),
+        func.create("tlsalloc", "Allocates a TLS index."),
+        func.create("tlsfree", "Frees a TLS index."),
+        func.create("tlsgetvalue", "Retrieves the value associated with a TLS index."),
+        func.create("tlssetvalue", "Sets the value associated with a TLS index."),
+        func.create("unmapviewoffile", "Unmaps a view of a file from memory."),
+        func.create("waitforsingleobject", "Waits for an object to be signaled."),
+        func.create("writeconsolew", "Writes data to the console output handle."),
+        func.create("deletecriticalsection", "Deletes a critical section object."),
+        func.create("entercriticalsection", "Enters a critical section."),
+        func.create("initializecriticalsection", "Initializes a critical section object."),
+        func.create("leavecriticalsection", "Leaves a critical section."),
+        func.create("raiseexception", "Raises an exception in the calling thread."),
+        func.create("rtlvirtualunwindex", "Performs virtual unwinding of a stack frame with additional parameters."),
+        func.create("virtualprotect", "Changes the protection on memory pages."),
+        func.create("virtualquery", "Retrieves information about a region of memory."),
+        func.create("__cspecific_handler", "Internal handler for structured exception handling."),
     ].to_vec();
     dlls.insert("kernel32.dll".to_string(), funcs);
 
@@ -740,6 +822,14 @@ pub fn build_interesting_funcs() -> HashMap<String, Vec<Func>> {
         func.create(
             "wnetuseconnectionw",
             "Makes a connection to a network resource. This is the Unicode version.",
+        ),
+        func.create(
+            "netshareenum",
+            "Retrieves information about each shared resource on a server.",
+        ),
+        func.create(
+            "netwkstagetinfo",
+            "Returns information about the configuration of a workstation.",
         ),
     ]
     .to_vec();
@@ -759,6 +849,10 @@ pub fn build_interesting_funcs() -> HashMap<String, Vec<Func>> {
         func.create(
             "NetWkstaGetInfo",
             "Returns information about the configuration of a workstation.",
+        ),
+        func.create(
+            "netapi32",
+            "Provides API functions for network administration.",
         ),
     ]
     .to_vec();
@@ -780,7 +874,10 @@ pub fn build_interesting_funcs() -> HashMap<String, Vec<Func>> {
         func.create("VariantCopy", "Frees the destination variant and makes a copy of the source variant."),
         func.create("VariantCopyInd", "Frees the destination variant and makes a copy of the source variant, performing the necessary indirection if the source is specified to be VT_BYREF."),
         func.create("VariantInit", "Initializes a variant by setting its type to VT_EMPTY."),
-    ].to_vec();
+        func.create("CoInitialize", "Initializes the COM library for use by the current thread."),
+        func.create("CoCreateInstance", "Creates an instance of a COM object."),
+    ]
+    .to_vec();
     dlls.insert("oleaut32.dll".to_string(), funcs);
 
     // rpcrt4.dll
@@ -790,6 +887,14 @@ pub fn build_interesting_funcs() -> HashMap<String, Vec<Func>> {
     )]
     .to_vec();
     dlls.insert("rpcrt4.dll".to_string(), funcs);
+
+    // shlwapi.dll
+    let funcs: Vec<Func> = [
+        func.create("pathappend", "Appends one path to another."),
+        func.create("strstrA", "Searches for a substring in a string."),
+    ]
+    .to_vec();
+    dlls.insert("shlwapi.dll".to_string(), funcs);
 
     // urlmon.dll
     let funcs: Vec<Func> = [
@@ -808,7 +913,10 @@ pub fn build_interesting_funcs() -> HashMap<String, Vec<Func>> {
     // user32.dll
     let funcs: Vec<Func> = [
         func.create("getprocaddress", "Retrieves the address of an exported function or variable from the specified dynamic-link library (DLL)."),
-    ].to_vec();
+        func.create("setwindowlonga", "Sets the window procedure for a window."),
+        func.create("setwindowlongw", "Sets the window procedure for a window. This is the Unicode version."),
+    ]
+    .to_vec();
     dlls.insert("user32.dll".to_string(), funcs);
 
     // vbe7.dll
@@ -830,7 +938,10 @@ pub fn build_interesting_funcs() -> HashMap<String, Vec<Func>> {
         func.create("WinHttpReadData", "Reads data from a handle opened by the WinHttpOpenRequest function."),
         func.create("WinHttpReceiveResponse", "Waits to receive the response to an HTTP request initiated by WinHttpSendRequest."),
         func.create("winhttpsendrequest", "Sends the specified request to the HTTP server."),
-    ].to_vec();
+        func.create("httpopenrequesta", "Creates an HTTP request handle. This is the ANSI version."),
+        func.create("httpqueryinfoa", "Retrieves header information associated with an HTTP request. This is the ANSI version."),
+    ]
+    .to_vec();
     dlls.insert("winhttp.dll".to_string(), funcs);
 
     // wininet.dll
@@ -853,7 +964,10 @@ pub fn build_interesting_funcs() -> HashMap<String, Vec<Func>> {
         func.create("InternetOpenW", "Initializes an application's use of the WinINet functions. This is the Unicode version."),
         func.create("InternetQueryDataAvailable", "Queries the server to determine the amount of data available."),
         func.create("InternetReadFile", "Reads data from a handle opened by the InternetOpenUrl, FtpOpenFile, or HttpOpenRequest function."),
-    ].to_vec();
+        func.create("getprofileinta", "Retrieves an integer from a key in the specified section of the Win.ini file."),
+        func.create("inet_addr", "Converts a string containing an IPv4 dotted-decimal address into a proper address for the IN_ADDR structure."),
+    ]
+    .to_vec();
     dlls.insert("wininet.dll".to_string(), funcs);
 
     // ws2_32.dll
@@ -861,7 +975,9 @@ pub fn build_interesting_funcs() -> HashMap<String, Vec<Func>> {
         func.create("wsaasyncgethostbyname", "Asynchronously retrieves host information that corresponds to a hostname."),
         func.create("getprofileinta", "Retrieves an integer from a key in the specified section of the Win.ini file."),
         func.create("inet_addr", "Converts a string containing an IPv4 dotted-decimal address into a proper address for the IN_ADDR structure."),
-    ].to_vec();
+        func.create("wsaconnect", "Establishes a connection to a specified socket."),
+    ]
+    .to_vec();
     dlls.insert("ws2_32.dll".to_string(), funcs);
 
     // ELF
@@ -890,6 +1006,8 @@ pub fn build_interesting_funcs() -> HashMap<String, Vec<Func>> {
             "ptrace",
             "Trace and manipulate other processes – key forensic indicator.",
         ),
+        func.create("getuid", "Get the real user ID of the calling process."),
+        func.create("getgid", "Get the real group ID of the calling process."),
     ]
     .to_vec();
     dlls.insert("libc.so.6".to_string(), funcs);
@@ -901,6 +1019,7 @@ pub fn build_interesting_funcs() -> HashMap<String, Vec<Func>> {
             "__libc_dlopen_mode",
             "Internal helper for dlopen with mode flags.",
         ),
+        func.create("dlerror", "Return error message from last dl* call."),
     ]
     .to_vec();
     dlls.insert("libdl.so.2".to_string(), funcs);
@@ -912,6 +1031,7 @@ pub fn build_interesting_funcs() -> HashMap<String, Vec<Func>> {
         func.create("pthread_mutex_lock", "Lock a mutex."),
         func.create("pthread_mutex_unlock", "Unlock a mutex."),
         func.create("pthread_cond_wait", "Wait on a condition variable."),
+        func.create("pthread_attr_init", "Initialize thread attributes object."),
     ]
     .to_vec();
     dlls.insert("libpthread.so.0".to_string(), funcs);
@@ -924,6 +1044,8 @@ pub fn build_interesting_funcs() -> HashMap<String, Vec<Func>> {
         ),
         func.create("EVP_decrypt_update", "Decrypt data chunk (OpenSSL)."),
         func.create("RAND_bytes", "Generate random bytes (OpenSSL)."),
+        func.create("sha256", "Compute SHA256 hash of input data."),
+        func.create("aes_encrypt", "Encrypt data using AES algorithm."),
     ]
     .to_vec();
     dlls.insert("libcrypto.so.1.1".to_string(), funcs);
@@ -932,6 +1054,8 @@ pub fn build_interesting_funcs() -> HashMap<String, Vec<Func>> {
     let funcs: Vec<Func> = [
         func.create("__ieee754_sqrt", "Square root implementation."),
         func.create("__pow10f", "Compute 10^x for float."),
+        func.create("cos", "Compute cosine of argument."),
+        func.create("sin", "Compute sine of argument."),
     ]
     .to_vec();
     dlls.insert("libm.so.6".to_string(), funcs);
@@ -945,6 +1069,7 @@ pub fn build_interesting_funcs() -> HashMap<String, Vec<Func>> {
         func.create("free", "Memory deallocation function used by applications."),
         func.create("pthread_create", "Create a new thread in the system."),
         func.create("pthread_join", "Wait for a thread to terminate."),
+        func.create("clock_gettime", "Get current time of specified clock."),
     ]
     .to_vec();
     dlls.insert("libSystem.B.dylib".to_string(), funcs);
@@ -958,6 +1083,8 @@ pub fn build_interesting_funcs() -> HashMap<String, Vec<Func>> {
             "Retrieve information from completed transfers.",
         ),
         func.create("curl_easy_cleanup", "Clean up curl handle resources."),
+        func.create("curl_version", "Get version of libcurl library."),
+        func.create("curl_easy_setopt", "Set options for a curl easy handle."),
     ]
     .to_vec();
     dlls.insert("libcurl.dylib".to_string(), funcs);
@@ -973,6 +1100,7 @@ pub fn build_interesting_funcs() -> HashMap<String, Vec<Func>> {
             "SecRandomCopyBytes",
             "Generate random bytes for security operations.",
         ),
+        func.create("secitemcopymatching", "Copy matching items from keychain."),
     ]
     .to_vec();
     dlls.insert("SecurityFoundation.framework".to_string(), funcs);
@@ -988,9 +1116,96 @@ pub fn build_interesting_funcs() -> HashMap<String, Vec<Func>> {
             "CFArrayGetValueAtIndex",
             "Get value at specific array index.",
         ),
+        func.create("cfstringgetcstring", "Convert CFString to C-style string."),
+        func.create("wkwebviewloadrequest", "Load request with specified URL."),
     ]
     .to_vec();
-    dlls.insert("CoreFoundation.framework".to_string(), funcs);
+    dlls.insert("WebKit.framework".to_string(), funcs);
+
+    // api-ms-win-core-synch-l1-2-0.dll
+    let funcs: Vec<Func> = [
+        func.create(
+            "waitonaddress",
+            "Waits for an address to be signaled or timeout.",
+        ),
+        func.create(
+            "wakebyaddressall",
+            "Wakes all threads waiting on the specified address.",
+        ),
+        func.create(
+            "wakebyaddresssingle",
+            "Wakes a single thread waiting on the specified address.",
+        ),
+    ]
+    .to_vec();
+    dlls.insert("api-ms-win-core-synch-l1-2-0.dll".to_string(), funcs);
+
+    // bcryptprimitives.dll
+    let funcs: Vec<Func> = [func.create(
+        "processprng",
+        "Processes a pseudo-random number generator for cryptographic operations.",
+    )]
+    .to_vec();
+    dlls.insert("bcryptprimitives.dll".to_string(), funcs);
+
+    // msvcrt.dll
+    let funcs: Vec<Func> = [
+        func.create("__getmainargs", "Gets the main arguments of the program."),
+        func.create("__initenv", "Initializes environment variables."),
+        func.create(
+            "__iob_func",
+            "Returns a pointer to the standard input/output streams.",
+        ),
+        func.create(
+            "__set_app_type",
+            "Sets the application type for error handling.",
+        ),
+        func.create("__setusermatherr", "Sets user-defined math error handler."),
+        func.create(
+            "_amsg_exit",
+            "Displays an error message and exits the program.",
+        ),
+        func.create("_cexit", "Cleans up C runtime environment before exit."),
+        func.create("_commode", "Sets the default mode for standard streams."),
+        func.create("_errno", "Retrieves the last error number."),
+        func.create("_fmode", "Gets or sets the file mode for standard streams."),
+        func.create("_fpreset", "Resets floating-point environment."),
+        func.create("_initterm", "Initializes termination functions."),
+        func.create("_onexit", "Registers exit handlers."),
+        func.create("abort", "Aborts execution and exits with an error code."),
+        func.create("calloc", "Allocates memory for arrays of objects."),
+        func.create("exit", "Terminates the calling process."),
+        func.create("fprintf", "Prints formatted output to a stream."),
+        func.create("free", "Frees memory allocated by malloc or calloc."),
+        func.create("fwrite", "Writes data to a stream."),
+        func.create("logf", "Computes the natural logarithm of the argument."),
+        func.create("malloc", "Allocates memory for objects."),
+        func.create("memcmp", "Compares two memory regions."),
+        func.create("memcpy", "Copies memory from source to destination."),
+        func.create("memmove", "Moves memory with overlap handling."),
+        func.create("memset", "Sets a memory region to a specific value."),
+        func.create("signal", "Sets a signal handler for the specified signal."),
+        func.create("strlen", "Returns the length of a string."),
+        func.create("strncmp", "Compares two strings up to n characters."),
+        func.create(
+            "vfprintf",
+            "Prints formatted output to a stream using variable arguments.",
+        ),
+    ]
+    .to_vec();
+    dlls.insert("msvcrt.dll".to_string(), funcs);
+
+    // ntdll.dll
+    let funcs: Vec<Func> = [
+        func.create("ntreadfile", "Reads data from a file handle."),
+        func.create("ntwritefile", "Writes data to a file handle."),
+        func.create(
+            "rtlntstatustodoserror",
+            "Converts NT status code to DOS error code.",
+        ),
+    ]
+    .to_vec();
+    dlls.insert("ntdll.dll".to_string(), funcs);
 
     // WebKit framework - Web browser engine functions
     let funcs: Vec<Func> = [
@@ -1000,9 +1215,56 @@ pub fn build_interesting_funcs() -> HashMap<String, Vec<Func>> {
             "WebKitEvaluateJavaScript",
             "Execute JavaScript in web context.",
         ),
+        func.create("wkwebviewloadrequest", "Load request with specified URL."),
     ]
     .to_vec();
     dlls.insert("WebKit.framework".to_string(), funcs);
+
+    // Additional libraries for completeness
+
+    // ntdll.dll - Core Windows system calls
+    let funcs: Vec<Func> = [
+        func.create("ntcreatefile", "Creates or opens a file or I/O device."),
+        func.create(
+            "ntqueryinformationfile",
+            "Queries information about a file object.",
+        ),
+        func.create("ntreadfile", "Reads data from a file handle."),
+    ]
+    .to_vec();
+    dlls.insert("ntdll.dll".to_string(), funcs);
+
+    // wsock32.dll - Windows socket functions (legacy)
+    let funcs: Vec<Func> = [
+        func.create(
+            "wsaconnect",
+            "Establishes a connection to a specified socket.",
+        ),
+        func.create("wsend", "Sends data over a socket."),
+        func.create("wrecv", "Receives data from a socket."),
+    ]
+    .to_vec();
+    dlls.insert("wsock32.dll".to_string(), funcs);
+
+    // librt.so.1 - Real-time library functions
+    let funcs: Vec<Func> = [
+        func.create("clock_gettime", "Get current time of specified clock."),
+        func.create(
+            "pthread_timedjoin_np",
+            "Wait for a thread to terminate with timeout.",
+        ),
+    ]
+    .to_vec();
+    dlls.insert("librt.so.1".to_string(), funcs);
+
+    // libssl.so.1.1 - SSL/TLS functions
+    let funcs: Vec<Func> = [
+        func.create("ssl_connect", "Initiate SSL/TLS connection."),
+        func.create("ssl_write", "Write data to an SSL/TLS connection."),
+        func.create("ssl_read", "Read data from an SSL/TLS connection."),
+    ]
+    .to_vec();
+    dlls.insert("libssl.so.1.1".to_string(), funcs);
 
     return dlls;
 }
