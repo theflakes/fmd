@@ -134,7 +134,6 @@ impl Default for Function {
     fn default() -> Function {
         Function {
             name: String::new(),
-            more_interesting: None,
             info: String::new(),
         }
     }
@@ -142,7 +141,6 @@ impl Default for Function {
 #[derive(Serialize, Clone, Debug)]
 pub struct Function {
     pub name: String,
-    pub more_interesting: Option<bool>,
     pub info: String,
 }
 
@@ -557,19 +555,19 @@ impl MetaData {
     }
 }
 
-pub fn is_function_interesting(dll: &str, func: &str) -> (Option<bool>, String) {
+pub fn is_function_interesting(dll: &str, func: &str) -> String {
     if DLLS.contains_key(dll) {
         let funcs = match DLLS.get(dll) {
             Some(it) => it,
-            None => return (None, String::new()),
+            None => return String::new(),
         };
         for f in funcs {
             if f.name.to_lowercase().eq(&func.to_lowercase()) {
-                return (Some(true), f.desc.clone());
+                return f.desc.clone();
             }
         }
     }
-    (None, String::new())
+    String::new()
 }
 
 /*

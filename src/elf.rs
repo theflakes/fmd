@@ -1,23 +1,24 @@
-use goblin::elf;
-use crate::data_defs::{BinSection, BinSections, Binary, BinaryFormat, BinaryInfo, 
-                    ExpHashes, Exports, Function, ImpHashes, Import, Imports, 
-                    Architecture, is_function_interesting};
-use std::collections::HashMap;
-use fuzzyhash::FuzzyHash;
-use entropy::shannon_entropy;
+use crate::data_defs::{
+    is_function_interesting, Architecture, BinSection, BinSections, Binary, BinaryFormat,
+    BinaryInfo, ExpHashes, Exports, Function, ImpHashes, Import, Imports,
+};
 use anyhow::Result;
-
+use entropy::shannon_entropy;
+use fuzzyhash::FuzzyHash;
+use goblin::elf;
+use std::collections::HashMap;
 
 fn bytes_to_human_readable_string(data: &[u8]) -> String {
-    data.iter().map(|&byte| {
-        if byte >= 0x20 && byte <= 0x7E {
-            byte as char
-        } else {
-            ' '
-        }
-    }).collect()
+    data.iter()
+        .map(|&byte| {
+            if byte >= 0x20 && byte <= 0x7E {
+                byte as char
+            } else {
+                ' '
+            }
+        })
+        .collect()
 }
-
 
 fn get_elf_file_type_name(e_type: u16) -> String {
     match e_type {
@@ -29,7 +30,6 @@ fn get_elf_file_type_name(e_type: u16) -> String {
         _ => format!("UNKNOWN_ET_TYPE({})", e_type),
     }
 }
-
 
 fn get_arch(e_machine: u16) -> Architecture {
     match e_machine {
@@ -45,7 +45,6 @@ fn get_arch(e_machine: u16) -> Architecture {
     }
 }
 
-
 fn parse_elf_header_info(elf: &elf::Elf, binary_info: &mut BinaryInfo) {
     binary_info.is_64 = elf.is_64;
     binary_info.entry_point = format!("0x{:x}", elf.entry);
@@ -57,7 +56,6 @@ fn parse_elf_header_info(elf: &elf::Elf, binary_info: &mut BinaryInfo) {
     binary_info.format = BinaryFormat::Elf;
     binary_info.arch = get_arch(elf.header.e_machine);
 }
-
 
 fn parse_elf_sections(elf: &elf::Elf, buffer: &[u8]) -> Result<BinSections> {
     let mut sections = BinSections::default();
@@ -108,7 +106,6 @@ fn parse_elf_sections(elf: &elf::Elf, buffer: &[u8]) -> Result<BinSections> {
     Ok(sections)
 }
 
-
 fn build_elf_version_map(elf: &elf::Elf) -> HashMap<u16, String> {
     let mut version_map: HashMap<u16, String> = HashMap::new();
     if let Some(verneed_iter) = &elf.verneed {
@@ -120,9 +117,8 @@ fn build_elf_version_map(elf: &elf::Elf) -> HashMap<u16, String> {
             }
         }
     }
-    return version_map
+    return version_map;
 }
-
 
 fn get_hash_sorted(hash_array: &mut Vec<String>) -> (String, String) {
     hash_array.sort();
@@ -133,9 +129,8 @@ fn get_hash_sorted(hash_array: &mut Vec<String>) -> (String, String) {
     imphash_text_sorted = imphash_text_sorted.trim_end_matches(",").to_string();
     let imphash_sorted = format!("{:x}", md5::compute(&imphash_text_sorted)).to_lowercase();
 
-    return (imphash_text_sorted, imphash_sorted)
+    return (imphash_text_sorted, imphash_sorted);
 }
-
 
 fn get_elf_imphashes(imports: &Imports) -> ImpHashes {
     let mut imphash_array: Vec<String> = Vec::new();
@@ -158,16 +153,15 @@ fn get_elf_imphashes(imports: &Imports) -> ImpHashes {
     let mut imphashes = ImpHashes::default();
     imphash_text = imphash_text.trim_end_matches(",").to_string();
     imphashes.md5 = format!("{:x}", md5::compute(imphash_text.as_bytes())).to_lowercase();
-    
+
     let (imphash_text_sorted, md5_sorted) = get_hash_sorted(&mut imphash_array);
     imphashes.md5_sorted = md5_sorted;
 
     imphashes.ssdeep = FuzzyHash::new(imphash_text.as_bytes()).to_string();
     imphashes.ssdeep_sorted = FuzzyHash::new(imphash_text_sorted.as_bytes()).to_string();
 
-    return imphashes
+    return imphashes;
 }
-
 
 fn get_elf_exphashes(exports: &Exports) -> ExpHashes {
     let mut exphashes = ExpHashes::default();
@@ -183,16 +177,15 @@ fn get_elf_exphashes(exports: &Exports) -> ExpHashes {
 
     exphash_text = exphash_text.trim_end_matches(",").to_string();
     exphashes.md5 = format!("{:x}", md5::compute(exphash_text.as_bytes())).to_lowercase();
-    
+
     let (exphash_text_sorted, md5_sorted) = get_hash_sorted(&mut exphash_array);
     exphashes.md5_sorted = md5_sorted;
 
     exphashes.ssdeep = FuzzyHash::new(exphash_text.as_bytes()).to_string();
     exphashes.ssdeep_sorted = FuzzyHash::new(exphash_text_sorted.as_bytes()).to_string();
 
-    return exphashes
+    return exphashes;
 }
-
 
 fn parse_elf_imports(elf: &elf::Elf, version_map: &HashMap<u16, String>) -> Imports {
     let mut imports = Imports::default();
@@ -201,7 +194,8 @@ fn parse_elf_imports(elf: &elf::Elf, version_map: &HashMap<u16, String>) -> Impo
         if sym.is_import() {
             if let Some(name) = elf.dynstrtab.get_at(sym.st_name) {
                 // Resolve the providing library (or fall back to “unknown”)
-                let lib_name = elf.versym
+                let lib_name = elf
+                    .versym
                     .as_ref()
                     .and_then(|vs| vs.get_at(i))
                     .and_then(|versym| version_map.get(&versym.vs_val))
@@ -214,14 +208,10 @@ fn parse_elf_imports(elf: &elf::Elf, version_map: &HashMap<u16, String>) -> Impo
                         }
                     });
 
-                let (more_interesting, info) = is_function_interesting(
-                    &lib_name.to_lowercase(),
-                    &name,
-                );
+                let info = is_function_interesting(&lib_name.to_lowercase(), &name);
 
                 let func = Function {
                     name: name.to_string(),
-                    more_interesting,
                     info,
                     ..Default::default()
                 };
@@ -246,11 +236,12 @@ fn parse_elf_imports(elf: &elf::Elf, version_map: &HashMap<u16, String>) -> Impo
     imports
 }
 
-
 fn parse_elf_exports(elf: &elf::Elf) -> Exports {
     let mut exports = Exports::default();
     for sym in elf.dynsyms.iter() {
-        if sym.st_bind() == elf::sym::STB_GLOBAL && sym.st_shndx as u32 != elf::section_header::SHN_UNDEF {
+        if sym.st_bind() == elf::sym::STB_GLOBAL
+            && sym.st_shndx as u32 != elf::section_header::SHN_UNDEF
+        {
             if let Some(name) = elf.dynstrtab.get_at(sym.st_name) {
                 if !name.is_empty() {
                     exports.names.push(name.to_string());
@@ -260,9 +251,8 @@ fn parse_elf_exports(elf: &elf::Elf) -> Exports {
     }
     exports.count = exports.names.len();
     exports.hashes = get_elf_exphashes(&exports);
-    return exports
+    return exports;
 }
-
 
 pub fn get_elf(buffer: &[u8]) -> Result<Binary> {
     let mut bin = Binary::default();

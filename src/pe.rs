@@ -1,18 +1,18 @@
-use crate::data_defs::{BinSection, BinSections, Binary, BinaryFormat, BinaryInfo, ExpHashes, 
-                        Exports, Function, ImpHashes, Import, Imports, Architecture, 
-                        is_function_interesting};
+use crate::data_defs::{
+    is_function_interesting, Architecture, BinSection, BinSections, Binary, BinaryFormat,
+    BinaryInfo, ExpHashes, Exports, Function, ImpHashes, Import, Imports,
+};
 use crate::ordinals;
-use std::path::Path;
-use std::io::{Read, Seek, SeekFrom};
-use std::fs::File;
-use std::collections::HashMap;
-use chrono::DateTime;
-use fuzzyhash::FuzzyHash;
-use entropy::shannon_entropy;
-use goblin::pe;
-use exe;
 use anyhow::Result;
-
+use chrono::DateTime;
+use entropy::shannon_entropy;
+use exe;
+use fuzzyhash::FuzzyHash;
+use goblin::pe;
+use std::collections::HashMap;
+use std::fs::File;
+use std::io::{Read, Seek, SeekFrom};
+use std::path::Path;
 
 fn get_arch(machine: u16) -> Architecture {
     match machine {
@@ -26,40 +26,38 @@ fn get_arch(machine: u16) -> Architecture {
     }
 }
 
-
-fn get_hashmap_value(
-                    string_map: &HashMap<String, String>, 
-                    value_name: &str
-                    ) -> Result<String> 
-{
+fn get_hashmap_value(string_map: &HashMap<String, String>, value_name: &str) -> Result<String> {
     let _v = match string_map.get(value_name) {
         Some(v) => return Ok(v.to_string()),
-        None => return Ok("".to_string())
+        None => return Ok("".to_string()),
     };
 }
 
-
 fn get_date_string(timestamp: i64) -> Result<String> {
     let dt = match DateTime::from_timestamp(timestamp, 0) {
-            Some(s) => s.format("%Y-%m-%dT%H:%M:%S").to_string(),
-            None => "".to_string()
-        };
+        Some(s) => s.format("%Y-%m-%dT%H:%M:%S").to_string(),
+        None => "".to_string(),
+    };
     Ok(dt)
 }
-
 
 fn get_ssdeep_hash(buffer: &Vec<u8>) -> Result<String> {
     let ssdeep = FuzzyHash::new(buffer);
     Ok(ssdeep.to_string())
 }
 
-
 fn get_pe_file_info(path: &Path, binary_info: &mut BinaryInfo) -> Result<()> {
-    let Ok(pefile) = exe::VecPE::from_disk_file(path) else { return Ok(()) };
-    let Ok(vs_version_check) = exe::VSVersionInfo::parse(&pefile) else { return Ok(()) };
+    let Ok(pefile) = exe::VecPE::from_disk_file(path) else {
+        return Ok(());
+    };
+    let Ok(vs_version_check) = exe::VSVersionInfo::parse(&pefile) else {
+        return Ok(());
+    };
     let vs_version = vs_version_check;
     if let Some(string_file_info) = vs_version.string_file_info {
-        let Ok(string_map) = string_file_info.children[0].string_map() else { return Ok(()) };
+        let Ok(string_map) = string_file_info.children[0].string_map() else {
+            return Ok(());
+        };
         binary_info.pe_info.product_version = get_hashmap_value(&string_map, "ProductVersion")?;
         binary_info.pe_info.original_filename = get_hashmap_value(&string_map, "OriginalFilename")?;
         binary_info.pe_info.file_description = get_hashmap_value(&string_map, "FileDescription")?;
@@ -72,7 +70,6 @@ fn get_pe_file_info(path: &Path, binary_info: &mut BinaryInfo) -> Result<()> {
     Ok(())
 }
 
-
 fn read_section(path: &Path, start: u32, size: u32) -> Result<Vec<u8>> {
     let mut f = File::open(path)?;
     f.seek(SeekFrom::Start(start as u64))?;
@@ -80,7 +77,6 @@ fn read_section(path: &Path, start: u32, size: u32) -> Result<Vec<u8>> {
     f.read_exact(&mut buf)?;
     Ok(buf)
 }
-
 
 fn get_sections(pex: &pe::PE, path: &Path) -> Result<BinSections> {
     let mut bss = BinSections::default();
@@ -102,39 +98,37 @@ fn get_sections(pex: &pe::PE, path: &Path) -> Result<BinSections> {
     Ok(bss)
 }
 
-
 fn is_dotnet(imps: &Imports) -> Result<bool> {
     if imps.imports.len() == 1 {
-        if imps.imports[0].count ==1 
-            && imps.imports[0].lib == "mscoree.dll" 
-            && (
-                imps.imports[0].names[0].name == "_CorExeMain" 
-                || imps.imports[0].names[0].name == "_CorDllMain"
-            ) {
+        if imps.imports[0].count == 1
+            && imps.imports[0].lib == "mscoree.dll"
+            && (imps.imports[0].names[0].name == "_CorExeMain"
+                || imps.imports[0].names[0].name == "_CorDllMain")
+        {
             return Ok(true);
         }
     }
     Ok(false)
 }
 
-
-fn parse_pe_imports(imports: &Vec<goblin::pe::import::Import>) -> Result<(Imports, bool)> 
-{
-    let mut track_dlls:Vec<&str> = Vec::new();
+fn parse_pe_imports(imports: &Vec<goblin::pe::import::Import>) -> Result<(Imports, bool)> {
+    let mut track_dlls: Vec<&str> = Vec::new();
     let mut imps: Imports = Imports::default();
     let mut func: Function = Function::default();
     for i in imports.iter() {
-        if track_dlls.contains(&i.dll) { continue; }
+        if track_dlls.contains(&i.dll) {
+            continue;
+        }
         track_dlls.push(i.dll);
         let mut temp = Import::default();
         temp.lib = i.dll.to_string();
         for m in imports.iter() {
-            if i.dll != m.dll { continue; }
+            if i.dll != m.dll {
+                continue;
+            }
             temp.count += 1;
             func.name = m.name.to_string();
-            (func.more_interesting, func.info) = is_function_interesting(
-                                                    &i.dll.to_lowercase(),
-                                                    &func.name); 
+            func.info = is_function_interesting(&i.dll.to_lowercase(), &func.name);
             temp.names.push(func.clone());
         }
         imps.imports.push(temp);
@@ -142,7 +136,6 @@ fn parse_pe_imports(imports: &Vec<goblin::pe::import::Import>) -> Result<(Import
     let is_dot_net = is_dotnet(&imps)?;
     Ok((imps, is_dot_net))
 }
-
 
 fn get_hash_sorted(hash_array: &mut Vec<String>) -> Result<(String, String)> {
     hash_array.sort();
@@ -156,7 +149,6 @@ fn get_hash_sorted(hash_array: &mut Vec<String>) -> Result<(String, String)> {
     Ok((imphash_text_sorted, imphash_sorted))
 }
 
-
 fn check_ordinal(dll: &str, func: &str) -> Result<String> {
     let mut f: String = func.to_ascii_lowercase().replace("ordinal ", "");
     if f.parse::<u32>().is_ok() {
@@ -166,21 +158,24 @@ fn check_ordinal(dll: &str, func: &str) -> Result<String> {
     Ok(f)
 }
 
-
-fn get_imphashes(imports: &Vec<goblin::pe::import::Import>) 
-                        -> Result<(ImpHashes, usize, usize)> {
+fn get_imphashes(imports: &Vec<goblin::pe::import::Import>) -> Result<(ImpHashes, usize, usize)> {
     let mut imphash_array: Vec<String> = Vec::new();
     let mut imphash_text = String::new();
     let mut total_dlls = 0;
     let mut track_dll = String::new();
     for i in imports.iter() {
         let mut temp = String::new();
-        if i.dll != track_dll { total_dlls += 1; }
-        let dll = i.dll.to_ascii_lowercase()
+        if i.dll != track_dll {
+            total_dlls += 1;
+        }
+        let dll = i
+            .dll
+            .to_ascii_lowercase()
             .replace(".dll", "")
             .replace(".sys", "")
             .replace(".drv", "")
-            .replace(".ocx", "").to_string();
+            .replace(".ocx", "")
+            .to_string();
         temp.push_str(&dll);
         temp.push_str(".");
         let func = check_ordinal(i.dll, &i.name)?;
@@ -202,7 +197,6 @@ fn get_imphashes(imports: &Vec<goblin::pe::import::Import>)
     Ok((imphashes, total_dlls, imports.len()))
 }
 
-
 fn parse_pe_exports(exports: &Vec<goblin::pe::export::Export>) -> Result<Exports> {
     let mut exps = Exports::default();
     let mut exphash_text = String::new();
@@ -223,28 +217,32 @@ fn parse_pe_exports(exports: &Vec<goblin::pe::export::Export>) -> Result<Exports
     Ok(exps)
 }
 
-
 pub fn get_pe(buffer: &[u8], path: &Path) -> Result<Binary> {
     let mut bin = Binary::default();
     if let Ok(pe) = pe::PE::parse(&buffer) {
         (bin.imports, bin.binary_info.is_dotnet) = parse_pe_imports(&pe.imports)?;
         bin.binary_info.entry_point = format!("0x{:x}", pe.entry);
         bin.sections = get_sections(&pe, path)?;
-        (bin.imports.hashes, bin.imports.lib_count, bin.imports.func_count) = get_imphashes(&pe.imports)?;
+        (
+            bin.imports.hashes,
+            bin.imports.lib_count,
+            bin.imports.func_count,
+        ) = get_imphashes(&pe.imports)?;
         bin.binary_info.is_64 = pe.is_64;
         bin.binary_info.is_lib = pe.is_lib;
         bin.exports = parse_pe_exports(&pe.exports)?;
         get_pe_file_info(path, &mut bin.binary_info)?;
         bin.binary_info.format = BinaryFormat::Pe;
         bin.binary_info.arch = get_arch(pe.header.coff_header.machine);
-        bin.binary_info.pe_info.timestamps.compile = get_date_string(pe.header.coff_header.time_date_stamp as i64)?;
+        bin.binary_info.pe_info.timestamps.compile =
+            get_date_string(pe.header.coff_header.time_date_stamp as i64)?;
         bin.binary_info.pe_info.linker.major_version = match pe.header.optional_header {
             Some(d) => d.standard_fields.major_linker_version,
-            None => 0
+            None => 0,
         };
         bin.binary_info.pe_info.linker.minor_version = match pe.header.optional_header {
             Some(d) => d.standard_fields.minor_linker_version,
-            None => 0
+            None => 0,
         };
     }
     Ok(bin)

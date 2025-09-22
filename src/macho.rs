@@ -1,12 +1,12 @@
-use crate::data_defs::{BinSection, BinSections, Binary, BinaryFormat, BinaryInfo, ExpHashes, 
-                    Exports, Function, ImpHashes, Import, Imports, Architecture, 
-                    is_function_interesting};
-use goblin::mach::{self, cputype, header, Mach};
-use fuzzyhash::FuzzyHash;
-use entropy::shannon_entropy;
-use std::str;
+use crate::data_defs::{
+    is_function_interesting, Architecture, BinSection, BinSections, Binary, BinaryFormat,
+    BinaryInfo, ExpHashes, Exports, Function, ImpHashes, Import, Imports,
+};
 use anyhow::{anyhow, Result};
-
+use entropy::shannon_entropy;
+use fuzzyhash::FuzzyHash;
+use goblin::mach::{self, cputype, header, Mach};
+use std::str;
 
 fn get_arch(cputype: u32) -> Architecture {
     match cputype {
@@ -19,17 +19,16 @@ fn get_arch(cputype: u32) -> Architecture {
     }
 }
 
-
-fn parse_macho_header_info(
-    macho: &mach::MachO,
-    binary_info: &mut BinaryInfo,
-) -> Result<()> {
+fn parse_macho_header_info(macho: &mach::MachO, binary_info: &mut BinaryInfo) -> Result<()> {
     binary_info.is_64 = macho.is_64;
     binary_info.entry_point = format!("0x{:x}", macho.entry);
     binary_info.is_lib = macho.header.filetype == header::MH_DYLIB;
     binary_info.macho_info.file_type = header::filetype_to_str(macho.header.filetype).to_string();
     binary_info.macho_info.flags = format!("{:?}", macho.header.flags);
-    binary_info.macho_info.cpu_subtype = cputype::get_arch_name_from_types(macho.header.cputype, macho.header.cpusubtype).unwrap_or("UNKNOWN").to_string();
+    binary_info.macho_info.cpu_subtype =
+        cputype::get_arch_name_from_types(macho.header.cputype, macho.header.cpusubtype)
+            .unwrap_or("UNKNOWN")
+            .to_string();
     binary_info.macho_info.ncmds = macho.header.ncmds as u32;
     binary_info.macho_info.sizeofcmds = macho.header.sizeofcmds as u32;
     binary_info.format = BinaryFormat::MachO;
@@ -37,11 +36,7 @@ fn parse_macho_header_info(
     Ok(())
 }
 
-
-fn parse_macho_sections(
-    macho: &mach::MachO,
-    buffer: &[u8],
-) -> Result<BinSections> {
+fn parse_macho_sections(macho: &mach::MachO, buffer: &[u8]) -> Result<BinSections> {
     let mut sections = BinSections::default();
     for segment in &macho.segments {
         let sections_data = segment.sections().map_err(|e| anyhow!(e))?;
@@ -70,7 +65,6 @@ fn parse_macho_sections(
     Ok(sections)
 }
 
-
 fn get_hash_sorted(hash_array: &mut Vec<String>) -> (String, String) {
     hash_array.sort();
     let mut imphash_text_sorted = String::new();
@@ -80,9 +74,8 @@ fn get_hash_sorted(hash_array: &mut Vec<String>) -> (String, String) {
     imphash_text_sorted = imphash_text_sorted.trim_end_matches(",").to_string();
     let imphash_sorted = format!("{:x}", md5::compute(&imphash_text_sorted)).to_lowercase();
 
-    return (imphash_text_sorted, imphash_sorted)
+    return (imphash_text_sorted, imphash_sorted);
 }
-
 
 fn get_macho_imphashes(imports: &Imports) -> ImpHashes {
     let mut imphash_array: Vec<String> = Vec::new();
@@ -105,16 +98,15 @@ fn get_macho_imphashes(imports: &Imports) -> ImpHashes {
     let mut imphashes = ImpHashes::default();
     imphash_text = imphash_text.trim_end_matches(",").to_string();
     imphashes.md5 = format!("{:x}", md5::compute(imphash_text.as_bytes())).to_lowercase();
-    
+
     let (imphash_text_sorted, md5_sorted) = get_hash_sorted(&mut imphash_array);
     imphashes.md5_sorted = md5_sorted;
 
     imphashes.ssdeep = FuzzyHash::new(imphash_text.as_bytes()).to_string();
     imphashes.ssdeep_sorted = FuzzyHash::new(imphash_text_sorted.as_bytes()).to_string();
 
-    return imphashes
+    return imphashes;
 }
-
 
 fn get_macho_exphashes(exports: &Exports) -> ExpHashes {
     let mut exphashes = ExpHashes::default();
@@ -130,36 +122,30 @@ fn get_macho_exphashes(exports: &Exports) -> ExpHashes {
 
     exphash_text = exphash_text.trim_end_matches(",").to_string();
     exphashes.md5 = format!("{:x}", md5::compute(exphash_text.as_bytes())).to_lowercase();
-    
+
     let (exphash_text_sorted, md5_sorted) = get_hash_sorted(&mut exphash_array);
     exphashes.md5_sorted = md5_sorted;
 
     exphashes.ssdeep = FuzzyHash::new(exphash_text.as_bytes()).to_string();
     exphashes.ssdeep_sorted = FuzzyHash::new(exphash_text_sorted.as_bytes()).to_string();
 
-    return exphashes
+    return exphashes;
 }
-
 
 fn parse_macho_imports(macho: &mach::MachO) -> Result<Imports> {
     let mut imports = Imports::default();
     let imports_data = macho.imports().map_err(|e| anyhow!(e))?;
 
     for import in imports_data {
-        let (more_interesting, info) = is_function_interesting(
-            &import.dylib.to_lowercase(),
-            &import.name,
-        );
+        let info = is_function_interesting(&import.dylib.to_lowercase(), &import.name);
 
         let func = Function {
             name: import.name.to_string(),
-            more_interesting,
             info,
             ..Default::default()
         };
 
-        if let Some(existing_import) = imports.imports.iter_mut()
-                                                    .find(|i| i.lib == import.dylib) {
+        if let Some(existing_import) = imports.imports.iter_mut().find(|i| i.lib == import.dylib) {
             existing_import.names.push(func);
             existing_import.count += 1;
         } else {
@@ -173,11 +159,10 @@ fn parse_macho_imports(macho: &mach::MachO) -> Result<Imports> {
 
     // Populate aggregate counters and hashes (unchanged)
     imports.func_count = imports.imports.iter().map(|i| i.names.len()).sum();
-    imports.lib_count   = imports.imports.len();
-    imports.hashes      = get_macho_imphashes(&imports);
+    imports.lib_count = imports.imports.len();
+    imports.hashes = get_macho_imphashes(&imports);
     Ok(imports)
 }
-
 
 fn parse_macho_exports(macho: &mach::MachO) -> Result<Exports> {
     let mut exports = Exports::default();
@@ -189,7 +174,6 @@ fn parse_macho_exports(macho: &mach::MachO) -> Result<Exports> {
     exports.hashes = get_macho_exphashes(&exports);
     Ok(exports)
 }
-
 
 pub fn get_macho(buffer: &[u8]) -> Result<Binary> {
     let mut bin = Binary::default();
