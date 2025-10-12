@@ -785,9 +785,10 @@ pub fn build_interesting_funcs() -> HashMap<String, Vec<Func>> {
     .to_vec();
     dlls.insert("crypt32.dll".to_string(), funcs);
 
-        // gdi32.dll - Graphics Device Interface API
+    // gdi32.dll - Graphics Device Interface API
 
-        let funcs: Vec<Func> = [func.create("bind", "Associates a local address with a socket.")].to_vec();
+    let funcs: Vec<Func> =
+        [func.create("bind", "Associates a local address with a socket.")].to_vec();
     dlls.insert("gdi32.dll".to_string(), funcs);
 
     // icmp.dll - Internet Control Message Protocol API
@@ -1080,9 +1081,10 @@ pub fn build_interesting_funcs() -> HashMap<String, Vec<Func>> {
     .to_vec();
     dlls.insert("mpr.dll".to_string(), funcs);
 
-        // mscoree.dll - .NET Runtime Execution Engine
+    // mscoree.dll - .NET Runtime Execution Engine
 
-        let funcs: Vec<Func> = [func.create("controlservice", "Sends a control code to a service.")].to_vec();
+    let funcs: Vec<Func> =
+        [func.create("controlservice", "Sends a control code to a service.")].to_vec();
     dlls.insert("mscoree.dll".to_string(), funcs);
 
     // netapi32.dll - Network API for administration
@@ -1099,17 +1101,50 @@ pub fn build_interesting_funcs() -> HashMap<String, Vec<Func>> {
             "netapi32",
             "Provides API functions for network administration.",
         ),
-        func.create("NetServerGetInfo", "Retrieves current operating parameters for a specified server."),
-        func.create("NetStatisticsGet", "Retrieves operating statistics for a service."),
-        func.create("DsEnumerateDomainTrustsW", "Enumerates the trust relationships for a specified domain."),
-        func.create("DsGetDcNameW", "Finds a domain controller in a specified domain."),
-        func.create("NetApiBufferFree", "Frees the memory that the NetApiBufferAllocate function allocates."),
-        func.create("NetRemoteTOD", "Retrieves the time of day from a remote server."),
-        func.create("NetSessionEnum", "Provides information about sessions established on a server."),
-        func.create("NetWkstaUserEnum", "Lists all users currently logged on to the workstation."),
-        func.create("I_NetServerAuthenticate2", "Authenticates a server application client."),
-        func.create("I_NetServerTrustPasswordsGet", "Gets the trusted domain password."),
-        func.create("I_NetServerReqChallenge", "Requests a challenge from a server."),
+        func.create(
+            "NetServerGetInfo",
+            "Retrieves current operating parameters for a specified server.",
+        ),
+        func.create(
+            "NetStatisticsGet",
+            "Retrieves operating statistics for a service.",
+        ),
+        func.create(
+            "DsEnumerateDomainTrustsW",
+            "Enumerates the trust relationships for a specified domain.",
+        ),
+        func.create(
+            "DsGetDcNameW",
+            "Finds a domain controller in a specified domain.",
+        ),
+        func.create(
+            "NetApiBufferFree",
+            "Frees the memory that the NetApiBufferAllocate function allocates.",
+        ),
+        func.create(
+            "NetRemoteTOD",
+            "Retrieves the time of day from a remote server.",
+        ),
+        func.create(
+            "NetSessionEnum",
+            "Provides information about sessions established on a server.",
+        ),
+        func.create(
+            "NetWkstaUserEnum",
+            "Lists all users currently logged on to the workstation.",
+        ),
+        func.create(
+            "I_NetServerAuthenticate2",
+            "Authenticates a server application client.",
+        ),
+        func.create(
+            "I_NetServerTrustPasswordsGet",
+            "Gets the trusted domain password.",
+        ),
+        func.create(
+            "I_NetServerReqChallenge",
+            "Requests a challenge from a server.",
+        ),
     ]
     .to_vec();
     dlls.insert("netapi32.dll".to_string(), funcs);
@@ -1347,8 +1382,14 @@ pub fn build_interesting_funcs() -> HashMap<String, Vec<Func>> {
             "GetUserProfileDirectoryW",
             "Gets the path to the user's profile directory (Unicode).",
         ),
-        func.create("CreateEnvironmentBlock", "Retrieves the environment variables for the specified user."),
-        func.create("DestroyEnvironmentBlock", "Frees environment variables created by the CreateEnvironmentBlock function."),
+        func.create(
+            "CreateEnvironmentBlock",
+            "Retrieves the environment variables for the specified user.",
+        ),
+        func.create(
+            "DestroyEnvironmentBlock",
+            "Frees environment variables created by the CreateEnvironmentBlock function.",
+        ),
     ]
     .to_vec();
     dlls.insert("userenv.dll".to_string(), funcs);
@@ -1660,65 +1701,167 @@ pub fn build_interesting_funcs() -> HashMap<String, Vec<Func>> {
             "vfprintf",
             "Prints formatted output to a stream using variable arguments.",
         ),
-        func.create("isspace", "Checks if a character is a whitespace character."),
+        func.create(
+            "isspace",
+            "Checks if a character is a whitespace character.",
+        ),
         func.create("isdigit", "Checks if a character is a decimal digit."),
-        func.create("mbtowc", "Converts a multibyte character to a wide character."),
-        func.create("_lseeki64", "Moves the file pointer to a specified location (64-bit)."),
+        func.create(
+            "mbtowc",
+            "Converts a multibyte character to a wide character.",
+        ),
+        func.create(
+            "_lseeki64",
+            "Moves the file pointer to a specified location (64-bit).",
+        ),
         func.create("_write", "Writes data to a file."),
-        func.create("isleadbyte", "Determines if a character is a lead byte of a multibyte character."),
+        func.create(
+            "isleadbyte",
+            "Determines if a character is a lead byte of a multibyte character.",
+        ),
         func.create("isxdigit", "Checks if a character is a hexadecimal digit."),
-        func.create("localeconv", "Retrieves detailed information on locale settings."),
-        func.create("_snprintf", "Writes formatted data to a string of a specified size."),
+        func.create(
+            "localeconv",
+            "Retrieves detailed information on locale settings.",
+        ),
+        func.create(
+            "_snprintf",
+            "Writes formatted data to a string of a specified size.",
+        ),
         func.create("_itoa", "Converts an integer to a string."),
-        func.create("wctomb", "Converts a wide character to a multibyte character."),
+        func.create(
+            "wctomb",
+            "Converts a wide character to a multibyte character.",
+        ),
         func.create("ferror", "Checks for an error in a stream."),
-        func.create("iswctype", "Classifies wide characters by their character type."),
-        func.create("wcstombs", "Converts a sequence of wide characters to a sequence of multibyte characters."),
-        func.create("_isatty", "Determines if a file descriptor is associated with a character device."),
+        func.create(
+            "iswctype",
+            "Classifies wide characters by their character type.",
+        ),
+        func.create(
+            "wcstombs",
+            "Converts a sequence of wide characters to a sequence of multibyte characters.",
+        ),
+        func.create(
+            "_isatty",
+            "Determines if a file descriptor is associated with a character device.",
+        ),
         func.create("ungetc", "Pushes a character back to the stream."),
         func.create("?terminate @@YAXXZ", "C++ terminate handler."),
         func.create("__badioinfo", "Internal CRT function."),
         func.create("__pioinfo", "Internal CRT function."),
         func.create("_read", "Reads data from a file."),
         func.create("log", "Computes the natural logarithm."),
-        func.create("__mb_cur_max", "Gets the maximum number of bytes in a multibyte character for the current locale."),
-        func.create("vwprintf", "Writes formatted output using a pointer to a list of arguments."),
+        func.create(
+            "__mb_cur_max",
+            "Gets the maximum number of bytes in a multibyte character for the current locale.",
+        ),
+        func.create(
+            "vwprintf",
+            "Writes formatted output using a pointer to a list of arguments.",
+        ),
         func.create("_wcsdup", "Duplicates a wide-character string."),
-        func.create("_vsnprintf", "Writes formatted data of a specified size to a string."),
-        func.create("strrchr", "Locates the last occurrence of a character in a string."),
-        func.create("_wcsicmp", "Performs a case-insensitive comparison of wide-character strings."),
-        func.create("vfwprintf", "Writes formatted output to a stream using a pointer to a list of arguments."),
-        func.create("_vscwprintf", "Returns the number of characters required to write formatted data to a string."),
+        func.create(
+            "_vsnprintf",
+            "Writes formatted data of a specified size to a string.",
+        ),
+        func.create(
+            "strrchr",
+            "Locates the last occurrence of a character in a string.",
+        ),
+        func.create(
+            "_wcsicmp",
+            "Performs a case-insensitive comparison of wide-character strings.",
+        ),
+        func.create(
+            "vfwprintf",
+            "Writes formatted output to a stream using a pointer to a list of arguments.",
+        ),
+        func.create(
+            "_vscwprintf",
+            "Returns the number of characters required to write formatted data to a string.",
+        ),
         func.create("fflush", "Flushes a stream."),
         func.create("_wfopen", "Opens a file with a wide-character file name."),
-        func.create("wprintf", "Writes formatted output to the standard output stream."),
-        func.create("_fileno", "Gets the file descriptor associated with a stream."),
+        func.create(
+            "wprintf",
+            "Writes formatted output to the standard output stream.",
+        ),
+        func.create(
+            "_fileno",
+            "Gets the file descriptor associated with a stream.",
+        ),
         func.create("_iob", "Pointer to an array of stream control structures."),
         func.create("_setmode", "Sets the file translation mode."),
         func.create("fclose", "Closes a stream."),
-        func.create("_stricmp", "Performs a case-insensitive comparison of strings."),
-        func.create("wcsrchr", "Locates the last occurrence of a wide character in a wide-character string."),
-        func.create("wcschr", "Locates the first occurrence of a wide character in a wide-character string."),
+        func.create(
+            "_stricmp",
+            "Performs a case-insensitive comparison of strings.",
+        ),
+        func.create(
+            "wcsrchr",
+            "Locates the last occurrence of a wide character in a wide-character string.",
+        ),
+        func.create(
+            "wcschr",
+            "Locates the first occurrence of a wide character in a wide-character string.",
+        ),
         func.create("strtoul", "Converts a string to an unsigned long integer."),
-        func.create("_wcsnicmp", "Performs a case-insensitive comparison of a specified number of wide characters."),
+        func.create(
+            "_wcsnicmp",
+            "Performs a case-insensitive comparison of a specified number of wide characters.",
+        ),
         func.create("wcsstr", "Locates a wide-character substring."),
-        func.create("_vscprintf", "Returns the number of characters required to write formatted data to a string."),
-        func.create("_msize", "Returns the size of a memory block allocated from the heap."),
-        func.create("strcspn", "Finds the first character in a string that is also in a set of characters."),
+        func.create(
+            "_vscprintf",
+            "Returns the number of characters required to write formatted data to a string.",
+        ),
+        func.create(
+            "_msize",
+            "Returns the size of a memory block allocated from the heap.",
+        ),
+        func.create(
+            "strcspn",
+            "Finds the first character in a string that is also in a set of characters.",
+        ),
         func.create("realloc", "Reallocates a memory block."),
         func.create("fgetws", "Gets a wide-character string from a stream."),
-        func.create("wcstoul", "Converts a wide-character string to an unsigned long integer."),
-        func.create("wcstol", "Converts a wide-character string to a long integer."),
+        func.create(
+            "wcstoul",
+            "Converts a wide-character string to an unsigned long integer.",
+        ),
+        func.create(
+            "wcstol",
+            "Converts a wide-character string to a long integer.",
+        ),
         func.create("towupper", "Converts a wide character to uppercase."),
         func.create("_wpgmptr", "Pointer to the wide-character program name."),
         func.create("strstr", "Locates a substring."),
-        func.create("strchr", "Locates the first occurrence of a character in a string."),
-        func.create("_wcstoui64", "Converts a wide-character string to an unsigned 64-bit integer."),
-        func.create("wcsncmp", "Compares a specified number of wide characters in two strings."),
-        func.create("getchar", "Gets a character from the standard input stream."),
+        func.create(
+            "strchr",
+            "Locates the first occurrence of a character in a string.",
+        ),
+        func.create(
+            "_wcstoui64",
+            "Converts a wide-character string to an unsigned 64-bit integer.",
+        ),
+        func.create(
+            "wcsncmp",
+            "Compares a specified number of wide characters in two strings.",
+        ),
+        func.create(
+            "getchar",
+            "Gets a character from the standard input stream.",
+        ),
         func.create("__C_specific_handler", "The C-specific exception handler."),
-        func.create("__wgetmainargs", "Internal CRT function to get main arguments."),
-        func.create("_XcptFilter", "The exception filter expression used by the C run-time library."),
+        func.create(
+            "__wgetmainargs",
+            "Internal CRT function to get main arguments.",
+        ),
+        func.create(
+            "_XcptFilter",
+            "The exception filter expression used by the C run-time library.",
+        ),
         func.create("_exit", "Terminates the calling process."),
     ]
     .to_vec();
@@ -1760,13 +1903,26 @@ pub fn build_interesting_funcs() -> HashMap<String, Vec<Func>> {
     dlls.insert("cryptdll.dll".to_string(), funcs);
 
     // dnsapi.dll - DNS API
-    let funcs: Vec<Func> = [func.create("DnsFree", "Frees memory allocated for DNS data."), func.create("DnsQuery_A", "Retrieves host A records for a given DNS name.")].to_vec();
+    let funcs: Vec<Func> = [
+        func.create("DnsFree", "Frees memory allocated for DNS data."),
+        func.create(
+            "DnsQuery_A",
+            "Retrieves host A records for a given DNS name.",
+        ),
+    ]
+    .to_vec();
     dlls.insert("dnsapi.dll".to_string(), funcs);
 
     // fltlib.dll - Filter Manager Library
     let funcs: Vec<Func> = [
-        func.create("FilterFindFirst", "Starts enumerating minifilter drivers in the system."),
-        func.create("FilterFindNext", "Continues a minifilter driver search started by a call to FilterFindFirst."),
+        func.create(
+            "FilterFindFirst",
+            "Starts enumerating minifilter drivers in the system.",
+        ),
+        func.create(
+            "FilterFindNext",
+            "Continues a minifilter driver search started by a call to FilterFindFirst.",
+        ),
     ]
     .to_vec();
     dlls.insert("fltlib.dll".to_string(), funcs);
@@ -1782,24 +1938,48 @@ pub fn build_interesting_funcs() -> HashMap<String, Vec<Func>> {
 
     // samlib.dll - Security Account Manager library
     let funcs: Vec<Func> = [
-        func.create("SamEnumerateGroupsInDomain", "Enumerates all groups in the specified domain."),
+        func.create(
+            "SamEnumerateGroupsInDomain",
+            "Enumerates all groups in the specified domain.",
+        ),
         func.create("SamiChangePasswordUser", "Changes a user's password."),
         func.create("SamSetInformationUser", "Sets information for a user."),
-        func.create("SamGetGroupsForUser", "Retrieves the groups that a user belongs to."),
+        func.create(
+            "SamGetGroupsForUser",
+            "Retrieves the groups that a user belongs to.",
+        ),
         func.create("SamConnect", "Connects to the SAM server."),
         func.create("SamGetMembersInGroup", "Retrieves the members of a group."),
         func.create("SamRidToSid", "Converts a RID to a SID."),
         func.create("SamGetMembersInAlias", "Retrieves the members of an alias."),
-        func.create("SamEnumerateAliasesInDomain", "Enumerates all aliases in the specified domain."),
-        func.create("SamGetAliasMembership", "Retrieves the aliases that a user belongs to."),
+        func.create(
+            "SamEnumerateAliasesInDomain",
+            "Enumerates all aliases in the specified domain.",
+        ),
+        func.create(
+            "SamGetAliasMembership",
+            "Retrieves the aliases that a user belongs to.",
+        ),
         func.create("SamOpenGroup", "Opens a group."),
-        func.create("SamQueryInformationUser", "Queries information about a user."),
+        func.create(
+            "SamQueryInformationUser",
+            "Queries information about a user.",
+        ),
         func.create("SamCloseHandle", "Closes a SAM handle."),
-        func.create("SamEnumerateDomainsInSamServer", "Enumerates all domains in the SAM server."),
+        func.create(
+            "SamEnumerateDomainsInSamServer",
+            "Enumerates all domains in the SAM server.",
+        ),
         func.create("SamFreeMemory", "Frees memory allocated by a SAM function."),
-        func.create("SamEnumerateUsersInDomain", "Enumerates all users in the specified domain."),
+        func.create(
+            "SamEnumerateUsersInDomain",
+            "Enumerates all users in the specified domain.",
+        ),
         func.create("SamOpenUser", "Opens a user."),
-        func.create("SamLookupDomainInSamServer", "Looks up a domain in the SAM server."),
+        func.create(
+            "SamLookupDomainInSamServer",
+            "Looks up a domain in the SAM server.",
+        ),
         func.create("SamLookupNamesInDomain", "Looks up names in a domain."),
         func.create("SamLookupIdsInDomain", "Looks up RIDs in a domain."),
         func.create("SamOpenDomain", "Opens a domain."),
@@ -1877,12 +2057,30 @@ pub fn build_interesting_funcs() -> HashMap<String, Vec<Func>> {
 
     // winsta.dll - Window Station and Desktop API
     let funcs: Vec<Func> = [
-        func.create("WinStationCloseServer", "Closes a handle to a Remote Desktop Services server."),
-        func.create("WinStationOpenServerW", "Opens a handle to a Remote Desktop Services server."),
-        func.create("WinStationFreeMemory", "Frees memory allocated by a WinStation function."),
-        func.create("WinStationConnectW", "Connects a session to an existing session on the local computer."),
-        func.create("WinStationQueryInformationW", "Retrieves information about a Remote Desktop Services session."),
-        func.create("WinStationEnumerateW", "Enumerates all Remote Desktop Services sessions on a specified server."),
+        func.create(
+            "WinStationCloseServer",
+            "Closes a handle to a Remote Desktop Services server.",
+        ),
+        func.create(
+            "WinStationOpenServerW",
+            "Opens a handle to a Remote Desktop Services server.",
+        ),
+        func.create(
+            "WinStationFreeMemory",
+            "Frees memory allocated by a WinStation function.",
+        ),
+        func.create(
+            "WinStationConnectW",
+            "Connects a session to an existing session on the local computer.",
+        ),
+        func.create(
+            "WinStationQueryInformationW",
+            "Retrieves information about a Remote Desktop Services session.",
+        ),
+        func.create(
+            "WinStationEnumerateW",
+            "Enumerates all Remote Desktop Services sessions on a specified server.",
+        ),
     ]
     .to_vec();
     dlls.insert("winsta.dll".to_string(), funcs);
@@ -1930,7 +2128,10 @@ pub fn build_interesting_funcs() -> HashMap<String, Vec<Func>> {
     // msasn1.dll - ASN.1 parsing API
     let funcs: Vec<Func> = [
         func.create("ASN1_CreateModule", "Creates an ASN.1 module."),
-        func.create("ASN1BERDotVal2Eoid", "Converts a dotted value to an object identifier."),
+        func.create(
+            "ASN1BERDotVal2Eoid",
+            "Converts a dotted value to an object identifier.",
+        ),
         func.create("ASN1_CloseEncoder", "Closes an ASN.1 encoder."),
         func.create("ASN1_CreateDecoder", "Creates an ASN.1 decoder."),
         func.create("ASN1_FreeEncoded", "Frees an encoded ASN.1 structure."),
