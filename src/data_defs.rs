@@ -1882,10 +1882,22 @@ pub fn build_interesting_funcs() -> HashMap<String, Vec<Func>> {
 
     // Cabinet.dll - Cabinet file API
     let funcs: Vec<Func> = [
-        func.create("ORDINAL 11", "Undocumented function."),
-        func.create("ORDINAL 14", "Undocumented function."),
-        func.create("ORDINAL 10", "Undocumented function."),
-        func.create("ORDINAL 13", "Undocumented function."),
+        func.create(
+            "ORDINAL 11",
+            "FDICreate: Creates a File Decompression Interface (FDI) context.",
+        ),
+        func.create(
+            "ORDINAL 14",
+            "FDITruncateCabinet: Truncates a cabinet file at a specified folder number.",
+        ),
+        func.create(
+            "ORDINAL 10",
+            "FDICopy: Extracts a file from a cabinet, decompressing it in the process.",
+        ),
+        func.create(
+            "ORDINAL 13",
+            "FDIDestroy: Destroys an open FDI context, freeing its memory.",
+        ),
     ]
     .to_vec();
     dlls.insert("cabinet.dll".to_string(), funcs);
@@ -2087,42 +2099,41 @@ pub fn build_interesting_funcs() -> HashMap<String, Vec<Func>> {
 
     // wldap32.dll - LDAP API
     let funcs: Vec<Func> = [
-        func.create("ORDINAL 122", "Undocumented function."),
-        func.create("ORDINAL 14", "Undocumented function."),
-        func.create("ORDINAL 88", "Undocumented function."),
-        func.create("ORDINAL 157", "Undocumented function."),
-        func.create("ORDINAL 133", "Undocumented function."),
-        func.create("ORDINAL 27", "Undocumented function."),
-        func.create("ORDINAL 147", "Undocumented function."),
-        func.create("ORDINAL 167", "Undocumented function."),
-        func.create("ORDINAL 26", "Undocumented function."),
-        func.create("ORDINAL 127", "Undocumented function."),
-        func.create("ORDINAL 224", "Undocumented function."),
-        func.create("ORDINAL 113", "Undocumented function."),
-        func.create("ORDINAL 309", "Undocumented function."),
-        func.create("ORDINAL 54", "Undocumented function."),
-        func.create("ORDINAL 142", "Undocumented function."),
-        func.create("ORDINAL 77", "Undocumented function."),
-        func.create("ORDINAL 13", "Undocumented function."),
-        func.create("ORDINAL 208", "Undocumented function."),
-        func.create("ORDINAL 145", "Undocumented function."),
-        func.create("ORDINAL 36", "Undocumented function."),
-        func.create("ORDINAL 79", "Undocumented function."),
-        func.create("ORDINAL 41", "Undocumented function."),
-        func.create("ORDINAL 73", "Undocumented function."),
-        func.create("ORDINAL 310", "Undocumented function."),
-        func.create("ORDINAL 203", "Undocumented function."),
-        func.create("ORDINAL 69", "Undocumented function."),
-        func.create("ORDINAL 139", "Undocumented function."),
-        func.create("ORDINAL 97", "Undocumented function."),
-        func.create("ORDINAL 223", "Undocumented function."),
-        func.create("ORDINAL 304", "Undocumented function."),
-        func.create("ORDINAL 12", "Undocumented function."),
-        func.create("ORDINAL 96", "Undocumented function."),
-        func.create("ORDINAL 301", "Undocumented function."),
-        func.create("ORDINAL 140", "Undocumented function."),
-    ]
-    .to_vec();
+        func.create("ORDINAL 122", "LdapMapErrorToWin32: Converts an LDAP error code to a Windows error code."),
+        func.create("ORDINAL 14", "cldap_open: Obsolete function to initialize a session with an LDAP server over UDP."),
+        func.create("ORDINAL 88", "ldap_ufn2dn: Converts a user-friendly name to a Distinguished Name (DN)."),
+        func.create("ORDINAL 157", "ldap_create_sort_control: Creates a control for sorting search results."),
+        func.create("ORDINAL 133", "ldap_stop_tls_s: Stops a TLS-encrypted session."),
+        func.create("ORDINAL 27", "ldap_count_references: Counts the number of continuation references returned by a search."),
+        func.create("ORDINAL 147", "ber_scanf: Decodes a BER element using a format string."),
+        func.create("ORDINAL 167", "ldap_set_dbg_flags: Sets debug flags for the LDAP library."),
+        func.create("ORDINAL 26", "ldap_count_entries: Counts the number of entries in a search result chain."),
+        func.create("ORDINAL 127", "ldap_get_option: Retrieves the current value of session-wide parameters."),
+        func.create("ORDINAL 224", "ldap_err2string: Converts an LDAP error code to a descriptive string."),
+        func.create("ORDINAL 113", "ldap_first_attribute: Retrieves the first attribute in a given entry."),
+        func.create("ORDINAL 309", "ldap_conn_per_thread_init: Initializes per-thread connection management."),
+        func.create("ORDINAL 54", "ldap_search_s: Synchronously performs an LDAP search operation."),
+        func.create("ORDINAL 142", "ber_alloc_t: Allocates a new BerElement structure."),
+        func.create("ORDINAL 77", "ldap_result: Waits for and returns the result of an asynchronous operation."),
+        func.create("ORDINAL 13", "cldap_close: Obsolete function to close a UDP-based LDAP session."),
+        func.create("ORDINAL 208", "ldap_simple_bind_s: Synchronously authenticates to a server using a username and password."),
+        func.create("ORDINAL 145", "ber_printf: Encodes data into a BerElement using a format string."),
+        func.create("ORDINAL 36", "ldap_get_values_len: Retrieves a set of binary values for a given attribute."),
+        func.create("ORDINAL 79", "ldap_set_option: Sets session-wide parameters."),
+        func.create("ORDINAL 41", "ldap_memfree: Frees memory allocated by the LDAP library."),
+        func.create("ORDINAL 73", "ldap_parse_result: Parses the results returned from an LDAP operation."),
+        func.create("ORDINAL 310", "ldap_conn_per_thread_cleanup: Cleans up per-thread connection management."),
+        func.create("ORDINAL 203", "ldap_search_ext_s: Synchronously performs an extended LDAP search with controls."),
+        func.create("ORDINAL 69", "ldap_next_entry: Retrieves the next entry in a chain of search results."),
+        func.create("ORDINAL 139", "LdapGetLastError: Retrieves the last error code set for the calling thread."),
+        func.create("ORDINAL 97", "ldap_add_s: Synchronously performs an LDAP add operation."),
+        func.create("ORDINAL 223", "ldap_controls_free: Frees an array of LDAPControl structures."),
+        func.create("ORDINAL 304", "ldap_create_vlv_control: Creates a control for virtual list view (VLV) searches."),
+        func.create("ORDINAL 12", "ldap_abandon: Abandons or cancels an asynchronous LDAP operation."),
+        func.create("ORDINAL 96", "ldap_add: Asynchronously performs an LDAP add operation."),
+        func.create("ORDINAL 301", "ldap_search_abandon_page: Abandons a paged search operation."),
+        func.create("ORDINAL 140", "LdapUTF8ToUnicode: Converts a UTF-8 string to a Unicode string."),
+    ].to_vec();
     dlls.insert("wldap32.dll".to_string(), funcs);
 
     // msasn1.dll - ASN.1 parsing API
