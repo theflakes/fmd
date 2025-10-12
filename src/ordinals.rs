@@ -531,13 +531,22 @@ pub fn imphash_resolve<S: AsRef<str>>(dll_name: S, ordinal: u32) -> String {
     let dll = dll_name.as_ref().to_string().to_ascii_lowercase();
 
     if dll == "ws2_32.dll" || dll == "wsock32.dll" {
-        return match WS2_32_ORDINALS.iter().cloned().collect::<HashMap<u32, &'static str>>().get(&ordinal) {
+        return match WS2_32_ORDINALS
+            .iter()
+            .cloned()
+            .collect::<HashMap<u32, &'static str>>()
+            .get(&ordinal)
+        {
             None => format!("ord{}", ordinal).to_string(),
             Some(s) => s.to_string(),
         };
-    }
-    else if dll == "oleaut32.dll" {
-        return match OLEAUT32_ORDINALS.iter().cloned().collect::<HashMap<u32, &'static str>>().get(&ordinal) {
+    } else if dll == "oleaut32.dll" {
+        return match OLEAUT32_ORDINALS
+            .iter()
+            .cloned()
+            .collect::<HashMap<u32, &'static str>>()
+            .get(&ordinal)
+        {
             None => format!("ord{}", ordinal).to_string(),
             Some(s) => s.to_string(),
         };
