@@ -4,6 +4,8 @@ fmd = File Metadata
 
 Currently supports parsing Windows LNK files, PE, Mach-O, and Elf binaries.
 
+[DLL API Sets](https://ofekshilon.com/2016/03/27/on-api-ms-win-xxxxx-dll-and-other-dependency-walker-glitches/)
+
 #### **Understanding MS PE analysis**
 https://practicalsecurityanalytics.com/threat-hunting-with-function-imports/
 https://resources.infosecinstitute.com/topic/malware-researchers-handbook/
