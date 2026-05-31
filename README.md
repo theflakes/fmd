@@ -38,10 +38,12 @@ License: MIT
 Purpose: Pull various file metadata.
 
 Usage:
-    fmd [--pretty | -p] ([--strings|-s] #) <file path> ([--depth | -d] #)
+    fmd [--pretty | -p] ([--strings|-s] #) <file path> ([--depth | -d] #) ([--jobs | -j] #)
     fmd --pretty --depth 3 --extensions 'exe,dll,pif,ps1,bat,com'
     fmd --pretty --depth 3 --extensions 'not:exe,dll,pif,ps1,bat,com'
-        This will process all files that do not have the specified extensions.
+    fmd --pretty --jobs 4 --depth 3 <directory>
+        This will process all files in the directory tree up to 3 levels deep
+        using 4 threads in parallel.
 
 Options:
     -d, --depth #       If passed a directory, recurse into all subdirectories
@@ -50,6 +52,9 @@ Options:
                         - Any extensions not in the list will be ignored
     -h, --help          Show this help message
     -i, --int_mtypes    Only analyze files that are more interesting mime types
+    -j, --jobs #        Number of threads to use for parallel file analysis
+                        - When > 1, files are analyzed concurrently
+                        - Defaults to the number of (CPU cores - 1)
     -m, --maxsize #     Max file size in bytes to perform content analysis on
                         - Any file larger than this will not have the following run:
                           hashing, entropy, mime type, strings, PE analysis
@@ -64,46 +69,46 @@ fmd.exe <directory> --depth 1
 
 Mimetypes are determined by examining a file's contents.
     - Interesting mime types:
-      "application/vnd.microsoft.portable-executable",
-      "application/hta",
-      "application/mac-binary",
-      "application/macbinary",
-      "application/octet-stream",
-      "application/x-binary",
-      "application/x-dosexec",
-      "application/x-executable",
-      "application/x-macbinary",
-      "application/x-ms-dos-executable",
-      "application/x-msdownload",
-      "application/x-sharedlib",
-      "application/x-elf",
-      "application/x-mach-binary",
-      "application/wasm",
-      "text/javascript",
-      "application/x-csh",
-      "application/x-shellscript",
-      "text/x-shellscript",
-      "text/x-nushell",
-      "application/x-nuscript",
-      "application/x-java-archive",
-      "application/x-jar",
-      "application/vnd.android.package-archive",
-      "application/x-ms-wizard",
-      "application/x-ms-application",
-      "application/x-dynamic-link-library",
-      "application/x-executable",
-      "application/x-mac-package",
-      "application/x-mach-o",
-      "application/x-pkcs7-cert",
-      "application/x-pkcs12",
-      "application/x-rpm",
-      "application/x-debian-package",
-      "application/x-tar",
-      "application/x-gtar",
-      "application/x-iso9660-image",
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        application/vnd.android.package-archive
+        application/vnd.microsoft.portable-executable
+        application/vnd.openxmlformats-officedocument.presentationml.presentation
+        application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+        application/vnd.openxmlformats-officedocument.wordprocessingml.document
+        application/x-binary
+        application/x-csh
+        application/x-debian-package
+        application/x-dosexec
+        application/x-dynamic-link-library
+        application/x-executable
+        application/x-gtar
+        application/x-java-archive
+        application/x-jar
+        application/x-macbinary
+        application/x-mac-package
+        application/x-mach-o
+        application/x-mach-binary
+        application/x-ms-application
+        application/x-ms-dos-executable
+        application/x-ms-download
+        application/x-ms-wizard
+        application/x-pkcs12
+        application/x-pkcs7-cert
+        application/x-rpm
+        application/x-shellscript
+        application/x-tar
+        application/x-elf
+        application/x-sharedlib
+        application/x-mac-package
+        application/x-nuscript
+        application/x-nushell
+        application/wasm
+        application/hta
+        application/mac-binary
+        application/macbinary
+        application/octet-stream
+        text/javascript
+        text/x-shellscript
+        text/x-nushell
 
 NOTE:
     If passed a directory, all files in that directory will be analyzed.
