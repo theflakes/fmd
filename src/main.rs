@@ -1,17 +1,3 @@
-extern crate dunce;
-extern crate entropy;
-extern crate exe;
-extern crate fuzzyhash;
-extern crate goblin;
-extern crate infer;
-extern crate lnk;
-extern crate path_abs;
-extern crate sha1;
-extern crate sha2;
-
-#[macro_use]
-extern crate lazy_static;
-
 mod data_defs;
 mod elf;
 mod macho;

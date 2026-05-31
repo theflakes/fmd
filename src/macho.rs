@@ -1,6 +1,6 @@
 use crate::data_defs::{
-    is_function_interesting, Architecture, BinSection, BinSections, Binary, BinaryFormat,
-    BinaryInfo, ExpHashes, Exports, Function, ImpHashes, Import, Imports,
+    get_hash_sorted, is_function_interesting, Architecture, BinSection, BinSections, Binary,
+    BinaryFormat, BinaryInfo, ExpHashes, Exports, Function, ImpHashes, Import, Imports,
 };
 use anyhow::{anyhow, Result};
 use entropy::shannon_entropy;
@@ -65,18 +65,6 @@ fn parse_macho_sections(macho: &mach::MachO, buffer: &[u8]) -> Result<BinSection
     Ok(sections)
 }
 
-fn get_hash_sorted(hash_array: &mut Vec<String>) -> (String, String) {
-    hash_array.sort();
-    let mut imphash_text_sorted = String::new();
-    for i in hash_array.iter() {
-        imphash_text_sorted.push_str(i);
-    }
-    imphash_text_sorted = imphash_text_sorted.trim_end_matches(",").to_string();
-    let imphash_sorted = format!("{:x}", md5::compute(&imphash_text_sorted)).to_lowercase();
-
-    return (imphash_text_sorted, imphash_sorted);
-}
-
 fn get_macho_imphashes(imports: &Imports) -> ImpHashes {
     let mut imphash_array: Vec<String> = Vec::new();
     let mut imphash_text = String::new();
@@ -99,7 +87,7 @@ fn get_macho_imphashes(imports: &Imports) -> ImpHashes {
     imphash_text = imphash_text.trim_end_matches(",").to_string();
     imphashes.md5 = format!("{:x}", md5::compute(imphash_text.as_bytes())).to_lowercase();
 
-    let (imphash_text_sorted, md5_sorted) = get_hash_sorted(&mut imphash_array);
+    let (imphash_text_sorted, md5_sorted) = crate::data_defs::get_hash_sorted(&mut imphash_array);
     imphashes.md5_sorted = md5_sorted;
 
     imphashes.ssdeep = FuzzyHash::new(imphash_text.as_bytes()).to_string();
@@ -133,7 +121,8 @@ fn get_macho_exphashes(exports: &Exports) -> ExpHashes {
 }
 
 fn parse_macho_imports(macho: &mach::MachO) -> Result<Imports> {
-    let mut imports = Imports::default();
+    let mut imports_map: std::collections::HashMap<String, (Import, usize)> =
+        std::collections::HashMap::new();
     let imports_data = macho.imports().map_err(|e| anyhow!(e))?;
 
     for import in imports_data {
@@ -145,19 +134,24 @@ fn parse_macho_imports(macho: &mach::MachO) -> Result<Imports> {
             ..Default::default()
         };
 
-        if let Some(existing_import) = imports.imports.iter_mut().find(|i| i.lib == import.dylib) {
-            existing_import.names.push(func);
-            existing_import.count += 1;
-        } else {
-            imports.imports.push(Import {
-                lib: import.dylib.to_string(),
-                count: 1,
-                names: vec![func],
-            });
-        }
+        let entry = imports_map
+            .entry(import.dylib.to_string())
+            .or_insert_with(|| (Import::default(), 0));
+        entry.0.names.push(func);
+        entry.1 += 1;
     }
 
-    // Populate aggregate counters and hashes (unchanged)
+    let mut imports = Imports::default();
+    imports.imports = imports_map
+        .into_iter()
+        .map(|(lib, (mut imp, count))| {
+            imp.lib = lib;
+            imp.count = count as u32;
+            imp
+        })
+        .collect();
+
+    // Populate aggregate counters and hashes
     imports.func_count = imports.imports.iter().map(|i| i.names.len()).sum();
     imports.lib_count = imports.imports.len();
     imports.hashes = get_macho_imphashes(&imports);

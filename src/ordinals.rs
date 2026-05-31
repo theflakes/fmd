@@ -4,6 +4,25 @@
 use std::collections::HashMap;
 use std::convert::AsRef;
 
+use lazy_static::lazy_static;
+
+lazy_static! {
+    static ref WS2_32_ORDINAL_MAP: HashMap<u32, &'static str> = {
+        let mut map = HashMap::new();
+        for &(ord, name) in WS2_32_ORDINALS {
+            map.insert(ord, name);
+        }
+        map
+    };
+    static ref OLEAUT32_ORDINAL_MAP: HashMap<u32, &'static str> = {
+        let mut map = HashMap::new();
+        for &(ord, name) in OLEAUT32_ORDINALS {
+            map.insert(ord, name);
+        }
+        map
+    };
+}
+
 const WS2_32_ORDINALS: &[(u32, &'static str)] = &[
     (1u32, "accept"),
     (2, "bind"),
@@ -531,26 +550,16 @@ pub fn imphash_resolve<S: AsRef<str>>(dll_name: S, ordinal: u32) -> String {
     let dll = dll_name.as_ref().to_string().to_ascii_lowercase();
 
     if dll == "ws2_32.dll" || dll == "wsock32.dll" {
-        return match WS2_32_ORDINALS
-            .iter()
-            .cloned()
-            .collect::<HashMap<u32, &'static str>>()
+        return WS2_32_ORDINAL_MAP
             .get(&ordinal)
-        {
-            None => format!("ord{}", ordinal).to_string(),
-            Some(s) => s.to_string(),
-        };
+            .map(|s| s.to_string())
+            .unwrap_or_else(|| format!("ord{ordinal}"));
     } else if dll == "oleaut32.dll" {
-        return match OLEAUT32_ORDINALS
-            .iter()
-            .cloned()
-            .collect::<HashMap<u32, &'static str>>()
+        return OLEAUT32_ORDINAL_MAP
             .get(&ordinal)
-        {
-            None => format!("ord{}", ordinal).to_string(),
-            Some(s) => s.to_string(),
-        };
+            .map(|s| s.to_string())
+            .unwrap_or_else(|| format!("ord{ordinal}"));
     }
 
-    format!("ord{}", ordinal).to_string()
+    format!("ord{ordinal}")
 }

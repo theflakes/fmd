@@ -1,6 +1,6 @@
 [package]
 name = "fmd"
-version = "1.1.2"
+version = "1.1.3"
 edition = "2021"
 authors = ["Brian Kellogg"]
 description = "Parse file meta data for forensics purposes."
@@ -28,7 +28,6 @@ anyhow = "*"
 epochs = "*"
 is_elevated = "*"
 exe = "*"
-#rand = "*"
 lnk = "*"
 
 [profile.release]

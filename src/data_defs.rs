@@ -4,6 +4,7 @@ extern crate whoami;
 
 use chrono::{DateTime, Utc};
 use is_elevated::is_elevated;
+use lazy_static::lazy_static;
 use serde::Serialize;
 use std::collections::HashMap;
 use std::{io, time::SystemTime};
@@ -614,6 +615,19 @@ impl Func {
     pub fn create(&self, name: &str, desc: &str) -> Func {
         Func::new(name.to_string(), desc.to_string())
     }
+}
+
+/// Compute MD5 hash of a sorted list of import strings (imphash variant).
+pub fn get_hash_sorted(hash_array: &mut Vec<String>) -> (String, String) {
+    hash_array.sort();
+    let mut imphash_text_sorted = String::new();
+    for i in hash_array.iter() {
+        imphash_text_sorted.push_str(i);
+    }
+    imphash_text_sorted = imphash_text_sorted.trim_end_matches(',').to_string();
+    let imphash_sorted =
+        format!("{:x}", md5::compute(imphash_text_sorted.as_bytes())).to_lowercase();
+    (imphash_text_sorted, imphash_sorted)
 }
 
 pub fn build_interesting_funcs() -> HashMap<String, Vec<Func>> {

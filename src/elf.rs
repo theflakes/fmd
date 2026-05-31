@@ -1,6 +1,6 @@
 use crate::data_defs::{
-    is_function_interesting, Architecture, BinSection, BinSections, Binary, BinaryFormat,
-    BinaryInfo, ExpHashes, Exports, Function, ImpHashes, Import, Imports,
+    get_hash_sorted, is_function_interesting, Architecture, BinSection, BinSections, Binary,
+    BinaryFormat, BinaryInfo, ExpHashes, Exports, Function, ImpHashes, Import, Imports,
 };
 use anyhow::Result;
 use entropy::shannon_entropy;
@@ -120,18 +120,6 @@ fn build_elf_version_map(elf: &elf::Elf) -> HashMap<u16, String> {
     return version_map;
 }
 
-fn get_hash_sorted(hash_array: &mut Vec<String>) -> (String, String) {
-    hash_array.sort();
-    let mut imphash_text_sorted = String::new();
-    for i in hash_array.iter() {
-        imphash_text_sorted.push_str(i);
-    }
-    imphash_text_sorted = imphash_text_sorted.trim_end_matches(",").to_string();
-    let imphash_sorted = format!("{:x}", md5::compute(&imphash_text_sorted)).to_lowercase();
-
-    return (imphash_text_sorted, imphash_sorted);
-}
-
 fn get_elf_imphashes(imports: &Imports) -> ImpHashes {
     let mut imphash_array: Vec<String> = Vec::new();
     let mut imphash_text = String::new();
@@ -154,7 +142,7 @@ fn get_elf_imphashes(imports: &Imports) -> ImpHashes {
     imphash_text = imphash_text.trim_end_matches(",").to_string();
     imphashes.md5 = format!("{:x}", md5::compute(imphash_text.as_bytes())).to_lowercase();
 
-    let (imphash_text_sorted, md5_sorted) = get_hash_sorted(&mut imphash_array);
+    let (imphash_text_sorted, md5_sorted) = crate::data_defs::get_hash_sorted(&mut imphash_array);
     imphashes.md5_sorted = md5_sorted;
 
     imphashes.ssdeep = FuzzyHash::new(imphash_text.as_bytes()).to_string();
@@ -188,12 +176,12 @@ fn get_elf_exphashes(exports: &Exports) -> ExpHashes {
 }
 
 fn parse_elf_imports(elf: &elf::Elf, version_map: &HashMap<u16, String>) -> Imports {
-    let mut imports = Imports::default();
+    let mut imports_map: HashMap<String, (Import, usize)> = HashMap::new();
 
     for (i, sym) in elf.dynsyms.iter().enumerate() {
         if sym.is_import() {
             if let Some(name) = elf.dynstrtab.get_at(sym.st_name) {
-                // Resolve the providing library (or fall back to “unknown”)
+                // Resolve the providing library (or fall back to "unknown")
                 let lib_name = elf
                     .versym
                     .as_ref()
@@ -216,20 +204,24 @@ fn parse_elf_imports(elf: &elf::Elf, version_map: &HashMap<u16, String>) -> Impo
                     ..Default::default()
                 };
 
-                if let Some(import) = imports.imports.iter_mut().find(|imp| imp.lib == lib_name) {
-                    import.names.push(func);
-                    import.count += 1;
-                } else {
-                    imports.imports.push(Import {
-                        lib: lib_name.to_string(),
-                        count: 1,
-                        names: vec![func],
-                    });
-                }
+                let entry = imports_map
+                    .entry(lib_name)
+                    .or_insert_with(|| (Import::default(), 0));
+                entry.0.names.push(func);
+                entry.1 += 1;
             }
         }
     }
 
+    let mut imports = Imports::default();
+    imports.imports = imports_map
+        .into_iter()
+        .map(|(lib, (mut imp, count))| {
+            imp.lib = lib;
+            imp.count = count as u32;
+            imp
+        })
+        .collect();
     imports.func_count = imports.imports.iter().map(|i| i.names.len()).sum();
     imports.lib_count = imports.imports.len();
     imports.hashes = get_elf_imphashes(&imports);

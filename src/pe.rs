@@ -1,17 +1,13 @@
 use crate::data_defs::{
-    is_function_interesting, Architecture, BinSection, BinSections, Binary, BinaryFormat,
-    BinaryInfo, ExpHashes, Exports, Function, ImpHashes, Import, Imports,
+    get_hash_sorted, is_function_interesting, Architecture, BinSection, BinSections, Binary,
+    BinaryFormat, BinaryInfo, ExpHashes, Exports, Function, ImpHashes, Import, Imports,
 };
 use crate::ordinals;
 use anyhow::Result;
-use chrono::DateTime;
 use entropy::shannon_entropy;
 use exe;
 use fuzzyhash::FuzzyHash;
 use goblin::pe;
-use std::collections::HashMap;
-use std::fs::File;
-use std::io::{Read, Seek, SeekFrom};
 use std::path::Path;
 
 fn get_arch(machine: u16) -> Architecture {
@@ -34,21 +30,6 @@ fn get_arch(machine: u16) -> Architecture {
     }
 }
 
-fn get_hashmap_value(string_map: &HashMap<String, String>, value_name: &str) -> Result<String> {
-    let _v = match string_map.get(value_name) {
-        Some(v) => return Ok(v.to_string()),
-        None => return Ok("".to_string()),
-    };
-}
-
-fn get_date_string(timestamp: i64) -> Result<String> {
-    let dt = match DateTime::from_timestamp(timestamp, 0) {
-        Some(s) => s.format("%Y-%m-%dT%H:%M:%S").to_string(),
-        None => "".to_string(),
-    };
-    Ok(dt)
-}
-
 fn get_ssdeep_hash(buffer: &Vec<u8>) -> Result<String> {
     let ssdeep = FuzzyHash::new(buffer);
     Ok(ssdeep.to_string())
@@ -66,27 +47,35 @@ fn get_pe_file_info(path: &Path, binary_info: &mut BinaryInfo) -> Result<()> {
         let Ok(string_map) = string_file_info.children[0].string_map() else {
             return Ok(());
         };
-        binary_info.pe_info.product_version = get_hashmap_value(&string_map, "ProductVersion")?;
-        binary_info.pe_info.original_filename = get_hashmap_value(&string_map, "OriginalFilename")?;
-        binary_info.pe_info.file_description = get_hashmap_value(&string_map, "FileDescription")?;
-        binary_info.pe_info.file_version = get_hashmap_value(&string_map, "FileVersion")?;
-        binary_info.pe_info.product_name = get_hashmap_value(&string_map, "ProductName")?;
-        binary_info.pe_info.company_name = get_hashmap_value(&string_map, "CompanyName")?;
-        binary_info.pe_info.internal_name = get_hashmap_value(&string_map, "InternalName")?;
-        binary_info.pe_info.legal_copyright = get_hashmap_value(&string_map, "LegalCopyright")?;
+        binary_info.pe_info.product_version = string_map
+            .get("ProductVersion")
+            .cloned()
+            .unwrap_or_default();
+        binary_info.pe_info.original_filename = string_map
+            .get("OriginalFilename")
+            .cloned()
+            .unwrap_or_default();
+        binary_info.pe_info.file_description = string_map
+            .get("FileDescription")
+            .cloned()
+            .unwrap_or_default();
+        binary_info.pe_info.file_version =
+            string_map.get("FileVersion").cloned().unwrap_or_default();
+        binary_info.pe_info.product_name =
+            string_map.get("ProductName").cloned().unwrap_or_default();
+        binary_info.pe_info.company_name =
+            string_map.get("CompanyName").cloned().unwrap_or_default();
+        binary_info.pe_info.internal_name =
+            string_map.get("InternalName").cloned().unwrap_or_default();
+        binary_info.pe_info.legal_copyright = string_map
+            .get("LegalCopyright")
+            .cloned()
+            .unwrap_or_default();
     }
     Ok(())
 }
 
-fn read_section(path: &Path, start: u32, size: u32) -> Result<Vec<u8>> {
-    let mut f = File::open(path)?;
-    f.seek(SeekFrom::Start(start as u64))?;
-    let mut buf = vec![0; size as usize];
-    f.read_exact(&mut buf)?;
-    Ok(buf)
-}
-
-fn get_sections(pex: &pe::PE, path: &Path) -> Result<BinSections> {
+fn get_sections(pex: &pe::PE, buffer: &[u8]) -> Result<BinSections> {
     let mut bss = BinSections::default();
     for s in pex.sections.iter() {
         bss.total_sections += 1;
@@ -97,7 +86,9 @@ fn get_sections(pex: &pe::PE, path: &Path) -> Result<BinSections> {
         bs.virt_address = format!("0x{:02x}", s.virtual_address);
         bs.raw_size = s.size_of_raw_data;
         bs.virt_size = s.virtual_size;
-        let data = read_section(path, s.pointer_to_raw_data, s.size_of_raw_data)?;
+        let start = s.pointer_to_raw_data as usize;
+        let end = start + s.size_of_raw_data as usize;
+        let data = buffer.get(start..end).unwrap_or(&[]).to_vec();
         bs.entropy = shannon_entropy(&data);
         bs.md5 = format!("{:x}", md5::compute(&data)).to_lowercase();
         bs.ssdeep = get_ssdeep_hash(&data)?;
@@ -145,18 +136,6 @@ fn parse_pe_imports(imports: &Vec<goblin::pe::import::Import>) -> Result<(Import
     Ok((imps, is_dot_net))
 }
 
-fn get_hash_sorted(hash_array: &mut Vec<String>) -> Result<(String, String)> {
-    hash_array.sort();
-    let mut imphash_text_sorted = String::new();
-    for i in hash_array.iter() {
-        imphash_text_sorted.push_str(i);
-    }
-    imphash_text_sorted = imphash_text_sorted.trim_end_matches(",").to_string();
-    let imphash_sorted = format!("{:x}", md5::compute(&imphash_text_sorted)).to_lowercase();
-
-    Ok((imphash_text_sorted, imphash_sorted))
-}
-
 fn check_ordinal(dll: &str, func: &str) -> Result<String> {
     let mut f: String = func.to_ascii_lowercase().replace("ordinal ", "");
     if f.parse::<u32>().is_ok() {
@@ -176,14 +155,14 @@ fn get_imphashes(imports: &Vec<goblin::pe::import::Import>) -> Result<(ImpHashes
         if i.dll != track_dll {
             total_dlls += 1;
         }
-        let dll = i
-            .dll
-            .to_ascii_lowercase()
-            .replace(".dll", "")
-            .replace(".sys", "")
-            .replace(".drv", "")
-            .replace(".ocx", "")
-            .to_string();
+        let dll = i.dll.to_ascii_lowercase();
+        let dll = dll
+            .strip_suffix(".dll")
+            .or_else(|| dll.strip_suffix(".sys"))
+            .or_else(|| dll.strip_suffix(".drv"))
+            .or_else(|| dll.strip_suffix(".ocx"))
+            .unwrap_or(&dll);
+        let dll = dll.to_string();
         temp.push_str(&dll);
         temp.push_str(".");
         let func = check_ordinal(i.dll, &i.name)?;
@@ -196,7 +175,7 @@ fn get_imphashes(imports: &Vec<goblin::pe::import::Import>) -> Result<(ImpHashes
     let mut imphashes = ImpHashes::default();
     imphash_text = imphash_text.trim_end_matches(",").to_string();
     imphashes.md5 = format!("{:x}", md5::compute(imphash_text.clone())).to_lowercase();
-    let (imphash_text_sorted, sorted_md5) = get_hash_sorted(&mut imphash_array)?;
+    let (imphash_text_sorted, sorted_md5) = get_hash_sorted(&mut imphash_array);
     imphashes.md5_sorted = sorted_md5;
     let imphash_bytes: Vec<u8> = imphash_text.as_bytes().to_vec();
     let imphash_bytes_ordered: Vec<u8> = imphash_text_sorted.as_bytes().to_vec();
@@ -230,7 +209,7 @@ pub fn get_pe(buffer: &[u8], path: &Path) -> Result<Binary> {
     if let Ok(pe) = pe::PE::parse(&buffer) {
         (bin.imports, bin.binary_info.is_dotnet) = parse_pe_imports(&pe.imports)?;
         bin.binary_info.entry_point = format!("0x{:x}", pe.entry);
-        bin.sections = get_sections(&pe, path)?;
+        bin.sections = get_sections(&pe, buffer)?;
         (
             bin.imports.hashes,
             bin.imports.lib_count,
@@ -243,7 +222,12 @@ pub fn get_pe(buffer: &[u8], path: &Path) -> Result<Binary> {
         bin.binary_info.format = BinaryFormat::Pe;
         bin.binary_info.arch = get_arch(pe.header.coff_header.machine);
         bin.binary_info.pe_info.timestamps.compile =
-            get_date_string(pe.header.coff_header.time_date_stamp as i64)?;
+            chrono::DateTime::<chrono::Utc>::from_timestamp(
+                pe.header.coff_header.time_date_stamp as i64,
+                0,
+            )
+            .map(|dt| dt.format("%Y-%m-%dT%H:%M:%S").to_string())
+            .unwrap_or_default();
         bin.binary_info.pe_info.linker.major_version = match pe.header.optional_header {
             Some(d) => d.standard_fields.major_linker_version,
             None => 0,
