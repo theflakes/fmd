@@ -194,19 +194,23 @@ fn get_imphashes(imports: &[goblin::pe::import::Import]) -> Result<(ImpHashes, u
 
 fn parse_pe_exports(exports: &[goblin::pe::export::Export]) -> Result<Exports> {
     let mut exps = Exports::default();
+    let mut exphash_array: Vec<String> = Vec::new();
     let mut exphash_text = String::new();
     for e in exports.iter() {
-        exps.names.push(e.name.unwrap_or("").to_string());
-        let mut temp = String::new();
-        temp.push_str(&e.name.unwrap_or("").to_string());
-        temp.push_str(",");
-        exphash_text.push_str(&temp.to_string());
+        let lower_name = e.name.unwrap_or("").to_lowercase();
+        exps.names.push(lower_name.clone());
+        exphash_text.push_str(&lower_name);
+        exphash_text.push_str(",");
+        exphash_array.push(lower_name);
     }
     exps.count = exports.len();
     let mut exphashes = ExpHashes::default();
     exphash_text = exphash_text.trim_end_matches(",").to_string();
     exphashes.md5 = format!("{:x}", md5::compute(exphash_text.as_bytes())).to_lowercase();
+    let (exphash_text_sorted, md5_sorted) = get_hash_sorted(&mut exphash_array);
+    exphashes.md5_sorted = md5_sorted;
     exphashes.ssdeep = get_ssdeep_hash(exphash_text.as_bytes())?;
+    exphashes.ssdeep_sorted = get_ssdeep_hash(exphash_text_sorted.as_bytes())?;
     exps.hashes = exphashes;
     Ok(exps)
 }

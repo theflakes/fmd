@@ -3,6 +3,7 @@ mod elf;
 mod macho;
 mod mft;
 mod ordinals;
+mod parallel;
 mod pe;
 mod sector_reader;
 
@@ -16,82 +17,18 @@ use goblin::Object;
 use lnk::encoding::WINDOWS_1252;
 use lnk::extradata::ExtraDataBlock;
 use lnk::ShellLink;
+use memmap2::Mmap;
 use mft::*;
 use path_abs::{PathAbs, PathInfo};
 use sha1::Sha1;
 use sha2::Sha256;
 use std::env;
 use std::fs::{self, File};
-use std::io::{Read, Seek};
+use std::io::Read;
 use std::os::windows::prelude::*;
 use std::path::{Path, PathBuf};
 use std::process;
-use std::{io, str};
-
-// report out in json
-fn print_log(
-    path: String,
-    directory: String,
-    filename: String,
-    extension: String,
-    bytes: u64,
-    mime_type: String,
-    is_hidden: bool,
-    is_link: bool,
-    link: Link,
-    timestamps: FileTimestamps,
-    entropy: f32,
-    hashes: Hashes,
-    ads: Vec<DataRun>,
-    binary: Binary,
-    pprint: bool,
-    strings: Vec<String>,
-) -> io::Result<()> {
-    let runtime_env = RunTimeEnv::default();
-    if pprint {
-        MetaData::new(
-            runtime_env,
-            path.to_string(),
-            directory,
-            filename,
-            extension,
-            bytes,
-            mime_type,
-            is_hidden,
-            is_link,
-            link,
-            timestamps,
-            entropy,
-            hashes,
-            ads,
-            binary,
-            strings,
-        )
-        .report_pretty_log();
-    } else {
-        MetaData::new(
-            runtime_env,
-            path.to_string(),
-            directory,
-            filename,
-            extension,
-            bytes,
-            mime_type,
-            is_hidden,
-            is_link,
-            link,
-            timestamps,
-            entropy,
-            hashes,
-            ads,
-            binary,
-            strings,
-        )
-        .report_log();
-    }
-
-    Ok(())
-}
+use std::str;
 
 // get handle to a file
 pub fn open_file(file_path: &std::path::Path) -> std::io::Result<std::fs::File> {
@@ -110,17 +47,25 @@ fn get_mimetype(buffer: &[u8]) -> Result<String> {
     See:    https://github.com/rustysec/fuzzyhash-rs
             https://docs.rs/fuzzyhash/latest/fuzzyhash/
 */
-fn get_ssdeep_hash(buffer: &[u8]) -> Result<String> {
-    let ssdeep = FuzzyHash::new(buffer);
-    Ok(ssdeep.to_string())
-}
+// fn get_ssdeep_hash(buffer: &[u8]) -> Result<String> {
+//     let ssdeep = FuzzyHash::new(buffer);
+//     Ok(ssdeep.to_string())
+// }
 
 // read in file as byte vector
-fn read_file_bytes(file: &mut File) -> Result<Vec<u8>> {
-    let mut buffer = Vec::new();
-    file.rewind()?;
-    file.read_to_end(&mut buffer)?;
-    Ok(buffer)
+// Maps the file into memory without allocating a Vec heap buffer
+fn map_file_bytes(file: &File) -> Result<Mmap> {
+    let metadata = file.metadata()?;
+    let len = metadata.len();
+
+    // Corner case: memmap errors out on 0-byte files
+    if len == 0 {
+        return Err(anyhow::anyhow!("Cannot memory map an empty file"));
+    }
+
+    // Safety: Safe because we are treating the file as read-only data
+    let mmap = unsafe { Mmap::map(file)? };
+    Ok(mmap)
 }
 
 // read only the first n bytes (for quick MIME/type detection)
@@ -132,23 +77,35 @@ fn read_first_n_bytes(path: &Path, n: usize) -> Result<Vec<u8>> {
     Ok(buffer)
 }
 
-// get metadata for the file's content (md5, sha1, sha256, ssdeep)
-// MD5 is computed separately; SHA1+SHA256 are batched into a single pass
 fn get_file_hashes(buffer: &[u8]) -> Result<Hashes> {
     let mut sha1 = Sha1::new();
     let mut sha256 = Sha256::new();
+    let mut md5 = md5::Context::new();
+    let mut ssdeep_hasher = FuzzyHash::default(); // Initialize the streaming ssdeep state
 
-    // Batch-compute SHA1, SHA256 in a single pass
-    for chunk in buffer.chunks(4096) {
+    // Single pass: Everything is computed simultaneously chunk-by-chunk
+    for chunk in buffer.chunks(8192) {
         sha1.update(chunk);
         sha256.update(chunk);
+        md5.consume(chunk);
+        ssdeep_hasher.update(chunk); // Feed the chunk into ssdeep
     }
 
+    // Finalize the cryptographic results
+    let md5_res = md5.finalize();
+    let sha1_res = sha1.finalize();
+    let sha256_res = sha256.finalize();
+
+    // Finalize the ssdeep fuzzy hash string
+    ssdeep_hasher.finalize();
+
     Ok(Hashes {
-        md5: format!("{:x}", md5::compute(buffer)).to_lowercase(),
-        sha1: format!("{:x}", sha1.finalize()),
-        sha256: format!("{:x}", sha256.finalize()),
-        ssdeep: get_ssdeep_hash(buffer)?,
+        md5: format!("{:x}", md5_res),
+        sha1: format!("{:x}", sha1_res),
+        sha256: format!("{:x}", sha256_res),
+
+        // Convert the finalized FuzzyHash directly to a String using its Display trait
+        ssdeep: ssdeep_hasher.to_string(),
     })
 }
 
@@ -353,18 +310,19 @@ fn check_extensions(not_exts: bool, extensions: &Vec<String>, ext: &String) -> b
     }
 }
 
-fn analyze_file(
+/// Core file analysis that returns MetaData without printing.
+/// Used by both sequential mode and parallel file analysis.
+pub(crate) fn analyze_file_data(
     path: &Path,
-    pprint: bool,
     strings_length: usize,
     max_size: u64,
     extensions: &Vec<String>,
     not_exts: bool,
     int_mtypes: bool,
-) -> Result<()> {
+) -> Result<MetaData> {
     let (dir, fname, ext) = get_dir_fname_ext(path)?;
     if check_extensions(not_exts, extensions, &ext) {
-        return Ok(());
+        return Err(anyhow::anyhow!("Extension filtered"));
     }
 
     // Get file times first
@@ -397,11 +355,11 @@ fn analyze_file(
         let small_buf = read_first_n_bytes(&path, 512)?;
         mime_type = get_mimetype(&small_buf)?;
         if int_mtypes && !INTERESTING_MIME_TYPES.contains(&mime_type.as_str()) {
-            return Ok(()); // skip full-file read for non-interesting types
+            return Err(anyhow::anyhow!("MIME type filtered")); // skip full-file read for non-interesting types
         }
         // Phase 2: Full analysis
-        let mut file = open_file(&path)?;
-        let buffer = read_file_bytes(&mut file)?;
+        let file = open_file(&path)?;
+        let buffer = map_file_bytes(&file)?;
         bin = get_binary(path, &buffer)?;
         if strings_length > 0 {
             strings = get_strings(&buffer, strings_length)?;
@@ -411,7 +369,9 @@ fn analyze_file(
     }
 
     let p = path.to_string_lossy().into_owned();
-    print_log(
+    let runtime_env = RunTimeEnv::default();
+    Ok(MetaData::new(
+        runtime_env,
         p,
         dir,
         fname,
@@ -426,9 +386,33 @@ fn analyze_file(
         hashes,
         ads,
         bin,
-        pprint,
         strings,
+    ))
+}
+
+fn analyze_file(
+    path: &Path,
+    pprint: bool,
+    strings_length: usize,
+    max_size: u64,
+    extensions: &Vec<String>,
+    not_exts: bool,
+    int_mtypes: bool,
+) -> Result<()> {
+    let metadata = analyze_file_data(
+        path,
+        strings_length,
+        max_size,
+        extensions,
+        not_exts,
+        int_mtypes,
     )?;
+
+    if pprint {
+        metadata.report_pretty_log();
+    } else {
+        metadata.report_log();
+    }
 
     Ok(())
 }
@@ -521,23 +505,73 @@ fn convert_to_path(target: &str) -> Result<PathBuf> {
 }
 
 fn main() -> Result<()> {
-    let (file_path, pprint, depth, strings_length, max_size, extensions, not_exts, int_mtypes) =
-        get_args()?;
-    is_file_or_dir(
-        convert_to_path(&file_path)?.as_path(),
+    let (
+        file_path,
         pprint,
         depth,
-        0,
         strings_length,
         max_size,
-        &extensions,
+        extensions,
         not_exts,
         int_mtypes,
-    )?;
+        jobs,
+    ) = get_args()?;
+    let path = convert_to_path(&file_path)?;
+
+    if jobs > 1 {
+        // Parallel mode: collect all files, analyze in parallel, print in sorted order
+        let files = parallel::collect_files(&path, depth);
+        if files.len() == 1 {
+            // Single file: avoid rayon overhead, use sequential
+            analyze_file(
+                &files[0],
+                pprint,
+                strings_length,
+                max_size,
+                &extensions,
+                not_exts,
+                int_mtypes,
+            )?;
+        } else {
+            parallel::run_parallel(
+                files,
+                pprint,
+                strings_length,
+                max_size,
+                &extensions,
+                not_exts,
+                int_mtypes,
+                jobs,
+            );
+        }
+    } else {
+        // Sequential mode (original behavior)
+        is_file_or_dir(
+            &path,
+            pprint,
+            depth,
+            0,
+            strings_length,
+            max_size,
+            &extensions,
+            not_exts,
+            int_mtypes,
+        )?;
+    }
     Ok(())
 }
 
-fn get_args() -> Result<(String, bool, usize, usize, u64, Vec<String>, bool, bool)> {
+fn get_args() -> Result<(
+    String,
+    bool,
+    usize,
+    usize,
+    u64,
+    Vec<String>,
+    bool,
+    bool,
+    usize,
+)> {
     let args: Vec<String> = env::args().collect();
     let mut file_path = String::new();
     let mut pprint = false;
@@ -551,6 +585,8 @@ fn get_args() -> Result<(String, bool, usize, usize, u64, Vec<String>, bool, boo
     let mut exts_vec: Vec<String> = Vec::new();
     let mut not_exts = false;
     let mut int_mtypes = false;
+    let mut get_jobs = false;
+    let mut jobs: usize = 0;
     if args.len() == 1 {
         print_help();
     }
@@ -560,11 +596,15 @@ fn get_args() -> Result<(String, bool, usize, usize, u64, Vec<String>, bool, boo
             "-e" | "--extensions" => get_exts = true,
             "-h" | "--help" => print_help(),
             "-i" | "--int_mtypes" => int_mtypes = true,
+            "-j" | "--jobs" => get_jobs = true,
             "-m" | "--maxsize" => get_size = true,
             "-p" | "--pretty" => pprint = true,
             "-s" | "--strings" => get_strings_length = true,
             _ => {
-                if get_depth {
+                if get_jobs {
+                    jobs = arg.as_str().parse::<usize>().unwrap_or(0);
+                    get_jobs = false;
+                } else if get_depth {
                     depth = arg.as_str().parse::<usize>().unwrap_or(0);
                     if depth < 1 {
                         print_help();
@@ -609,6 +649,7 @@ fn get_args() -> Result<(String, bool, usize, usize, u64, Vec<String>, bool, boo
         exts_vec,
         not_exts,
         int_mtypes,
+        jobs,
     ))
 }
 
@@ -620,10 +661,12 @@ License: MIT
 Purpose: Pull various file metadata.
 
 Usage:
-    fmd [--pretty | -p] ([--strings|-s] #) <file path> ([--depth | -d] #)
+    fmd [--pretty | -p] ([--strings|-s] #) <file path> ([--depth | -d] #) ([--jobs | -j] #)
     fmd --pretty --depth 3 --extensions 'exe,dll,pif,ps1,bat,com'
     fmd --pretty --depth 3 --extensions 'not:exe,dll,pif,ps1,bat,com'
-        This will process all files that do not have the specified extensions.
+    fmd --pretty --jobs 4 --depth 3 <directory>
+        This will process all files in the directory tree up to 3 levels deep
+        using 4 threads in parallel.
 
 Options:
     -d, --depth #       If passed a directory, recurse into all subdirectories
@@ -632,6 +675,9 @@ Options:
                         - Any extensions not in the list will be ignored
     -h, --help          Show this help message
     -i, --int_mtypes    Only analyze files that are more interesting mime types
+    -j, --jobs #        Number of threads to use for parallel file analysis
+                        - When > 1, files are analyzed concurrently
+                        - Defaults to the number of (CPU cores - 1)
     -m, --maxsize #     Max file size in bytes to perform content analysis on
                         - Any file larger than this will not have the following run:
                           hashing, entropy, mime type, strings, PE analysis

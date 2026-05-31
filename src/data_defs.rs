@@ -800,10 +800,112 @@ pub fn build_interesting_funcs() -> HashMap<String, Vec<Func>> {
     dlls.insert("crypt32.dll".to_string(), funcs);
 
     // gdi32.dll - Graphics Device Interface API
-
     let funcs: Vec<Func> =
         [func.create("bind", "Associates a local address with a socket.")].to_vec();
     dlls.insert("gdi32.dll".to_string(), funcs);
+
+    // api-ms-win-crt-string-l1-1-0.dll - C runtime string functions
+    let funcs: Vec<Func> = [
+        func.create("memset", "Fills a block of memory with a specified value."),
+        func.create("strncmp", "Compares up to n characters of two strings."),
+    ]
+    .to_vec();
+    dlls.insert("api-ms-win-crt-string-l1-1-0.dll".to_string(), funcs);
+
+    // api-ms-win-crt-runtime-l1-1-0.dll - C runtime initialization functions
+    let funcs: Vec<Func> = [
+        func.create(
+            "_initterm_e",
+            "Calls each function in a table of initializers, stopping if any returns an error.",
+        ),
+        func.create(
+            "_initterm",
+            "Calls each function in a table of initializers during program startup.",
+        ),
+    ]
+    .to_vec();
+    dlls.insert("api-ms-win-crt-runtime-l1-1-0.dll".to_string(), funcs);
+
+    // api-ms-win-crt-private-l1-1-0.dll - C runtime private functions (memory, string, file ops)
+    let funcs: Vec<Func> = [
+        func.create("_o__cexit", "Calls exit handlers and terminates the C program."),
+        func.create("_o__chdir", "Changes the current working directory. This is the ANSI version."),
+        func.create("_o__chdrive", "Changes the current disk drive."),
+        func.create("_o__close", "Closes a file descriptor."),
+        func.create("_o__configure_narrow_argv", "Configures the argument vector for the C program."),
+        func.create("_o__crt_atexit", "Registers a function to be called at program exit."),
+        func.create("_o__errno", "Retrieves a pointer to the thread's last error value."),
+        func.create("_o__execute_onexit_table", "Executes all registered onexit functions."),
+        func.create("_o__getcwd", "Retrieves the current working directory. This is the ANSI version."),
+        func.create("_o__getdrive", "Retrieves the current disk drive number."),
+        func.create("_o__initialize_narrow_environment", "Initializes the narrow (ANSI) environment block."),
+        func.create("_o__initialize_onexit_table", "Initializes the onexit table."),
+        func.create("_o__invalid_parameter_noinfo", "Handles an invalid parameter error without additional info."),
+        func.create("_o__locking", "Locks or unlocks a specified portion of a file."),
+        func.create("_o__lseek", "Moves the file pointer of an open file. This is the ANSI version."),
+        func.create("_o__ltoa", "Converts a long integer to a string. This is the ANSI version."),
+        func.create("_o__purecall", "Called when a pure virtual function is called in C++."),
+        func.create("_o__read", "Reads data from a file. This is the ANSI version."),
+        func.create("_o__register_onexit_function", "Registers a function to be called at program exit."),
+        func.create("_o__seh_filter_dll", "Sets the structured exception handling filter for a DLL."),
+        func.create("memmove", "Copies a block of memory from one location to another, handling overlapping regions safely."),
+        func.create("_o__stricmp", "Compares two strings without regard to case. This is the ANSI version."),
+        func.create("_o__strnicmp", "Compares up to n characters of two strings without regard to case. This is the ANSI version."),
+        func.create("_o__write", "Writes data to a file. This is the ANSI version."),
+        func.create("_o_atol", "Converts a string to a long integer. This is the ANSI version."),
+        func.create("_o_free", "Frees a memory block previously allocated by malloc. This is the ANSI version."),
+        func.create("_o_malloc", "Allocates a block of memory on the heap. This is the ANSI version."),
+        func.create("_o_remove", "Deletes a file. This is the ANSI version."),
+        func.create("_o_strcat_s", "Appends a string to another string with bounds checking. This is the ANSI version."),
+        func.create("_o_strcpy_s", "Copies a string to another buffer with bounds checking. This is the ANSI version."),
+        func.create("_o_strncpy_s", "Copies up to n characters of a string with bounds checking. This is the ANSI version."),
+        func.create("_except_handler4_common", "Common structured exception handler for x86 and x64 Windows."),
+        func.create("_o___stdio_common_vswprintf", "Writes formatted wide-character output to a string buffer. Internal CRT function."),
+        func.create("_o___stdio_common_vsprintf_s", "Writes formatted output to a string buffer with bounds checking. Internal CRT function."),
+        func.create("_o___stdio_common_vsprintf", "Writes formatted output to a string buffer. Internal CRT function."),
+        func.create("_o___stdio_common_vsnprintf_s", "Writes formatted output to a buffer with bounds checking. Internal CRT function."),
+        func.create("_o___std_type_info_destroy_list", "Destroys the list of C++ type info objects during termination."),
+        func.create("_o___std_exception_destroy", "Destroys a C++ exception object."),
+        func.create("_o___std_exception_copy", "Copies a C++ exception object."),
+        func.create("__std_terminate", "Terminates the C++ program by calling std::terminate."),
+        func.create("__CxxFrameHandler3", "C++ structured exception handler (third version) for x64."),
+        func.create("_CxxThrowException", "Throws a C++ exception, triggering the C++ exception handling mechanism."),
+        func.create("memcmp", "Compares two blocks of memory byte by byte."),
+        func.create("memcpy", "Copies a block of memory from one location to another."),
+        func.create("_o__sopen_dispatch", "Opens a file with specified sharing mode and file flags."),
+    ]
+    .to_vec();
+    dlls.insert("api-ms-win-crt-private-l1-1-0.dll".to_string(), funcs);
+
+    // apphelp.dll - Application Compatibility Shims
+    let funcs: Vec<Func> = [func.create(
+        "ApphelpCheckExe",
+        "Checks the application compatibility database for the specified executable to determine if compatibility shims should be applied.",
+    )]
+    .to_vec();
+    dlls.insert("apphelp.dll".to_string(), funcs);
+
+    // api-ms-win-eventing-provider-l1-1-0.dll - Event Tracing for Windows (ETW) provider
+    let funcs: Vec<Func> = [
+        func.create(
+            "EventWriteTransfer",
+            "Writes an event trace and transfers ownership of the event to another provider.",
+        ),
+        func.create(
+            "EventRegister",
+            "Registers an event provider with the Event Tracing for Windows (ETW) system.",
+        ),
+        func.create(
+            "EventSetInformation",
+            "Sets information for an event trace session.",
+        ),
+        func.create(
+            "EventUnregister",
+            "Unregisters an event provider from the ETW system.",
+        ),
+    ]
+    .to_vec();
+    dlls.insert("api-ms-win-eventing-provider-l1-1-0.dll".to_string(), funcs);
 
     // icmp.dll - Internet Control Message Protocol API
     let funcs: Vec<Func> = [func.create(
@@ -815,7 +917,18 @@ pub fn build_interesting_funcs() -> HashMap<String, Vec<Func>> {
 
     // kernel32.dll - Core system functions (memory, processes, threads)
     let funcs: Vec<Func> = [
+        // Existing entries
         func.create("connect", "Establishes a connection to a specified socket."),
+        // Added missing common functions with descriptions
+        func.create("GlobalFlags", "Retrieves the global flags for the current process (used for debugging)."),
+        func.create("GlobalAlloc", "Allocates a global memory object."),
+        func.create("GlobalFree", "Frees a previously allocated global memory object."),
+        func.create("GlobalLock", "Locks a global memory object and returns a pointer to the first byte of the object's memory."),
+        func.create("GlobalUnlock", "Decrements the lock count for a global memory object."),
+        func.create("PowerCreateRequest", "Creates a power request object used to prevent system sleep."),
+        func.create("PowerClearRequest", "Clears a previously set power request."),
+        func.create("PowerSetRequest", "Sets a power request state (e.g., DISPLAY_REQUIRED)."),
+        func.create("GetTempPath2A", "Retrieves the path of the temporary-file directory, supporting longer paths than GetTempPathA."),
         func.create("corbindtoruntimeex", "Enables unmanaged hosts to load the common language runtime (CLR) into a process, allowing for the specification of runtime behavior through various flags."),
         func.create("createfilea", "Creates or opens a file or I/O device. This is the ANSI version."),
         func.create("createfilemappinga", "Creates or opens a named or unnamed file mapping object for a specified file. This is the ANSI version."),
@@ -1078,6 +1191,25 @@ pub fn build_interesting_funcs() -> HashMap<String, Vec<Func>> {
         func.create("GetComputerNameW", "Retrieves the NetBIOS name of the local computer. This is the Unicode version."),
         func.create("ProcessIdToSessionId", "Retrieves the Remote Desktop Services session associated with a specified process."),
         func.create("SetCurrentDirectoryW", "Changes the current directory for the current process. This is the Unicode version."),
+        // Added missing functions with descriptions
+        func.create("GetSystemDirectoryA", "Retrieves the path of the system directory. This is the ANSI version."),
+        func.create("GetProfileStringA", "Copies a string from the specified section in the Win.ini initialization file. This is the ANSI version."),
+        func.create("GlobalHandle", "Retrieves the global memory handle associated with the specified memory block."),
+        func.create("OpenFile", "Opens a file and specifies the maximum number of processes that can open the file."),
+        func.create("lstrcmpiA", "Compares two specified strings, ignoring case. This is the ANSI version."),
+        func.create("CreateSemaphoreExW", "Creates a named or unnamed semaphore object with extended attributes. This is the Unicode version."),
+        func.create("CreateMutexExW", "Creates a named or unnamed mutex object with extended attributes. This is the Unicode version."),
+        func.create("CreateThreadpoolTimer", "Creates a thread pool timer object for scheduling callback functions."),
+        func.create("OpenSemaphoreW", "Opens a named semaphore object with desired access. This is the Unicode version."),
+        func.create("WaitForThreadpoolTimerCallbacks", "Waits for pending thread pool timer callbacks to complete."),
+        func.create("InitializeCriticalSectionEx", "Initializes a critical section object with a specified spin count."),
+        func.create("ReleaseSemaphore", "Increments a semaphore's counter by a specified amount and returns the previous counter value."),
+        func.create("AcquireSRWLockShared", "Acquires the specified shared read/write lock in shared (read) mode."),
+        func.create("ReleaseSRWLockShared", "Releases the specified shared read/write lock in shared (read) mode."),
+        func.create("AcquireSRWLockExclusive", "Acquires the specified shared read/write lock in exclusive (write) mode."),
+        func.create("ReleaseSRWLockExclusive", "Releases the specified shared read/write lock in exclusive (write) mode."),
+        func.create("DebugBreak", "Generates a breakpoint exception in the current process, triggering a debugger if one is attached."),
+        func.create("WriteProfileStringA", "Writes a string to a specified section in the Win.ini initialization file. This is the ANSI version."),
     ].to_vec();
     dlls.insert("kernel32.dll".to_string(), funcs);
 
@@ -1358,7 +1490,40 @@ pub fn build_interesting_funcs() -> HashMap<String, Vec<Func>> {
 
     // user32.dll - User Interface API (windows, messages)
     let funcs: Vec<Func> = [
+        // Existing entry
         func.create("setwindowlonga", "Sets the window procedure for a window."),
+        // Added missing imported functions with brief descriptions
+        func.create("CharUpperA", "Converts a character string to uppercase (ANSI)."),
+        func.create("RegisterWindowMessageA", "Registers a new Windows message and returns its identifier (ANSI)."),
+        func.create("LoadStringA", "Loads a string resource from the specified module (ANSI)."),
+        func.create("SendMessageA", "Sends the specified message to a window or windows (ANSI)."),
+        func.create("FindWindowA", "Retrieves a handle to the top-level window whose class name and window name match the specified strings (ANSI)."),
+        func.create("PeekMessageA", "Examines the thread's message queue for messages without removing them (ANSI)."),
+        func.create("IsWindow", "Determines whether the given handle identifies an existing window."),
+        func.create("PostMessageA", "Posts a message to the message queue of the specified window (ANSI)."),
+        func.create("EnableWindow", "Enables or disables mouse and keyboard input to the specified window."),
+        func.create("GetDlgItem", "Retrieves a handle to a control in a dialog box."),
+        func.create("SetWindowsHookA", "Installs an application-defined hook procedure into a hook chain (ANSI)."),
+        func.create("SendDlgItemMessageA", "Sends a message to a control in a dialog box (ANSI)."),
+        func.create("SetFocus", "Sets the keyboard focus to the specified window."),
+        func.create("DialogBoxParamA", "Creates a modal dialog box from a template resource (ANSI)."),
+        func.create("EndDialog", "Ends a modal dialog box, returning control to the owner window."),
+        func.create("CallNextHookEx", "Passes hook information to the next hook procedure in the chain."),
+        func.create("UnhookWindowsHook", "Removes a hook procedure installed by SetWindowsHookA."),
+        func.create("TranslateMessage", "Translates virtual-key messages into character messages."),
+        func.create("DispatchMessageA", "Dispatches a message to a window procedure (ANSI)."),
+        func.create("DdeFreeStringHandle", "Frees a DDE string handle."),
+        func.create("DdeInitializeA", "Initializes the Dynamic Data Exchange library (ANSI)."),
+        func.create("DdeUninitialize", "Closes the DDEML and releases resources."),
+        func.create("DdeCmpStringHandles", "Compares two DDE string handles."),
+        func.create("DdeCreateDataHandle", "Creates a data handle that can be passed to an application via DDE."),
+        func.create("DdeCreateStringHandleA", "Creates a DDE string handle (ANSI)."),
+        func.create("DdeGetLastError", "Retrieves the last error that occurred in DDE."),
+        func.create("DdeGetData", "Retrieves data from a DDE data handle."),
+        func.create("DdeClientTransaction", "Performs a client transaction for DDE communication."),
+        func.create("DdeQueryConvInfo", "Retrieves conversation info for a DDE conversation."),
+        func.create("DdeConnect", "Initiates a DDE conversation with a server."),
+        func.create("DdeDisconnect", "Terminates a DDE conversation."),
         func.create(
             "setwindowlongw",
             "Sets the window procedure for a window. This is the Unicode version.",
@@ -2166,6 +2331,781 @@ pub fn build_interesting_funcs() -> HashMap<String, Vec<Func>> {
     ]
     .to_vec();
     dlls.insert("msasn1.dll".to_string(), funcs);
+
+    // Additional cybersecurity-relevant DLLs
+
+    // iphlpapi.dll - IP Helper API (network forensics, ARP, routing table)
+    let funcs: Vec<Func> = [
+        func.create("GetAdaptersAddresses", "Retrieves adapter addresses for all network interfaces (preferred over GetAdaptersInfo)."),
+        func.create("GetAdaptersInfo", "Retrieves adapter information for the local computer."),
+        func.create("GetIpAddrTable", "Retrieves the IPv4 addressing table for the local computer."),
+        func.create("GetIpForwardTable", "Retrieves the IP routing table for the local computer."),
+        func.create("GetBestInterface", "Retrieves the best interface for a given destination IP address."),
+        func.create("GetUdpTable", "Retrieves the UDP table containing all active UDP connections."),
+        func.create("GetTcpTable", "Retrieves the TCP table containing all active TCP connections."),
+        func.create("CreateUdpTableChangeNotification", "Creates a notification handle for UDP table changes."),
+        func.create("CreateIpNotificationHandle", "Creates a notification handle for IP address changes."),
+        func.create("CancelMibChangeNotify2", "Cancels a MIB change notification."),
+        func.create("NotifyIpInterfaceChange", "Registers for notifications when IP interface information changes."),
+        func.create("NotifyRouteChange2", "Registers for notifications when the IP routing table changes."),
+    ]
+    .to_vec();
+    dlls.insert("iphlpapi.dll".to_string(), funcs);
+
+    // wintrust.dll - Windows trust verification (Authenticode, binary validation)
+    let funcs: Vec<Func> = [
+        func.create(
+            "WinVerifyTrust",
+            "Verifies the trustworthiness of a file using Authenticode or other trust providers.",
+        ),
+        func.create(
+            "WinVerifyTrustEx",
+            "Extended version of WinVerifyTrust with additional parameters and trust providers.",
+        ),
+    ]
+    .to_vec();
+    dlls.insert("wintrust.dll".to_string(), funcs);
+
+    // bcrypt.dll - Basic Cryptographic Services (modern crypto primitives)
+    let funcs: Vec<Func> = [
+        func.create(
+            "BCryptOpenAlgorithmProvider",
+            "Opens a specified cryptographic algorithm provider.",
+        ),
+        func.create(
+            "BCryptCloseAlgorithmProvider",
+            "Closes a cryptographic algorithm provider.",
+        ),
+        func.create(
+            "BCryptGenerateKeyPair",
+            "Generates a public/private key pair in a cryptographic algorithm provider.",
+        ),
+        func.create(
+            "BCryptFinalizeKeyPair",
+            "Finalizes a key pair, indicating that key generation is complete.",
+        ),
+        func.create(
+            "BCryptExportKey",
+            "Exports a cryptographic key from a key storage provider.",
+        ),
+        func.create(
+            "BCryptImportKeyPair",
+            "Imports a key pair into a cryptographic algorithm provider.",
+        ),
+        func.create(
+            "BCryptEncrypt",
+            "Encrypts data using a cryptographic algorithm.",
+        ),
+        func.create(
+            "BCryptDecrypt",
+            "Decrypts data that was encrypted using a cryptographic algorithm.",
+        ),
+        func.create(
+            "BCryptHashData",
+            "Hashes data using a cryptographic hash algorithm.",
+        ),
+        func.create(
+            "BCryptCreateHash",
+            "Creates a hashing object in a cryptographic algorithm provider.",
+        ),
+        func.create(
+            "BCryptFinishHash",
+            "Finalizes a hash computation and retrieves the hash value.",
+        ),
+        func.create(
+            "BCryptDeriveKey",
+            "Derives a key from a key derivation function.",
+        ),
+        func.create(
+            "BCryptGenRandom",
+            "Generates random bytes using the system CSPRNG.",
+        ),
+        func.create(
+            "BCryptDestroyKey",
+            "Destroys a key object and frees its associated resources.",
+        ),
+        func.create(
+            "BCryptDestroyHash",
+            "Destroys a hash object and frees its associated resources.",
+        ),
+    ]
+    .to_vec();
+    dlls.insert("bcrypt.dll".to_string(), funcs);
+
+    // ncrypt.dll - Next Generation Crypto API (modern key management)
+    let funcs: Vec<Func> = [
+        func.create(
+            "NCryptOpenStorageProvider",
+            "Opens a key storage provider for cryptographic operations.",
+        ),
+        func.create(
+            "NCryptCreatePersistedKey",
+            "Creates and persists a cryptographic key in a key storage provider.",
+        ),
+        func.create(
+            "NCryptFinalizeKey",
+            "Finalizes a persisted key, making it available for use.",
+        ),
+        func.create(
+            "NCryptEncrypt",
+            "Encrypts data using a key from a key storage provider.",
+        ),
+        func.create(
+            "NCryptDecrypt",
+            "Decrypts data that was encrypted using a key from a key storage provider.",
+        ),
+        func.create(
+            "NCryptSignHash",
+            "Signs a hash using a private key from a key storage provider.",
+        ),
+        func.create(
+            "NCryptVerifySignature",
+            "Verifies a signature using a public key from a key storage provider.",
+        ),
+        func.create(
+            "NCryptExportKey",
+            "Exports a key from a key storage provider in a specified format.",
+        ),
+        func.create(
+            "NCryptImportKey",
+            "Imports a key into a key storage provider.",
+        ),
+        func.create(
+            "NCryptDeleteKey",
+            "Deletes a persisted key from a key storage provider.",
+        ),
+        func.create(
+            "NCryptFreeBuffer",
+            "Frees a buffer allocated by an NCrypt function.",
+        ),
+        func.create(
+            "NCryptOpenKey",
+            "Opens a persisted key in a key storage provider.",
+        ),
+        func.create(
+            "NCryptEnumKeys",
+            "Enumerates persisted keys in a key storage provider.",
+        ),
+    ]
+    .to_vec();
+    dlls.insert("ncrypt.dll".to_string(), funcs);
+
+    // msxml6.dll - MSXML 6.0 parser (XML processing, often abused for XXE/XSS)
+    let funcs: Vec<Func> = [
+        func.create(
+            "DllGetClassObject",
+            "Returns a class factory for a COM class.",
+        ),
+        func.create(
+            "DllCanUnloadNow",
+            "Indicates whether the DLL can currently be unloaded from memory.",
+        ),
+        func.create(
+            "DllInstall",
+            "Installs or uninstalls the DLL for a user or machine.",
+        ),
+    ]
+    .to_vec();
+    dlls.insert("msxml6.dll".to_string(), funcs);
+
+    // ucrtbase.dll - Universal C Runtime (modern C standard library for Windows)
+    let funcs: Vec<Func> = [
+        func.create("malloc", "Allocates memory on the heap."),
+        func.create("free", "Frees previously allocated memory."),
+        func.create(
+            "calloc",
+            "Allocates memory for an array and initializes it to zero.",
+        ),
+        func.create(
+            "realloc",
+            "Reallocates a previously allocated memory block.",
+        ),
+        func.create("memcpy", "Copies a block of memory."),
+        func.create(
+            "memmove",
+            "Copies a block of memory, handling overlapping regions.",
+        ),
+        func.create("memset", "Fills a block of memory with a specified value."),
+        func.create("memcmp", "Compares two blocks of memory."),
+        func.create("strcpy", "Copies a string."),
+        func.create("strncpy", "Copies up to n characters of a string."),
+        func.create("strcat", "Appends a string to another string."),
+        func.create(
+            "strncat",
+            "Appends up to n characters of a string to another string.",
+        ),
+        func.create("strlen", "Returns the length of a string."),
+        func.create("strcmp", "Compares two strings."),
+        func.create("strncmp", "Compares up to n characters of two strings."),
+        func.create(
+            "strchr",
+            "Finds the first occurrence of a character in a string.",
+        ),
+        func.create(
+            "strrchr",
+            "Finds the last occurrence of a character in a string.",
+        ),
+        func.create("strstr", "Finds the first occurrence of a substring."),
+        func.create("sprintf", "Writes formatted data to a string."),
+        func.create("sscanf", "Reads formatted data from a string."),
+        func.create("printf", "Writes formatted data to standard output."),
+        func.create("fprintf", "Writes formatted data to a stream."),
+        func.create("fopen", "Opens a file."),
+        func.create("fclose", "Closes an open stream."),
+        func.create("fread", "Reads data from a stream."),
+        func.create("fwrite", "Writes data to a stream."),
+        func.create("fgets", "Reads a string from a stream."),
+        func.create("fputs", "Writes a string to a stream."),
+        func.create("ftell", "Returns the current position of the file pointer."),
+        func.create("fseek", "Sets the position of the file pointer."),
+        func.create(
+            "rewind",
+            "Sets the position of the file pointer to the beginning.",
+        ),
+        func.create(
+            "perror",
+            "Displays an error message corresponding to errno.",
+        ),
+        func.create("abort", "Abnormal program termination."),
+        func.create("exit", "Normal program termination."),
+        func.create(
+            "atexit",
+            "Registers a function to be called at normal program termination.",
+        ),
+        func.create(
+            "system",
+            "Passes a string to the command processor for execution.",
+        ),
+        func.create("getenv", "Retrieves the value of an environment variable."),
+        func.create("setenv", "Sets the value of an environment variable."),
+        func.create("rand", "Generates a pseudo-random number."),
+        func.create("srand", "Initializes the pseudo-random number generator."),
+        func.create("time", "Returns the current calendar time."),
+        func.create(
+            "difftime",
+            "Calculates the difference between two calendar times.",
+        ),
+        func.create("localtime", "Converts a calendar time to local time."),
+        func.create("gmtime", "Converts a calendar time to Greenwich Mean Time."),
+        func.create("strftime", "Formats a calendar time as a string."),
+        func.create(
+            "isalpha",
+            "Checks if a character is an alphabetic character.",
+        ),
+        func.create("isdigit", "Checks if a character is a decimal digit."),
+        func.create("isupper", "Checks if a character is an uppercase letter."),
+        func.create("islower", "Checks if a character is a lowercase letter."),
+        func.create("toupper", "Converts a character to uppercase."),
+        func.create("tolower", "Converts a character to lowercase."),
+        func.create(
+            "isspace",
+            "Checks if a character is a whitespace character.",
+        ),
+        func.create("isxdigit", "Checks if a character is a hexadecimal digit."),
+        func.create("isprint", "Checks if a character is a printable character."),
+        func.create(
+            "ispunct",
+            "Checks if a character is a punctuation character.",
+        ),
+        func.create("isalnum", "Checks if a character is alphanumeric."),
+        func.create("isgraph", "Checks if a character is a graphic character."),
+    ]
+    .to_vec();
+    dlls.insert("ucrtbase.dll".to_string(), funcs);
+
+    // cryptnet.dll - Crypto Network functions (certificate verification over network)
+    let funcs: Vec<Func> = [
+        func.create(
+            "CertGetCertificateChain",
+            "Creates a chain of certificates starting from a given certificate.",
+        ),
+        func.create(
+            "CertVerifyCertificateChainPolicy",
+            "Verifies a chain of certificates against a specified policy.",
+        ),
+        func.create("HTTPSendProxyRequest", "Sends a proxy request over HTTP."),
+        func.create(
+            "HTTPRecvProxyResponse",
+            "Receives a proxy response over HTTP.",
+        ),
+        func.create(
+            "AIA_URLCreateFromCertHttp",
+            "Creates an AIA (Authority Information Access) URL from an HTTP URL.",
+        ),
+    ]
+    .to_vec();
+    dlls.insert("cryptnet.dll".to_string(), funcs);
+
+    // softpub.dll - Software Publishing (code signing verification)
+    let funcs: Vec<Func> = [
+        func.create(
+            "UIQuerySignatureInfo",
+            "Queries information about digital signatures.",
+        ),
+        func.create(
+            "UISelectCertificate",
+            "Displays a certificate selection dialog.",
+        ),
+        func.create(
+            "UISetSelectCertificate",
+            "Sets the certificate for selection.",
+        ),
+        func.create(
+            "AuthenticodeSignerVerify",
+            "Verifies an Authenticode signature.",
+        ),
+        func.create(
+            "IsDigitalSubject",
+            "Determines if a subject is a digital certificate subject.",
+        ),
+    ]
+    .to_vec();
+    dlls.insert("softpub.dll".to_string(), funcs);
+
+    // powrprof.dll - Power Management API
+    let funcs: Vec<Func> = [
+        func.create(
+            "SetSystemPowerState",
+            "Sets the system power state to sleep or hibernate.",
+        ),
+        func.create(
+            "SetThreadExecutionState",
+            "Sets thread execution state to prevent system from entering sleep.",
+        ),
+        func.create(
+            "GetSystemPowerStatus",
+            "Retrieves the current system power status.",
+        ),
+        func.create(
+            "SetThreadExecutionStateW",
+            "Sets thread execution state. This is the Unicode version.",
+        ),
+        func.create(
+            "PowerRegisterSuspendResumeNotification",
+            "Registers for system suspend/resume notifications.",
+        ),
+        func.create(
+            "PowerDeregisterSystemState",
+            "Deregisters a system power state request.",
+        ),
+        func.create("PowerCreateRequest", "Creates a power request object."),
+        func.create("PowerSetRequest", "Sets a power request state."),
+        func.create(
+            "PowerClearRequest",
+            "Clears a previously set power request.",
+        ),
+    ]
+    .to_vec();
+    dlls.insert("powrprof.dll".to_string(), funcs);
+
+    // wtsapi32.dll - Windows Terminal Services API (RDP/session management)
+    let funcs: Vec<Func> = [
+        func.create(
+            "WTSEnumerateSessionsW",
+            "Enumerates sessions on a specified terminal server.",
+        ),
+        func.create(
+            "WTSQuerySessionInformationW",
+            "Retrieves information about a terminal server session.",
+        ),
+        func.create("WTSOpenServerW", "Opens a handle to a terminal server."),
+        func.create("WTSCloseServer", "Closes a handle to a terminal server."),
+        func.create("WTSFreeMemory", "Frees memory allocated by a WTS function."),
+        func.create(
+            "WTSEnumerateProcessesW",
+            "Enumerates processes on a terminal server session.",
+        ),
+        func.create(
+            "WTSTerminateProcess",
+            "Terminates a process on a remote terminal server session.",
+        ),
+        func.create(
+            "WTSConnectSession",
+            "Connects to an existing session on a terminal server.",
+        ),
+        func.create(
+            "WTSDisconnectSession",
+            "Disconnects a session on a terminal server.",
+        ),
+    ]
+    .to_vec();
+    dlls.insert("wtsapi32.dll".to_string(), funcs);
+
+    // cfgmgr32.dll - Configuration Manager (hardware/device enumeration)
+    let funcs: Vec<Func> = [
+        func.create(
+            "CM_Get_Device_IDW",
+            "Retrieves the device instance ID for a device node.",
+        ),
+        func.create(
+            "CM_Locate_DevNodeW",
+            "Locates a device node by its instance ID.",
+        ),
+        func.create(
+            "CM_Open_DevNode_Key",
+            "Opens a registry key for a device node.",
+        ),
+        func.create(
+            "CM_Get_Parent",
+            "Retrieves the parent device node of a device node.",
+        ),
+        func.create(
+            "CM_Get_Child",
+            "Retrieves the child device node of a device node.",
+        ),
+        func.create(
+            "CM_Get_Sibling",
+            "Retrieves the sibling device node of a device node.",
+        ),
+        func.create(
+            "CM_Get_Device_ID_ListW",
+            "Retrieves a list of device instance IDs matching a filter.",
+        ),
+        func.create(
+            "CM_Get_Device_Interface_ListW",
+            "Retrieves a list of device interface GUIDs.",
+        ),
+        func.create(
+            "CM_Request_Device_EjectW",
+            "Requests that a device be ejected.",
+        ),
+        func.create(
+            "CM_Register_Device_InterfaceW",
+            "Registers a device interface.",
+        ),
+    ]
+    .to_vec();
+    dlls.insert("cfgmgr32.dll".to_string(), funcs);
+
+    // imagehlp.dll - Image Helper functions (PE file analysis, crash debugging)
+    let funcs: Vec<Func> = [
+        func.create(
+            "MapAndLoad",
+            "Maps a binary image into the current process address space.",
+        ),
+        func.create("UnMapAndLoad", "Unmaps a previously mapped binary image."),
+        func.create(
+            "ImageDirectoryEntryToData",
+            "Retrieves a pointer to the specified directory in a binary image.",
+        ),
+        func.create(
+            "ImageRvaToSection",
+            "Determines the section that contains the specified RVA.",
+        ),
+        func.create(
+            "ImageRvaToOffset",
+            "Converts a section-relative RVA to a file offset.",
+        ),
+        func.create(
+            "CheckSumMappedFile",
+            "Computes the checksum of a mapped file.",
+        ),
+        func.create(
+            "DbgHelpVersion",
+            "Returns the version of the DbgHelp library.",
+        ),
+        func.create(
+            "MiniDumpWriteDump",
+            "Writes application data to a mini dump file.",
+        ),
+        func.create(
+            "SymInitialize",
+            "Initializes the symbol handler for a process.",
+        ),
+        func.create(
+            "SymFromAddr",
+            "Retrieves symbol information for an address.",
+        ),
+        func.create(
+            "SymGetLineFromAddr",
+            "Retrieves source file and line number information for an address.",
+        ),
+    ]
+    .to_vec();
+    dlls.insert("imagehlp.dll".to_string(), funcs);
+
+    // dbghelp.dll - Debug Helper functions (crash dumps, symbol resolution)
+    let funcs: Vec<Func> = [
+        func.create(
+            "MiniDumpWriteDump",
+            "Writes application debugging information to a mini dump file.",
+        ),
+        func.create(
+            "MiniDumpReadDumpStream",
+            "Reads a stream from a mini dump file.",
+        ),
+        func.create(
+            "SymInitialize",
+            "Initializes the symbol handler for a process or thread.",
+        ),
+        func.create(
+            "SymFromAddr",
+            "Retrieves symbol information for a given address.",
+        ),
+        func.create(
+            "SymGetLineFromAddr",
+            "Retrieves source file and line number for an address.",
+        ),
+        func.create(
+            "SymFunctionTableAccess",
+            "Accesses the function table for a given address.",
+        ),
+        func.create("SymEnumSymbols", "Enumerates symbols matching a mask."),
+        func.create(
+            "StackWalk64",
+            "Walks a stack frame and retrieves information for each frame.",
+        ),
+        func.create(
+            "UnhandledExceptionFilter",
+            "Default unhandled exception filter.",
+        ),
+        func.create("StackWalk", "Walks a stack frame for 32-bit processes."),
+    ]
+    .to_vec();
+    dlls.insert("dbghelp.dll".to_string(), funcs);
+
+    // shcore.dll - Shell Core functions (DPI, monitors, shell operations)
+    let funcs: Vec<Func> = [
+        func.create(
+            "SetCurrentProcessExplicitAppUserModelID",
+            "Sets the AppUserModelID for the current process.",
+        ),
+        func.create(
+            "GetCurrentProcessExplicitAppUserModelID",
+            "Retrieves the AppUserModelID for the current process.",
+        ),
+        func.create("GetDpiForMonitor", "Retrieves the DPI for a monitor."),
+        func.create("SHCreateStreamOnFileEx", "Creates a stream on a file."),
+        func.create("ExtractIconEx", "Extracts icons from a specified file."),
+        func.create(
+            "SetProcessDpiAwareness",
+            "Sets the DPI awareness of the current process.",
+        ),
+        func.create(
+            "GetProcessDpiAwareness",
+            "Retrieves the DPI awareness of the current process.",
+        ),
+    ]
+    .to_vec();
+    dlls.insert("shcore.dll".to_string(), funcs);
+
+    // profapi.dll - User Profile API (profile management)
+    let funcs: Vec<Func> = [
+        func.create(
+            "LoadUserProfileW",
+            "Loads a user profile and returns information about it. This is the Unicode version.",
+        ),
+        func.create(
+            "UnloadUserProfile",
+            "Unloads a user profile that was loaded by LoadUserProfile.",
+        ),
+        func.create(
+            "GetProfileType",
+            "Retrieves the type of the current user profile.",
+        ),
+        func.create(
+            "GetUserProperty",
+            "Retrieves a property of the current user profile.",
+        ),
+        func.create(
+            "SetUserProperty",
+            "Sets a property of the current user profile.",
+        ),
+    ]
+    .to_vec();
+    dlls.insert("profapi.dll".to_string(), funcs);
+
+    // jscript.dll - JScript engine (ActiveX/COM scripting, often abused for obfuscation)
+    let funcs: Vec<Func> = [
+        func.create(
+            "DllGetClassObject",
+            "Returns a class factory for a COM class.",
+        ),
+        func.create(
+            "DllCanUnloadNow",
+            "Indicates whether the DLL can be unloaded.",
+        ),
+        func.create("DllInstall", "Installs or uninstalls the DLL."),
+        func.create(
+            "CreateScriptObject",
+            "Creates a new JScript script engine object.",
+        ),
+        func.create("Eval", "Evaluates a JScript expression."),
+    ]
+    .to_vec();
+    dlls.insert("jscript.dll".to_string(), funcs);
+
+    // vbscript.dll - VBScript engine (scripting, often abused for obfuscation)
+    let funcs: Vec<Func> = [
+        func.create(
+            "DllGetClassObject",
+            "Returns a class factory for a COM class.",
+        ),
+        func.create(
+            "DllCanUnloadNow",
+            "Indicates whether the DLL can be unloaded.",
+        ),
+        func.create("DllInstall", "Installs or uninstalls the DLL."),
+        func.create(
+            "CreateScriptEngine",
+            "Creates a new VBScript script engine object.",
+        ),
+        func.create("Eval", "Evaluates a VBScript expression."),
+    ]
+    .to_vec();
+    dlls.insert("vbscript.dll".to_string(), funcs);
+
+    // scrrun.dll - Scripting Runtime (FileSystemObject, dictionary, etc.)
+    let funcs: Vec<Func> = [
+        func.create(
+            "DllGetClassObject",
+            "Returns a class factory for a COM class.",
+        ),
+        func.create(
+            "DllCanUnloadNow",
+            "Indicates whether the DLL can be unloaded.",
+        ),
+        func.create("DllInstall", "Installs or uninstalls the DLL."),
+        func.create(
+            "CreateObject",
+            "Creates a COM object such as FileSystemObject.",
+        ),
+        func.create(
+            "Scripting.FileSystemObject",
+            "Creates a FileSystemObject for file and directory operations.",
+        ),
+        func.create(
+            "Scripting.Dictionary",
+            "Creates a Dictionary object for key-value storage.",
+        ),
+        func.create("Scripting.TextStream", "Creates a TextStream for file I/O."),
+    ]
+    .to_vec();
+    dlls.insert("scrrun.dll".to_string(), funcs);
+
+    // API Sets - Virtual DLLs that redirect to actual system DLLs
+    // api-ms-win-core-file-l1-2-0.dll - File I/O operations
+    let funcs: Vec<Func> = [
+        func.create("FindFirstFileExW", "Searches a directory for files matching a pattern. This is the Unicode version."),
+        func.create("FindNextFileW", "Continues a file search from a previous FindFirstFile call. This is the Unicode version."),
+        func.create("FindClose", "Closes a search handle opened by FindFirstFile."),
+        func.create("GetFileAttributesExW", "Retrieves information about a file or directory. This is the Unicode version."),
+        func.create("CreateFileW", "Creates or opens a file or I/O device. This is the Unicode version."),
+        func.create("ReadFile", "Reads data from a file."),
+        func.create("WriteFile", "Writes data to a file."),
+        func.create("DeleteFileW", "Deletes an existing file. This is the Unicode version."),
+        func.create("MoveFileExW", "Moves or renames a file, with options for cross-volume moves. This is the Unicode version."),
+        func.create("CopyFileExW", "Copies a file, with progress and cancellation callbacks. This is the Unicode version."),
+    ]
+    .to_vec();
+    dlls.insert("api-ms-win-core-file-l1-2-0.dll".to_string(), funcs);
+
+    // api-ms-win-core-file-l2-1-0.dll - Extended file I/O operations
+    let funcs: Vec<Func> = [
+        func.create("FindFirstFileExW", "Searches a directory for files matching a pattern with extended options. This is the Unicode version."),
+        func.create("GetFinalPathNameByHandleW", "Retrieves the final path of a file by its handle. This is the Unicode version."),
+        func.create("SetFileInformationByHandle", "Sets information about a file using its handle."),
+        func.create("FindFilesBySearchTracking", "Retrieves search tracking information for files."),
+    ]
+    .to_vec();
+    dlls.insert("api-ms-win-core-file-l2-1-0.dll".to_string(), funcs);
+
+    // api-ms-win-core-processenvironment-l1-1-0.dll - Process environment management
+    let funcs: Vec<Func> = [
+        func.create("GetEnvironmentStringsW", "Retrieves the environment block for the current process. This is the Unicode version."),
+        func.create("FreeEnvironmentStringsW", "Frees a block of environment strings. This is the Unicode version."),
+        func.create("SetEnvironmentVariableW", "Sets the value of an environment variable. This is the Unicode version."),
+        func.create("ExpandEnvironmentStringsW", "Expands environment variable strings. This is the Unicode version."),
+        func.create("GetComputerNameExW", "Retrieves a name associated with the local computer. This is the Unicode version."),
+        func.create("GetCommandLineW", "Retrieves the command line for the current process. This is the Unicode version."),
+        func.create("GetStartupInfoW", "Retrieves the STARTUPINFO structure for the current process. This is the Unicode version."),
+    ]
+    .to_vec();
+    dlls.insert(
+        "api-ms-win-core-processenvironment-l1-1-0.dll".to_string(),
+        funcs,
+    );
+
+    // api-ms-win-core-processthreads-l1-1-0.dll - Process and thread creation
+    let funcs: Vec<Func> = [
+        func.create("CreateProcessW", "Creates a new process and its primary thread. This is the Unicode version."),
+        func.create("CreateProcessA", "Creates a new process and its primary thread. This is the ANSI version."),
+        func.create("CreateProcessWithTokenW", "Creates a process using the credentials of a logged-on user. This is the Unicode version."),
+        func.create("CreateRemoteThread", "Creates a thread that runs in the virtual address space of another process."),
+        func.create("CreateThread", "Creates a thread to run in the virtual address space of the calling process."),
+        func.create("OpenProcess", "Opens a handle to a local process."),
+        func.create("TerminateProcess", "Terminates a process and all of its threads."),
+        func.create("ExitProcess", "Terminates the calling process."),
+        func.create("SuspendThread", "Suspends the specified thread."),
+        func.create("ResumeThread", "Resumes a suspended thread."),
+        func.create("GetProcessId", "Retrieves the process identifier."),
+        func.create("GetThreadId", "Retrieves the thread identifier."),
+    ]
+    .to_vec();
+    dlls.insert(
+        "api-ms-win-core-processthreads-l1-1-0.dll".to_string(),
+        funcs,
+    );
+
+    // api-ms-win-core-processthreads-l1-1-1.dll - Extended process and thread creation
+    let funcs: Vec<Func> = [
+        func.create("CreateProcessW", "Creates a new process and its primary thread. This is the Unicode version."),
+        func.create("CreateProcessA", "Creates a new process and its primary thread. This is the ANSI version."),
+        func.create("CreateProcessWithLogonW", "Creates a new process using the specified credentials. This is the Unicode version."),
+        func.create("CreateProcessWithTokenW", "Creates a process using the credentials of a logged-on user. This is the Unicode version."),
+        func.create("CreateRemoteThreadEx", "Creates a thread to run in the virtual address space of another process with extended attributes."),
+        func.create("OpenProcess", "Opens a handle to a local process."),
+        func.create("OpenThread", "Opens a handle to a thread."),
+        func.create("TerminateProcess", "Terminates a process and all of its threads."),
+        func.create("GetCurrentProcess", "Returns a pseudo-handle to the current process."),
+        func.create("GetCurrentThread", "Returns a pseudo-handle to the current thread."),
+    ]
+    .to_vec();
+    dlls.insert(
+        "api-ms-win-core-processthreads-l1-1-1.dll".to_string(),
+        funcs,
+    );
+
+    // api-ms-win-core-namedpipe-l1-1-0.dll - Named pipe operations
+    let funcs: Vec<Func> = [
+        func.create("CreateNamedPipeW", "Creates an instance of a named pipe and returns a handle. This is the Unicode version."),
+        func.create("ConnectNamedPipe", "Waits for a client process to connect to an instance of a named pipe."),
+        func.create("DisconnectNamedPipe", "Disconnects the server end of a named pipe from a client process."),
+        func.create("CallNamedPipeW", "Connects to a named pipe, sends a message, reads a response, and then disconnects. This is the Unicode version."),
+        func.create("WaitNamedPipeW", "Waits for an instance of a named pipe to be available. This is the Unicode version."),
+        func.create("ReadFile", "Reads data from a file or I/O device."),
+        func.create("WriteFile", "Writes data to a file or I/O device."),
+    ]
+    .to_vec();
+    dlls.insert("api-ms-win-core-namedpipe-l1-1-0.dll".to_string(), funcs);
+
+    // extmsapi.dll - Extended MS API (virtual/compatibility layer DLL)
+    let funcs: Vec<Func> = [
+        func.create(
+            "DllGetClassObject",
+            "Returns a class factory for a COM class.",
+        ),
+        func.create(
+            "DllCanUnloadNow",
+            "Indicates whether the DLL can be unloaded.",
+        ),
+    ]
+    .to_vec();
+    dlls.insert("extmsapi.dll".to_string(), funcs);
+
+    // compatdll.dll - Compatibility DLL (virtual/compatibility layer)
+    let funcs: Vec<Func> = [
+        func.create(
+            "DllGetClassObject",
+            "Returns a class factory for a COM class.",
+        ),
+        func.create(
+            "DllCanUnloadNow",
+            "Indicates whether the DLL can be unloaded.",
+        ),
+    ]
+    .to_vec();
+    dlls.insert("compatdll.dll".to_string(), funcs);
 
     return dlls;
 }
