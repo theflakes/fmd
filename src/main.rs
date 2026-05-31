@@ -9,6 +9,7 @@ mod sector_reader;
 use anyhow::{Context, Result};
 use chrono::{DateTime, Utc};
 use data_defs::*;
+use digest::Digest;
 use entropy::shannon_entropy;
 use fuzzyhash::FuzzyHash;
 use goblin::Object;
@@ -17,7 +18,7 @@ use lnk::extradata::ExtraDataBlock;
 use lnk::ShellLink;
 use mft::*;
 use path_abs::{PathAbs, PathInfo};
-use sha1::{Digest as Sha1Digest, Sha1};
+use sha1::Sha1;
 use sha2::Sha256;
 use std::env;
 use std::fs::{self, File};
@@ -109,46 +110,49 @@ fn get_mimetype(buffer: &[u8]) -> Result<String> {
     See:    https://github.com/rustysec/fuzzyhash-rs
             https://docs.rs/fuzzyhash/latest/fuzzyhash/
 */
-fn get_ssdeep_hash(buffer: &Vec<u8>) -> Result<String> {
+fn get_ssdeep_hash(buffer: &[u8]) -> Result<String> {
     let ssdeep = FuzzyHash::new(buffer);
     Ok(ssdeep.to_string())
 }
 
 // read in file as byte vector
-fn read_file_bytes(mut file: &File) -> Result<Vec<u8>> {
+fn read_file_bytes(file: &mut File) -> Result<Vec<u8>> {
     let mut buffer = Vec::new();
-    let _ = file.rewind(); // need to reset to beginning of file if file has already been read
+    file.rewind()?;
     file.read_to_end(&mut buffer)?;
     Ok(buffer)
 }
 
-fn get_md5(buffer: &Vec<u8>) -> Result<String> {
-    Ok(format!("{:x}", md5::compute(buffer)).to_lowercase())
+// read only the first n bytes (for quick MIME/type detection)
+fn read_first_n_bytes(path: &Path, n: usize) -> Result<Vec<u8>> {
+    let file = File::open(path)?;
+    let mut buffer = Vec::new();
+    let mut reader = file.take(n as u64);
+    reader.read_to_end(&mut buffer)?;
+    Ok(buffer)
 }
 
-fn get_sha1(buffer: &Vec<u8>) -> Result<String> {
-    let mut hasher = Sha1::new();
-    hasher.update(buffer);
-    Ok(format!("{:x}", hasher.finalize()))
+// get metadata for the file's content (md5, sha1, sha256, ssdeep)
+// MD5 is computed separately; SHA1+SHA256 are batched into a single pass
+fn get_file_hashes(buffer: &[u8]) -> Result<Hashes> {
+    let mut sha1 = Sha1::new();
+    let mut sha256 = Sha256::new();
+
+    // Batch-compute SHA1, SHA256 in a single pass
+    for chunk in buffer.chunks(4096) {
+        sha1.update(chunk);
+        sha256.update(chunk);
+    }
+
+    Ok(Hashes {
+        md5: format!("{:x}", md5::compute(buffer)).to_lowercase(),
+        sha1: format!("{:x}", sha1.finalize()),
+        sha256: format!("{:x}", sha256.finalize()),
+        ssdeep: get_ssdeep_hash(buffer)?,
+    })
 }
 
-fn get_sha256(buffer: &Vec<u8>) -> Result<String> {
-    let mut hasher = Sha256::new();
-    hasher.update(buffer);
-    Ok(format!("{:x}", hasher.finalize()))
-}
-
-// get metadata for the file's content (md5, sha1, ...)
-fn get_file_hashes(buffer: &Vec<u8>) -> Result<Hashes> {
-    let mut hashes = Hashes::default();
-    hashes.md5 = get_md5(buffer)?;
-    hashes.sha1 = get_sha1(buffer)?;
-    hashes.sha256 = get_sha256(buffer)?;
-    hashes.ssdeep = get_ssdeep_hash(&buffer)?;
-    Ok(hashes)
-}
-
-fn get_strings(buffer: &Vec<u8>, length: usize) -> Result<Vec<String>> {
+fn get_strings(buffer: &[u8], length: usize) -> Result<Vec<String>> {
     let mut results: Vec<String> = Vec::new();
     let mut chars: Vec<u8> = Vec::new();
     let ascii = 32..126;
@@ -168,21 +172,21 @@ fn get_strings(buffer: &Vec<u8>, length: usize) -> Result<Vec<String>> {
     Ok(results)
 }
 
-fn get_binary(path: &Path, buffer: &Vec<u8>) -> Result<Binary> {
+fn get_binary(path: &Path, buffer: &[u8]) -> Result<Binary> {
     let mut bin = Binary::default();
     if buffer.len() < 4 {
         return Ok(bin);
     } // ELF magic number is 4 bytes
-    let _ = match Object::parse(&buffer) {
+    let _ = match Object::parse(buffer) {
         Ok(o) => match o {
             Object::Elf(_elf) => {
-                bin = elf::get_elf(&buffer).context("Failed to parse ELF!")?;
+                bin = elf::get_elf(buffer).context("Failed to parse ELF!")?;
             }
             Object::PE(_pex) => {
-                bin = pe::get_pe(&buffer, path).context("Failed to parse PE!")?;
+                bin = pe::get_pe(buffer, path).context("Failed to parse PE!")?;
             }
             Object::Mach(_macho) => {
-                bin = macho::get_macho(&buffer).context("Failed to parse Mach‑O!")?;
+                bin = macho::get_macho(buffer).context("Failed to parse Mach‑O!")?;
             }
             Object::Archive(_archive) => {
                 //println!("Archive file");
@@ -389,11 +393,15 @@ fn analyze_file(
     let mut mime_type = String::new();
 
     if max_size == 0 || bytes <= max_size {
-        let buffer = read_file_bytes(&file)?;
-        mime_type = get_mimetype(&buffer)?;
+        // Phase 1: Quick MIME detection from first 512 bytes for early rejection
+        let small_buf = read_first_n_bytes(&path, 512)?;
+        mime_type = get_mimetype(&small_buf)?;
         if int_mtypes && !INTERESTING_MIME_TYPES.contains(&mime_type.as_str()) {
-            return Ok(());
+            return Ok(()); // skip full-file read for non-interesting types
         }
+        // Phase 2: Full analysis
+        let mut file = open_file(&path)?;
+        let buffer = read_file_bytes(&mut file)?;
         bin = get_binary(path, &buffer)?;
         if strings_length > 0 {
             strings = get_strings(&buffer, strings_length)?;

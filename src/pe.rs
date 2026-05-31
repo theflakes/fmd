@@ -30,7 +30,7 @@ fn get_arch(machine: u16) -> Architecture {
     }
 }
 
-fn get_ssdeep_hash(buffer: &Vec<u8>) -> Result<String> {
+fn get_ssdeep_hash(buffer: &[u8]) -> Result<String> {
     let ssdeep = FuzzyHash::new(buffer);
     Ok(ssdeep.to_string())
 }
@@ -88,10 +88,11 @@ fn get_sections(pex: &pe::PE, buffer: &[u8]) -> Result<BinSections> {
         bs.virt_size = s.virtual_size;
         let start = s.pointer_to_raw_data as usize;
         let end = start + s.size_of_raw_data as usize;
-        let data = buffer.get(start..end).unwrap_or(&[]).to_vec();
-        bs.entropy = shannon_entropy(&data);
-        bs.md5 = format!("{:x}", md5::compute(&data)).to_lowercase();
-        bs.ssdeep = get_ssdeep_hash(&data)?;
+        // Use slice reference instead of Vec copy (optimization 6)
+        let data = buffer.get(start..end).unwrap_or(&[]);
+        bs.entropy = shannon_entropy(data);
+        bs.md5 = format!("{:x}", md5::compute(data)).to_lowercase();
+        bs.ssdeep = get_ssdeep_hash(data)?;
         bss.sections.push(bs);
     }
     Ok(bss)
@@ -110,28 +111,36 @@ fn is_dotnet(imps: &Imports) -> Result<bool> {
     Ok(false)
 }
 
-fn parse_pe_imports(imports: &Vec<goblin::pe::import::Import>) -> Result<(Imports, bool)> {
-    let mut track_dlls: Vec<&str> = Vec::new();
+fn parse_pe_imports(imports: &[goblin::pe::import::Import]) -> Result<(Imports, bool)> {
+    // O(n) grouping with HashMap instead of O(n^2) nested loops (optimization 3)
+    let mut dll_order: Vec<String> = Vec::new();
+    let mut dll_imports: std::collections::HashMap<String, Vec<&goblin::pe::import::Import>> =
+        std::collections::HashMap::new();
+
+    for import in imports {
+        let dll = import.dll.to_string();
+        let list = dll_imports.entry(dll.clone()).or_default();
+        if list.is_empty() {
+            dll_order.push(dll);
+        }
+        list.push(import);
+    }
+
     let mut imps: Imports = Imports::default();
     let mut func: Function = Function::default();
-    for i in imports.iter() {
-        if track_dlls.contains(&i.dll) {
-            continue;
-        }
-        track_dlls.push(i.dll);
+
+    for dll in &dll_order {
         let mut temp = Import::default();
-        temp.lib = i.dll.to_string();
-        for m in imports.iter() {
-            if i.dll != m.dll {
-                continue;
-            }
+        temp.lib = dll.clone();
+        for imp in &dll_imports[dll] {
             temp.count += 1;
-            func.name = m.name.to_string();
-            func.info = is_function_interesting(&i.dll.to_lowercase(), &func.name);
+            func.name = imp.name.to_string();
+            func.info = is_function_interesting(&dll.to_lowercase(), &func.name);
             temp.names.push(func.clone());
         }
         imps.imports.push(temp);
     }
+
     let is_dot_net = is_dotnet(&imps)?;
     Ok((imps, is_dot_net))
 }
@@ -145,7 +154,7 @@ fn check_ordinal(dll: &str, func: &str) -> Result<String> {
     Ok(f)
 }
 
-fn get_imphashes(imports: &Vec<goblin::pe::import::Import>) -> Result<(ImpHashes, usize, usize)> {
+fn get_imphashes(imports: &[goblin::pe::import::Import]) -> Result<(ImpHashes, usize, usize)> {
     let mut imphash_array: Vec<String> = Vec::new();
     let mut imphash_text = String::new();
     let mut total_dlls = 0;
@@ -174,17 +183,16 @@ fn get_imphashes(imports: &Vec<goblin::pe::import::Import>) -> Result<(ImpHashes
     }
     let mut imphashes = ImpHashes::default();
     imphash_text = imphash_text.trim_end_matches(",").to_string();
-    imphashes.md5 = format!("{:x}", md5::compute(imphash_text.clone())).to_lowercase();
+    imphashes.md5 = format!("{:x}", md5::compute(imphash_text.as_bytes())).to_lowercase();
     let (imphash_text_sorted, sorted_md5) = get_hash_sorted(&mut imphash_array);
     imphashes.md5_sorted = sorted_md5;
-    let imphash_bytes: Vec<u8> = imphash_text.as_bytes().to_vec();
-    let imphash_bytes_ordered: Vec<u8> = imphash_text_sorted.as_bytes().to_vec();
-    imphashes.ssdeep = get_ssdeep_hash(&imphash_bytes)?;
-    imphashes.ssdeep_sorted = get_ssdeep_hash(&imphash_bytes_ordered)?;
+    // Compute SSdeep directly from bytes — no intermediate Vec needed (optimization 7)
+    imphashes.ssdeep = get_ssdeep_hash(imphash_text.as_bytes())?;
+    imphashes.ssdeep_sorted = get_ssdeep_hash(imphash_text_sorted.as_bytes())?;
     Ok((imphashes, total_dlls, imports.len()))
 }
 
-fn parse_pe_exports(exports: &Vec<goblin::pe::export::Export>) -> Result<Exports> {
+fn parse_pe_exports(exports: &[goblin::pe::export::Export]) -> Result<Exports> {
     let mut exps = Exports::default();
     let mut exphash_text = String::new();
     for e in exports.iter() {
@@ -197,9 +205,8 @@ fn parse_pe_exports(exports: &Vec<goblin::pe::export::Export>) -> Result<Exports
     exps.count = exports.len();
     let mut exphashes = ExpHashes::default();
     exphash_text = exphash_text.trim_end_matches(",").to_string();
-    exphashes.md5 = format!("{:x}", md5::compute(exphash_text.clone())).to_lowercase();
-    let exphash_bytes: Vec<u8> = exphash_text.as_bytes().to_vec();
-    exphashes.ssdeep = get_ssdeep_hash(&exphash_bytes)?;
+    exphashes.md5 = format!("{:x}", md5::compute(exphash_text.as_bytes())).to_lowercase();
+    exphashes.ssdeep = get_ssdeep_hash(exphash_text.as_bytes())?;
     exps.hashes = exphashes;
     Ok(exps)
 }

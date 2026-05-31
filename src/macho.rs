@@ -111,13 +111,12 @@ fn get_macho_exphashes(exports: &Exports) -> ExpHashes {
     exphash_text = exphash_text.trim_end_matches(",").to_string();
     exphashes.md5 = format!("{:x}", md5::compute(exphash_text.as_bytes())).to_lowercase();
 
-    let (exphash_text_sorted, md5_sorted) = get_hash_sorted(&mut exphash_array);
+    let (_exphash_text_sorted, md5_sorted) = get_hash_sorted(&mut exphash_array);
     exphashes.md5_sorted = md5_sorted;
 
     exphashes.ssdeep = FuzzyHash::new(exphash_text.as_bytes()).to_string();
-    exphashes.ssdeep_sorted = FuzzyHash::new(exphash_text_sorted.as_bytes()).to_string();
-
-    return exphashes;
+    exphashes.ssdeep_sorted = FuzzyHash::new(_exphash_text_sorted.as_bytes()).to_string();
+    exphashes
 }
 
 fn parse_macho_imports(macho: &mach::MachO) -> Result<Imports> {

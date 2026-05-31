@@ -67,12 +67,12 @@ fn parse_elf_sections(elf: &elf::Elf, buffer: &[u8]) -> Result<BinSections> {
         }
 
         // Determine the data that will be hashed
-        let section_data_to_hash: Vec<u8>;
-        if sh.sh_type == elf::section_header::SHT_NOBITS {
+        // Use slice reference instead of Vec copy (optimization 6)
+        let section_data_to_hash: &[u8] = if sh.sh_type == elf::section_header::SHT_NOBITS {
             section.raw_size = 0;
             section.virt_size = sh.sh_size as u32;
             sections.total_virt_bytes += sh.sh_size as u32;
-            section_data_to_hash = Vec::new();
+            &[]
         } else {
             section.raw_size = sh.sh_size as u32;
             section.virt_size = sh.sh_size as u32;
@@ -82,21 +82,21 @@ fn parse_elf_sections(elf: &elf::Elf, buffer: &[u8]) -> Result<BinSections> {
             let start = sh.sh_offset as usize;
             let end = (sh.sh_offset + sh.sh_size) as usize;
             if end <= buffer.len() {
-                section_data_to_hash = buffer[start..end].to_vec();
+                &buffer[start..end]
             } else {
-                section_data_to_hash = Vec::new();
+                &[]
             }
-        }
+        };
 
         // Hashes & entropy
-        section.md5 = format!("{:x}", md5::compute(&section_data_to_hash)).to_lowercase();
-        section.ssdeep = FuzzyHash::new(&section_data_to_hash).to_string();
-        section.entropy = shannon_entropy(&section_data_to_hash);
+        section.md5 = format!("{:x}", md5::compute(section_data_to_hash)).to_lowercase();
+        section.ssdeep = FuzzyHash::new(section_data_to_hash).to_string();
+        section.entropy = shannon_entropy(section_data_to_hash);
 
         // Human‑readable content for .comment/.note
         if section.name == ".comment" || section.name.starts_with(".note") {
             section.elf_comment_or_note_content =
-                Some(bytes_to_human_readable_string(&section_data_to_hash));
+                Some(bytes_to_human_readable_string(section_data_to_hash));
         }
 
         section.virt_address = format!("0x{:x}", sh.sh_addr);
@@ -166,13 +166,12 @@ fn get_elf_exphashes(exports: &Exports) -> ExpHashes {
     exphash_text = exphash_text.trim_end_matches(",").to_string();
     exphashes.md5 = format!("{:x}", md5::compute(exphash_text.as_bytes())).to_lowercase();
 
-    let (exphash_text_sorted, md5_sorted) = get_hash_sorted(&mut exphash_array);
+    let (_exphash_text_sorted, md5_sorted) = get_hash_sorted(&mut exphash_array);
     exphashes.md5_sorted = md5_sorted;
 
     exphashes.ssdeep = FuzzyHash::new(exphash_text.as_bytes()).to_string();
-    exphashes.ssdeep_sorted = FuzzyHash::new(exphash_text_sorted.as_bytes()).to_string();
-
-    return exphashes;
+    exphashes.ssdeep_sorted = FuzzyHash::new(_exphash_text_sorted.as_bytes()).to_string();
+    exphashes
 }
 
 fn parse_elf_imports(elf: &elf::Elf, version_map: &HashMap<u16, String>) -> Imports {
