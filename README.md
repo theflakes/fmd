@@ -130,6 +130,15 @@ NOTE:
     - if 'total_virt_bytes' is much larger than 'total_raw_bytes', this can indicate
       a packed binary.
 
+    Windows Prefetch (.pf) files are detected by extension or file signature and
+    are parsed even with --int_mtypes. The general file log is always produced.
+    - 'prefetch' contains all of the prefetch information:
+      the executable name, version, run count, last run times, every loaded
+      dependency (file, flags, prefetch blocks and trace bitfields), and
+      volume information including NTFS file references.
+    - if 'prefetch' is null, the file was not successfully parsed as prefetch,
+      though the general file log is still reported.
+
     Certain forensic information can only be harvested when the file is analyzed on
     the filesystem of origin.
     - e.g. timestamps and alternate data streams are lost when the file is moved
@@ -312,7 +321,8 @@ NOTE:
       "names": []
     }
   },
-  "strings": []
+  "strings": [],
+  "prefetch": null
 }
 ```
 ```
@@ -413,7 +423,8 @@ NOTE:
       "names": []
     }
   },
-  "strings": []
+  "strings": [],
+  "prefetch": null
 }
 ```
 ```
@@ -1215,6 +1226,7 @@ eated."
       "names": []
     }
   },
-  "strings": []
+  "strings": [],
+  "prefetch": null
 }
 ```

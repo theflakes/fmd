@@ -3,3 +3,7 @@ rustflags = ["-C", "target-feature=+crt-static", "-Aunused"]
 
 [target.x86_64-pc-windows-msvc]
 rustflags = ["-C", "target-feature=+crt-static", "-Aunused"]
+
+[target.x86_64-pc-windows-gnu]
+# Possible fix for stack overflows when running under wine
+rustflags = ["-C", "link-args=-Wl,--stack,8388608"]

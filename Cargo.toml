@@ -30,6 +30,8 @@ rayon = "*"
 epochs = "*"
 is_elevated = "*"
 exe = "*"
+frnsc-prefetch = "0.13"
+forensic-rs = "0.13"
 lnk = "*"
 memmap2 = "0.9"
 

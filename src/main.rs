@@ -5,6 +5,7 @@ mod mft;
 mod ordinals;
 mod parallel;
 mod pe;
+mod prefetch;
 mod sector_reader;
 
 use anyhow::{Context, Result};
@@ -325,6 +326,12 @@ pub(crate) fn analyze_file_data(
         return Err(anyhow::anyhow!("Extension filtered"));
     }
 
+    // Windows prefetch files are parsed with the prefetch parser, not binary
+    // analysis, and are never skipped by the interesting MIME type filter.
+    // Detection is by extension or by sniffing the prefetch signature, which
+    // keeps renamed .pf files from being missed in directory sweeps.
+    let is_pf_ext = ext.eq_ignore_ascii_case("pf");
+
     // Get file times first
     let ftimes = get_file_times(&path)?;
 
@@ -349,20 +356,36 @@ pub(crate) fn analyze_file_data(
     let mut hashes = Hashes::default();
     let mut strings: Vec<String> = Vec::new();
     let mut mime_type = String::new();
+    let mut prefetch: Option<Prefetch> = None;
 
     if max_size == 0 || bytes <= max_size {
         // Phase 1: Quick MIME detection from first 512 bytes for early rejection
         let small_buf = read_first_n_bytes(&path, 512)?;
         mime_type = get_mimetype(&small_buf)?;
-        if int_mtypes && !INTERESTING_MIME_TYPES.contains(&mime_type.as_str()) {
+        let is_pf = is_pf_ext || prefetch::is_prefetch_file(&small_buf);
+        if !is_pf && int_mtypes && !INTERESTING_MIME_TYPES.contains(&mime_type.as_str()) {
             return Err(anyhow::anyhow!("MIME type filtered")); // skip full-file read for non-interesting types
         }
         // Phase 2: Full analysis
         let file = open_file(&path)?;
         let buffer = map_file_bytes(&file)?;
-        bin = get_binary(path, &buffer)?;
-        if strings_length > 0 {
-            strings = get_strings(&buffer, strings_length)?;
+        if is_pf {
+            // A parse failure still leaves the general file log below
+            // unscathed; the prefetch JSON log simply stays absent.
+            if let Ok(pf) = prefetch::get_prefetch(&fname, path) {
+                prefetch = Some(pf);
+            } else if is_pf_ext {
+                // Fallback for a .pf-ext file that fails to parse
+                bin = get_binary(path, &buffer)?;
+            }
+            if strings_length > 0 {
+                strings = get_strings(&buffer, strings_length)?;
+            }
+        } else {
+            bin = get_binary(path, &buffer)?;
+            if strings_length > 0 {
+                strings = get_strings(&buffer, strings_length)?;
+            }
         }
         entropy = shannon_entropy(&buffer);
         hashes = get_file_hashes(&buffer)?;
@@ -387,6 +410,7 @@ pub(crate) fn analyze_file_data(
         ads,
         bin,
         strings,
+        prefetch,
     ))
 }
 
@@ -750,6 +774,15 @@ NOTE:
     - 'total_virt_bytes' cumulative size in bytes of all virtual, in memory, sections.
     - if 'total_virt_bytes' is much larger than 'total_raw_bytes', this can indicate
       a packed binary.
+
+    Windows Prefetch (.pf) files are detected by extension or file signature and
+    are parsed even with --int_mtypes. The general file log is always produced.
+    - 'prefetch' contains all of the prefetch information:
+      the executable name, version, run count, last run times, every loaded
+      dependency (file, flags, prefetch blocks and trace bitfields), and
+      volume information including NTFS file references.
+    - if 'prefetch' is null, the file was not successfully parsed as prefetch,
+      though the general file log is still reported.
 
     Certain forensic information can only be harvested when the file is analyzed on
     the filesystem of origin.

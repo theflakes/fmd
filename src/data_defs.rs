@@ -492,6 +492,98 @@ pub struct Link {
     // pub volume_label: String,
 }
 
+impl Default for PrefetchTrace {
+    fn default() -> PrefetchTrace {
+        PrefetchTrace {
+            flags: String::new(),
+            block_offset: 0,
+            used: String::new(),
+            prefetched: String::new(),
+        }
+    }
+}
+#[derive(Serialize, Clone, Debug)]
+pub struct PrefetchTrace {
+    pub flags: String,
+    pub block_offset: u32,
+    pub used: String,
+    pub prefetched: String,
+}
+
+impl Default for PrefetchDependency {
+    fn default() -> PrefetchDependency {
+        PrefetchDependency {
+            file: String::new(),
+            flags: String::new(),
+            blocks_to_prefetch: 0,
+            traces: Vec::new(),
+        }
+    }
+}
+#[derive(Serialize, Clone, Debug)]
+pub struct PrefetchDependency {
+    pub file: String,
+    pub flags: String,
+    pub blocks_to_prefetch: u32,
+    pub traces: Vec<PrefetchTrace>,
+}
+
+impl Default for PrefetchNtfsFile {
+    fn default() -> PrefetchNtfsFile {
+        PrefetchNtfsFile {
+            mft_entry: 0,
+            seq_number: 0,
+        }
+    }
+}
+#[derive(Serialize, Clone, Debug)]
+pub struct PrefetchNtfsFile {
+    pub mft_entry: u64,
+    pub seq_number: u16,
+}
+
+impl Default for PrefetchVolume {
+    fn default() -> PrefetchVolume {
+        PrefetchVolume {
+            device_path: String::new(),
+            serial_number: 0,
+            creation_time: String::new(),
+            file_references: Vec::new(),
+            directory_strings: Vec::new(),
+        }
+    }
+}
+#[derive(Serialize, Clone, Debug)]
+pub struct PrefetchVolume {
+    pub device_path: String,
+    pub serial_number: u32,
+    pub creation_time: String,
+    pub file_references: Vec<PrefetchNtfsFile>,
+    pub directory_strings: Vec<String>,
+}
+
+impl Default for Prefetch {
+    fn default() -> Prefetch {
+        Prefetch {
+            version: 0,
+            name: String::new(),
+            run_count: 0,
+            last_run_times: Vec::new(),
+            dependencies: Vec::new(),
+            volumes: Vec::new(),
+        }
+    }
+}
+#[derive(Serialize, Clone, Debug)]
+pub struct Prefetch {
+    pub version: u32,
+    pub name: String,
+    pub run_count: u32,
+    pub last_run_times: Vec<String>,
+    pub dependencies: Vec<PrefetchDependency>,
+    pub volumes: Vec<PrefetchVolume>,
+}
+
 impl Default for RunTimeEnv {
     fn default() -> RunTimeEnv {
         RunTimeEnv {
@@ -526,6 +618,7 @@ pub struct MetaData {
     pub ads: Vec<DataRun>,
     pub binary: Binary,
     pub strings: Vec<String>,
+    pub prefetch: Option<Prefetch>,
 }
 impl MetaData {
     pub fn new(
@@ -545,6 +638,7 @@ impl MetaData {
         ads: Vec<DataRun>,
         binary: Binary,
         strings: Vec<String>,
+        prefetch: Option<Prefetch>,
     ) -> MetaData {
         MetaData {
             runtime_env,
@@ -563,6 +657,7 @@ impl MetaData {
             ads,
             binary,
             strings,
+            prefetch,
         }
     }
     // convert struct to json and report it out
