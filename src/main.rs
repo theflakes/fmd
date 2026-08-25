@@ -529,6 +529,26 @@ fn convert_to_path(target: &str) -> Result<PathBuf> {
 }
 
 fn main() -> Result<()> {
+    std::panic::set_hook(Box::new(|info| {
+        let mut msg = String::new();
+        if let Some(s) = info.payload().downcast_ref::<&str>() {
+            msg = s.to_string();
+        } else if let Some(s) = info.payload().downcast_ref::<String>() {
+            msg = s.clone();
+        }
+
+        if msg.contains("Pipe not connected")
+            || msg.contains("Broken pipe")
+            || msg.contains("os error 233")
+            || msg.contains("failed printing to stdout")
+        {
+            // Exit immediately without printing panic traces or unwinding
+            std::process::exit(0);
+        }
+
+        // Print normal panics
+        eprintln!("{info}");
+    }));
     let (
         file_path,
         pprint,
@@ -582,6 +602,7 @@ fn main() -> Result<()> {
             int_mtypes,
         )?;
     }
+
     Ok(())
 }
 
