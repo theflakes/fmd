@@ -27,6 +27,29 @@ fn filetime_u64_to_iso(t: u64) -> String {
 }
 
 fn map_prefetch(pf: &PrefetchFile) -> Prefetch {
+    let volumes: Vec<PrefetchVolume> = pf
+        .volume
+        .iter()
+        .map(|v| PrefetchVolume {
+            device_path: v.device_path.clone(),
+            serial_number: v.serial_number,
+            creation_time: filetime_u64_to_iso(v.creation_time),
+            file_references: v
+                .file_references
+                .iter()
+                .map(|f| PrefetchNtfsFile {
+                    mft_entry: f.mft_entry,
+                    seq_number: f.seq_number,
+                })
+                .collect(),
+            directories: v.directory_strings.clone(),
+        })
+        .collect();
+
+    // The executable's touched files, taken straight from the dependency
+    // list to make scanning easier when triaging a cybersecurity event.
+    let files: Vec<String> = pf.metrics.iter().map(|m| m.file.clone()).collect();
+
     Prefetch {
         version: pf.version,
         name: pf.name.clone(),
@@ -51,24 +74,8 @@ fn map_prefetch(pf: &PrefetchFile) -> Prefetch {
                     .collect(),
             })
             .collect(),
-        volumes: pf
-            .volume
-            .iter()
-            .map(|v| PrefetchVolume {
-                device_path: v.device_path.clone(),
-                serial_number: v.serial_number,
-                creation_time: filetime_u64_to_iso(v.creation_time),
-                file_references: v
-                    .file_references
-                    .iter()
-                    .map(|f| PrefetchNtfsFile {
-                        mft_entry: f.mft_entry,
-                        seq_number: f.seq_number,
-                    })
-                    .collect(),
-                directory_strings: v.directory_strings.clone(),
-            })
-            .collect(),
+        files,
+        volumes,
     }
 }
 

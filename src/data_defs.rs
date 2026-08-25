@@ -549,7 +549,7 @@ impl Default for PrefetchVolume {
             serial_number: 0,
             creation_time: String::new(),
             file_references: Vec::new(),
-            directory_strings: Vec::new(),
+            directories: Vec::new(),
         }
     }
 }
@@ -559,7 +559,7 @@ pub struct PrefetchVolume {
     pub serial_number: u32,
     pub creation_time: String,
     pub file_references: Vec<PrefetchNtfsFile>,
-    pub directory_strings: Vec<String>,
+    pub directories: Vec<String>,
 }
 
 impl Default for Prefetch {
@@ -570,6 +570,7 @@ impl Default for Prefetch {
             run_count: 0,
             last_run_times: Vec::new(),
             dependencies: Vec::new(),
+            files: Vec::new(),
             volumes: Vec::new(),
         }
     }
@@ -581,6 +582,7 @@ pub struct Prefetch {
     pub run_count: u32,
     pub last_run_times: Vec<String>,
     pub dependencies: Vec<PrefetchDependency>,
+    pub files: Vec<String>,
     pub volumes: Vec<PrefetchVolume>,
 }
 

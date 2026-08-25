@@ -134,8 +134,9 @@ NOTE:
     are parsed even with --int_mtypes. The general file log is always produced.
     - 'prefetch' contains all of the prefetch information:
       the executable name, version, run count, last run times, every loaded
-      dependency (file, flags, prefetch blocks and trace bitfields), and
-      volume information including NTFS file references.
+      dependency (file, flags, prefetch blocks and trace bitfields), a flat
+      list of every file touched (files) for quick triage, and volume
+      information including NTFS file references and directories.
     - if 'prefetch' is null, the file was not successfully parsed as prefetch,
       though the general file log is still reported.
 
