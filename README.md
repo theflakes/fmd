@@ -7,18 +7,18 @@ Currently supports parsing Windows LNK files, PE, Mach-O, and Elf binaries.
 [DLL API Sets](https://ofekshilon.com/2016/03/27/on-api-ms-win-xxxxx-dll-and-other-dependency-walker-glitches/)
 
 #### **Understanding MS PE analysis**
-https://practicalsecurityanalytics.com/threat-hunting-with-function-imports/
-https://resources.infosecinstitute.com/topic/malware-researchers-handbook/
-http://www.hacktohell.org/2012/04/analysing-pe-files.html
-https://tstillz.medium.com/basic-static-analysis-part-1-9c24497790b6
-https://upload.wikimedia.org/wikipedia/commons/1/1b/Portable_Executable_32_bit_Structure_in_SVG_fixed.svg
-https://0xrick.github.io/win-internals/pe5/
+https://practicalsecurityanalytics.com/threat-hunting-with-function-imports/  
+https://resources.infosecinstitute.com/topic/malware-researchers-handbook/  
+http://www.hacktohell.org/2012/04/analysing-pe-files.html  
+https://tstillz.medium.com/basic-static-analysis-part-1-9c24497790b6  
+https://upload.wikimedia.org/wikipedia/commons/1/1b/Portable_Executable_32_bit_Structure_in_SVG_fixed.svg  
+https://0xrick.github.io/win-internals/pe5/  
 
 **See**:
-https://github.com/frank2
-https://github.com/lilopkins/lnk-rs
-https://docs.rs/fuzzyhash/latest/fuzzyhash/
-https://dfir.science/2017/07/How-To-Fuzzy-Hashing-with-SSDEEP-(similarity-matching).html
+https://github.com/frank2  
+https://github.com/lilopkins/lnk-rs  
+https://docs.rs/fuzzyhash/latest/fuzzyhash/  
+https://dfir.science/2017/07/How-To-Fuzzy-Hashing-with-SSDEEP-(similarity-matching).html  
 
 #### LNK Analysis
 https://windowsir.blogspot.com/2025/09/ransomware-artifacts.html

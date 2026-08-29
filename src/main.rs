@@ -529,6 +529,7 @@ fn convert_to_path(target: &str) -> Result<PathBuf> {
 }
 
 fn main() -> Result<()> {
+    // a kludge to prevent println panic on mingw
     std::panic::set_hook(Box::new(|info| {
         let mut msg = String::new();
         if let Some(s) = info.payload().downcast_ref::<&str>() {
