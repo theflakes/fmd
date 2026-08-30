@@ -47,21 +47,17 @@ When examining a Windows prefetch artifact, the analysis pipeline executes the f
 * Prefetch files often record paths prefixed with a volume GUID (e.g., `\\VOLUME{...}\\WINDOWS\\SYSTEM32\\KERNEL32.DLL`). The engine strips this namespace prefix to extract a clean relative path.
 * It attempts to load the dependency directly using the path or by evaluating it against the system root (`SystemRoot`), ensuring it works natively or during cross-investigations.
 
-
 2. **Fallback Disk Discovery (`find_file_on_disk_any_extension`)**
 * If direct paths fail, the engine scans standard Windows system directories (`System32`, `SysWOW64`, and `SYSnative`) alongside the system `PATH`.
 * It operates independently of strict file extension requirements. If a dependency's extension varies or is absent, the engine falls back to matching file stems, ensuring that any matching binary on disk is discovered.
-
 
 3. **In-Memory PE Parsing (`goblin`)**
 * Once the target file is located and read into memory, it is parsed as a Portable Executable (PE) binary using the `goblin` crate.
 * This step checks the binary's headers to extract all exported function symbols and their corresponding Relative Virtual Addresses (RVAs) from the Export Address Table (EAT).
 
-
 4. **Bitmask & Sector Validation (`parse_used_bitfield`)**
 * Windows prefetch files record execution telemetry via a binary `used` bitmask string (e.g., `"11111110"`) for every trace block.
 * The engine parses this bitmask to determine which specific sub-sectors of a memory block were actively referenced during execution. Blocks with no active usage (`0`) are skipped entirely.
-
 
 5. **Sector-to-RVA Range Mapping**
 * Each prefetch trace block is treated as a standard 4KB memory page (`4096` bytes), which is subdivided into 8 distinct 512-byte sector chunks.
