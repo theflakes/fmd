@@ -111,6 +111,7 @@ $$\text{Sector End RVA} = \text{Sector Start RVA} + 512$$
 |  - De-duplicate and group results by block offset     |
 |  - Output structured JSON trace analysis              |
 +-------------------------------------------------------+
+```
 
 ### Compiling
 To compile; install Rust and the MSVC 32 and/or 64 bit environment:
