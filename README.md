@@ -26,7 +26,7 @@ https://windowsir.blogspot.com/2025/09/ransomware-artifacts.html
 ### Windows Prefetch Analysis
 If parsing a Windows Prefetch file the tool will endeavor to load any referenced DLL, even if it does not have a .dll extension, and using the offset and used bitmask determine what functions in the DLL MAY have been used. This workflow is layed out below.
 
-
+```
 +-------------------------------------------------------+
 |              Prefetch Trace Artifact                  |
 |    - File Path: \\VOLUME{...}\\...\\KERNEL32.D        |
@@ -72,7 +72,7 @@ If parsing a Windows Prefetch file the tool will endeavor to load any referenced
 |  - De-duplicate and group results by block offset     |
 |  - Output structured JSON trace analysis              |
 +-------------------------------------------------------+
-
+```
 
 ### Compiling
 To compile; install Rust and the MSVC 32 and/or 64 bit environment:
