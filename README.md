@@ -26,6 +26,52 @@ https://windowsir.blogspot.com/2025/09/ransomware-artifacts.html
 ### Windows Prefetch Analysis
 If parsing a Windows Prefetch file the tool will endeavor to load any referenced DLL, even if it does not have a .dll extension, and using the offset and used bitmask determine what functions in the DLL MAY have been used. This workflow is layed out below.
 
+#### Features
+
+* **Portable Executable (PE) Parsing:** In-memory parsing of binaries and system DLLs via **goblin** to extract export address tables (EAT), relative virtual addresses (RVAs), and metadata.
+* **Prefetch Trace Correlation:** Bridges Windows prefetch dependency traces with exported function names by mapping block offsets and active sub-sectors.
+* **Flexible File Discovery:** Locates target dependencies on disk regardless of file extension using smart fallback scanning across Windows system directories (`System32`, `SysWOW64`, `SYSnative`) and system paths.
+* **Volume Path Normalization:** Automatically handles and cleans prefetch volume GUID namespace paths (e.g., `\\VOLUME{...}\\...`) for seamless cross-platform or live artifact analysis.
+
+---
+
+#### Prefetch to DLL Function Resolution Engine
+
+The tool features an advanced forensic correlation engine that bridges Windows prefetch dependency traces with the Export Address Table (EAT) of target DLLs or binaries. This process maps low-level memory block execution back to meaningful Windows API functions.
+
+##### How the Resolution Engine Works
+
+When examining a Windows prefetch artifact, the analysis pipeline executes the following sequence:
+
+1. **Volume Path Cleansing & Direct Loading**
+* Prefetch files often record paths prefixed with a volume GUID (e.g., `\\VOLUME{...}\\WINDOWS\\SYSTEM32\\KERNEL32.DLL`). The engine strips this namespace prefix to extract a clean relative path.
+* It attempts to load the dependency directly using the path or by evaluating it against the system root (`SystemRoot`), ensuring it works natively or during cross-investigations.
+
+
+2. **Fallback Disk Discovery (`find_file_on_disk_any_extension`)**
+* If direct paths fail, the engine scans standard Windows system directories (`System32`, `SysWOW64`, and `SYSnative`) alongside the system `PATH`.
+* It operates independently of strict file extension requirements. If a dependency's extension varies or is absent, the engine falls back to matching file stems, ensuring that any matching binary on disk is discovered.
+
+
+3. **In-Memory PE Parsing (`goblin`)**
+* Once the target file is located and read into memory, it is parsed as a Portable Executable (PE) binary using the `goblin` crate.
+* This step checks the binary's headers to extract all exported function symbols and their corresponding Relative Virtual Addresses (RVAs) from the Export Address Table (EAT).
+
+
+4. **Bitmask & Sector Validation (`parse_used_bitfield`)**
+* Windows prefetch files record execution telemetry via a binary `used` bitmask string (e.g., `"11111110"`) for every trace block.
+* The engine parses this bitmask to determine which specific sub-sectors of a memory block were actively referenced during execution. Blocks with no active usage (`0`) are skipped entirely.
+
+
+5. **Sector-to-RVA Range Mapping**
+* Each prefetch trace block is treated as a standard 4KB memory page (`4096` bytes), which is subdivided into 8 distinct 512-byte sector chunks.
+* For every bit set in the `used` mask, the engine computes the exact RVA boundaries of that active 512-byte sector window:
+
+$$\text{Sector Start RVA} = (\text{Block Offset} \times 4096) + (\text{Sector Index} \times 512)$$
+$$\text{Sector End RVA} = \text{Sector Start RVA} + 512$$
+
+* Any exported function whose RVA falls cleanly within an active sector's window is matched, de-duplicated, and recorded.
+
 ```
 +-------------------------------------------------------+
 |              Prefetch Trace Artifact                  |
