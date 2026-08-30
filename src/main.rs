@@ -6,6 +6,7 @@ mod ordinals;
 mod parallel;
 mod pe;
 mod prefetch;
+mod prefetch_eat;
 mod sector_reader;
 
 use anyhow::{Context, Result};
@@ -529,7 +530,7 @@ fn convert_to_path(target: &str) -> Result<PathBuf> {
 }
 
 fn main() -> Result<()> {
-    // a kludge to prevent println panic on mingw
+    // a kludge to prevent println pipe panic on mingw
     std::panic::set_hook(Box::new(|info| {
         let mut msg = String::new();
         if let Some(s) = info.payload().downcast_ref::<&str>() {

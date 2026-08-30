@@ -23,6 +23,57 @@ https://dfir.science/2017/07/How-To-Fuzzy-Hashing-with-SSDEEP-(similarity-matchi
 #### LNK Analysis
 https://windowsir.blogspot.com/2025/09/ransomware-artifacts.html
 
+### Windows Prefetch Analysis
+If parsing a Windows Prefetch file the tool will endeavor to load any referenced DLL, even if it does not have a .dll extension, and using the offset and used bitmask determine what functions in the DLL MAY have been used. This workflow is layed out below.
+
++-------------------------------------------------------+
+|              Prefetch Trace Artifact                  |
+|    - File Path: \\VOLUME{...}\\...\\KERNEL32.D        |
+|    - Block Offsets & Binary 'used' Bitmask (e.g., 111)|
++-------------------------------------------------------+
+                           |
+                           v
++-------------------------------------------------------+
+|                1. Path Normalization                  |
+|  - Strip \\VOLUME{...} namespace prefix               |
+|  - Resolve clean relative path against SystemRoot     |
++-------------------------------------------------------+
+                           |
+                           v
++-------------------------------------------------------+
+|             2. File Discovery & Loading               |
+|  - Try direct load via cleaned path / SystemRoot      |
+|  - Fall back to disk scan (System32, SysWOW64, etc.)  |
+|  - BYPASSES EXTENSION CHECKS: Parses any valid file   |
+|    even if missing a '.dll' extension                 |
++-------------------------------------------------------+
+                           |
+                           v
++-------------------------------------------------------+
+|             3. In-Memory PE Parsing                   |
+|  - Read raw binary bytes into memory                  |
+|  - Parse via Goblin (`PE::parse`)                     |
+|  - Extract all Export Address Table (EAT) RVAs        |
++-------------------------------------------------------+
+                           |
+                           v
++-------------------------------------------------------+
+|             4. Bitmask & Sector Mapping               |
+|  - Parse binary 'used' bitmask string                 |
+|  - Divide 4KB block into 8 x 512-byte sectors         |
+|  - Compute active Sector Start/End RVAs               |
++-------------------------------------------------------+
+                           |
+                           v
++-------------------------------------------------------+
+|             5. Function Correlation                   |
+|  - Match EAT export RVAs falling inside active sectors|
+|  - De-duplicate and group results by block offset     |
+|  - Output structured JSON trace analysis              |
++-------------------------------------------------------+
+
+
+### Compiling
 To compile; install Rust and the MSVC 32 and/or 64 bit environment:
 ```
 x32:        cargo build --release --target i686-pc-windows-msvc

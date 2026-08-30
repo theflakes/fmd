@@ -499,6 +499,7 @@ impl Default for PrefetchTrace {
             block_offset: 0,
             used: String::new(),
             prefetched: String::new(),
+            functions: Vec::new(),
         }
     }
 }
@@ -508,6 +509,8 @@ pub struct PrefetchTrace {
     pub block_offset: u32,
     pub used: String,
     pub prefetched: String,
+    #[serde(skip_serializing_if = "Vec::is_empty", default)]
+    pub functions: Vec<String>,
 }
 
 impl Default for PrefetchDependency {
@@ -533,6 +536,7 @@ impl Default for PrefetchNtfsFile {
         PrefetchNtfsFile {
             mft_entry: 0,
             seq_number: 0,
+            path: None,
         }
     }
 }
@@ -540,6 +544,8 @@ impl Default for PrefetchNtfsFile {
 pub struct PrefetchNtfsFile {
     pub mft_entry: u64,
     pub seq_number: u16,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub path: Option<String>,
 }
 
 impl Default for PrefetchVolume {

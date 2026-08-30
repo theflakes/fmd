@@ -1,6 +1,7 @@
 use crate::data_defs::{
     Prefetch, PrefetchDependency, PrefetchNtfsFile, PrefetchTrace, PrefetchVolume,
 };
+use crate::prefetch_eat;
 use anyhow::Result;
 use forensic_rs::prelude::*;
 use frnsc_prefetch::common::PrefetchFile;
@@ -40,6 +41,7 @@ fn map_prefetch(pf: &PrefetchFile) -> Prefetch {
                 .map(|f| PrefetchNtfsFile {
                     mft_entry: f.mft_entry,
                     seq_number: f.seq_number,
+                    path: None,
                 })
                 .collect(),
             directories: v.directory_strings.clone(),
@@ -70,6 +72,7 @@ fn map_prefetch(pf: &PrefetchFile) -> Prefetch {
                         block_offset: t.block_offset,
                         used: format!("{:08b}", t.used_bitfield),
                         prefetched: format!("{:08b}", t.prefetched_bitfield),
+                        functions: Vec::new(),
                     })
                     .collect(),
             })
@@ -77,6 +80,40 @@ fn map_prefetch(pf: &PrefetchFile) -> Prefetch {
         files,
         volumes,
     }
+}
+
+fn map_prefetch_with_eat(pf: &PrefetchFile) -> Prefetch {
+    let mut prefetch = map_prefetch(pf);
+
+    // Resolve block offsets to DLL functions where the DLL is found on disk.
+    for dependency in prefetch.dependencies.iter_mut() {
+        let dll_name_strict: String = prefetch_eat::normalize_dll_name(&dependency.file);
+        let dll_name_lower = dll_name_strict.to_lowercase();
+
+        // Only resolve DLLs (pe, sys, drv)
+        if !dll_name_lower.ends_with(".dll")
+            && !dll_name_lower.ends_with(".sys")
+            && !dll_name_lower.ends_with(".drv")
+        {
+            continue;
+        }
+
+        // Try to find the DLL on disk
+        if let Some(eat_functions) = prefetch_eat::resolve_prefetch_to_dll_funcs(
+            &dependency.file,
+            &dependency.traces,
+            &dll_name_strict,
+            &dll_name_lower,
+        ) {
+            for trace in dependency.traces.iter_mut() {
+                if let Some(func_list) = eat_functions.get(&trace.block_offset) {
+                    trace.functions = func_list.clone();
+                }
+            }
+        }
+    }
+
+    prefetch
 }
 
 /// Parse a Windows prefetch (.pf) file into the tool's Prefetch log structure.
@@ -90,7 +127,7 @@ pub fn get_prefetch(artifact_name: &str, path: &Path) -> Result<Prefetch> {
         .map_err(|e| anyhow::anyhow!("Failed to open prefetch file: {e}"))?;
     let pf = read_prefetch_file(artifact_name, file)
         .map_err(|e| anyhow::anyhow!("Failed to parse prefetch file: {e}"))?;
-    Ok(map_prefetch(&pf))
+    Ok(map_prefetch_with_eat(&pf))
 }
 
 /// Quick sniff of the first bytes of a buffer to detect a prefetch file.
