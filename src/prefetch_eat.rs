@@ -2,9 +2,9 @@
 //!
 //! When analysing a Windows prefetch artifact this module:
 //! 1. Cleans the prefetch volume-prefixed path (e.g., `\\VOLUME{...}\\...`)
-//! 2. Attempts to load the target dependency directly using the path or resolved `SystemRoot` path
-//! 3. Falls back to locating the target on disk regardless of its file extension if direct loads fail
-//! 4. Parses it as a PE binary (in-memory, via **goblin**)
+//! 2. Attempts to load the file directly from the prefetch record or `SystemRoot`
+//! 3. Falls back to system directories using the exact filename provided
+//! 4. Validates the file as a PE binary via **goblin** (MZ/PE header check) regardless of extension
 //! 5. Maps export RVAs to specific sub-sectors of the page using the `used` bitmask
 
 use crate::data_defs::PrefetchTrace;
@@ -23,7 +23,7 @@ pub fn normalize_dll_name(name: &str) -> String {
 
 /// Resolve prefetch traces to binary export function names by verifying both
 /// the 4KB page range and whether the specific sub-sector bit is active in `used`.
-/// Handles prefetch volume namespace paths and falls back to system directory searches.
+/// Treats any matching file as a valid PE binary if its header checks out, skipping stem searches.
 pub fn resolve_prefetch_to_dll_funcs(
     filename: &str,
     traces: &[PrefetchTrace],
@@ -41,7 +41,7 @@ pub fn resolve_prefetch_to_dll_funcs(
         filename
     };
 
-    // Attempt loading via direct paths, system root combination, or disk fallback search
+    // Attempt loading directly via the prefetch record paths or exact filename match in System32/SysWOW64
     let file_bytes = std::fs::read(filename)
         .or_else(|_| std::fs::read(cleaned_path))
         .or_else(|_| {
@@ -52,15 +52,14 @@ pub fn resolve_prefetch_to_dll_funcs(
             std::fs::read(resolved_sys_path)
         })
         .or_else(|_| {
-            let fallback_path =
-                find_file_on_disk_any_extension(target_name_lower).ok_or_else(|| {
-                    std::io::Error::new(std::io::ErrorKind::NotFound, "DLL not found on disk")
-                })?;
-            std::fs::read(fallback_path)
+            let exact_path = find_file_on_disk_exact(target_name_lower).ok_or_else(|| {
+                std::io::Error::new(std::io::ErrorKind::NotFound, "File not found on disk")
+            })?;
+            std::fs::read(exact_path)
         })
         .ok()?;
 
-    // Always runs the PE header check via goblin, ignoring extension constraints
+    // Validate the PE headers (MZ / PE signature check via goblin) regardless of file extension
     let pe = PE::parse(&file_bytes).ok()?;
 
     // Collect all valid exports with their RVAs and names
@@ -116,9 +115,8 @@ fn parse_used_bitfield(s: &str) -> u32 {
     u32::from_str_radix(s.trim(), 2).unwrap_or(0)
 }
 
-/// Search common Windows system directories for a file regardless of its extension,
-/// checking exact matches and fallback variations.
-fn find_file_on_disk_any_extension(name_lower: &str) -> Option<String> {
+/// Search common Windows system directories for an exact filename match (no stem/extension substitution).
+fn find_file_on_disk_exact(name_lower: &str) -> Option<String> {
     let windir = std::env::var("SystemRoot")
         .or_else(|_| std::env::var("windir"))
         .ok()?;
@@ -129,30 +127,6 @@ fn find_file_on_disk_any_extension(name_lower: &str) -> Option<String> {
         let candidate = format!("{windir}\\{sub}\\{name_lower}");
         if Path::new(&candidate).exists() {
             return Some(candidate);
-        }
-
-        // Fallback: match base stems across the parent directory cleanly using combinators
-        let base_path = Path::new(&candidate);
-        if let Some(path) = base_path
-            .parent()
-            .zip(base_path.file_stem())
-            .and_then(|(parent, stem)| {
-                let stem_str = stem.to_string_lossy().to_lowercase();
-                std::fs::read_dir(parent).ok().map(|entries| {
-                    entries
-                        .flatten()
-                        .map(|entry| entry.path())
-                        .filter(|path| {
-                            path.file_stem()
-                                .map(|s| s.to_string_lossy().to_lowercase() == stem_str)
-                                .unwrap_or(false)
-                        })
-                        .find(|path| path.exists())
-                })
-            })
-            .flatten()
-        {
-            return Some(path.to_string_lossy().into_owned());
         }
     }
 

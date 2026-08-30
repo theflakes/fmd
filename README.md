@@ -24,13 +24,13 @@ https://dfir.science/2017/07/How-To-Fuzzy-Hashing-with-SSDEEP-(similarity-matchi
 https://windowsir.blogspot.com/2025/09/ransomware-artifacts.html
 
 ### Windows Prefetch Analysis
-If parsing a Windows Prefetch file the tool will endeavor to load any referenced DLL, even if it does not have a .dll extension, and using the offset and used bitmask determine what functions in the DLL MAY have been used. This workflow is layed out below.
+If parsing a Windows Prefetch file the tool will endeavor to load any referenced dependency, treating it as a valid PE binary if its header checks out (even if it lacks a standard `.dll` extension), and using the block offset and used bitmask determine what functions in the binary MAY have been used. This workflow is laid out below.
 
 #### Features
 
-* **Portable Executable (PE) Parsing:** In-memory parsing of binaries and system DLLs via **goblin** to extract export address tables (EAT), relative virtual addresses (RVAs), and metadata.
+* **Portable Executable (PE) Parsing:** In-memory parsing of binaries and system files via **goblin** to extract export address tables (EAT), relative virtual addresses (RVAs), and metadata regardless of file extensions.
 * **Prefetch Trace Correlation:** Bridges Windows prefetch dependency traces with exported function names by mapping block offsets and active sub-sectors.
-* **Flexible File Discovery:** Locates target dependencies on disk regardless of file extension using smart fallback scanning across Windows system directories (`System32`, `SysWOW64`, `SYSnative`) and system paths.
+* **Exact File Discovery:** Locates target dependencies on disk using exact filename matches across Windows system directories (`System32`, `SysWOW64`, `SYSnative`) and system paths without wildcard stem searches.
 * **Volume Path Normalization:** Automatically handles and cleans prefetch volume GUID namespace paths (e.g., `\\VOLUME{...}\\...`) for seamless cross-platform or live artifact analysis.
 
 ---
@@ -44,16 +44,15 @@ The tool features an advanced forensic correlation engine that bridges Windows p
 When examining a Windows prefetch artifact, the analysis pipeline executes the following sequence:
 
 1. **Volume Path Cleansing & Direct Loading**
-* Prefetch files often record paths prefixed with a volume GUID (e.g., `\\VOLUME{...}\\WINDOWS\\SYSTEM32\\KERNEL32.DLL`). The engine strips this namespace prefix to extract a clean relative path.
+* Prefetch files often record paths prefixed with a volume GUID (e.g., `\\VOLUME{...}\\WINDOWS\\SYSTEM32\\KERNEL32.D`). The engine strips this namespace prefix to extract a clean relative path.
 * It attempts to load the dependency directly using the path or by evaluating it against the system root (`SystemRoot`), ensuring it works natively or during cross-investigations.
 
-2. **Fallback Disk Discovery (`find_file_on_disk_any_extension`)**
-* If direct paths fail, the engine scans standard Windows system directories (`System32`, `SysWOW64`, and `SYSnative`) alongside the system `PATH`.
-* It operates independently of strict file extension requirements. If a dependency's extension varies or is absent, the engine falls back to matching file stems, ensuring that any matching binary on disk is discovered.
+2. **Exact Disk Discovery (`find_file_on_disk_exact`)**
+* If direct paths fail, the engine searches standard Windows system directories (`System32`, `SysWOW64`, and `SYSnative`) alongside the system `PATH` using the exact target filename provided.
 
-3. **In-Memory PE Parsing (`goblin`)**
-* Once the target file is located and read into memory, it is parsed as a Portable Executable (PE) binary using the `goblin` crate.
-* This step checks the binary's headers to extract all exported function symbols and their corresponding Relative Virtual Addresses (RVAs) from the Export Address Table (EAT).
+3. **In-Memory PE Header Validation (`goblin`)**
+* Once the target file is located and read into memory, it is parsed as a Portable Executable (PE) binary via the `goblin` crate.
+* This step validates the binary headers (MZ / PE signature check) and extracts all exported function symbols and their corresponding Relative Virtual Addresses (RVAs) from the Export Address Table (EAT) regardless of whether the file extension is `.dll`.
 
 4. **Bitmask & Sector Validation (`parse_used_bitfield`)**
 * Windows prefetch files record execution telemetry via a binary `used` bitmask string (e.g., `"11111110"`) for every trace block.
@@ -68,9 +67,9 @@ $$\text{Sector End RVA} = \text{Sector Start RVA} + 512$$
 
 * Any exported function whose RVA falls cleanly within an active sector's window is matched, de-duplicated, and recorded.
 
-```
+```c
 +-------------------------------------------------------+
-|              Prefetch Trace Artifact                  |
+|                    Prefetch Trace Artifact            |
 |    - File Path: \\VOLUME{...}\\...\\KERNEL32.D        |
 |    - Block Offsets & Binary 'used' Bitmask (e.g., 111)|
 +-------------------------------------------------------+
@@ -86,17 +85,15 @@ $$\text{Sector End RVA} = \text{Sector Start RVA} + 512$$
 +-------------------------------------------------------+
 |             2. File Discovery & Loading               |
 |  - Try direct load via cleaned path / SystemRoot      |
-|  - Fall back to disk scan (System32, SysWOW64, etc.)  |
-|  - BYPASSES EXTENSION CHECKS: Parses any valid file   |
-|    even if missing a '.dll' extension                 |
+|  - Fall back to exact disk scan (System32, etc.)      |
 +-------------------------------------------------------+
                            |
                            v
 +-------------------------------------------------------+
-|             3. In-Memory PE Parsing                   |
+|             3. In-Memory PE Header Validation         |
 |  - Read raw binary bytes into memory                  |
-|  - Parse via Goblin (`PE::parse`)                     |
-|  - Extract all Export Address Table (EAT) RVAs        |
+|  - Validate MZ/PE headers via Goblin (`PE::parse`)    |
+|  - Extracts EAT RVAs regardless of file extension     |
 +-------------------------------------------------------+
                            |
                            v
@@ -114,7 +111,6 @@ $$\text{Sector End RVA} = \text{Sector Start RVA} + 512$$
 |  - De-duplicate and group results by block offset     |
 |  - Output structured JSON trace analysis              |
 +-------------------------------------------------------+
-```
 
 ### Compiling
 To compile; install Rust and the MSVC 32 and/or 64 bit environment:
