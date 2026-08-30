@@ -30,7 +30,7 @@ If parsing a Windows Prefetch file the tool will endeavor to load any referenced
 +-------------------------------------------------------+
 |              Prefetch Trace Artifact                  |
 |    - File Path: \\VOLUME{...}\\...\\KERNEL32.D        |
-|    - Block Offsets & Binary 'used' Bitmask (e.g., 111) |
+|    - Block Offsets & Binary 'used' Bitmask (e.g., 111)|
 +-------------------------------------------------------+
                            |
                            v
