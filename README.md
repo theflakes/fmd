@@ -37,7 +37,9 @@ If parsing a Windows Prefetch file the tool will endeavor to load any referenced
 
 #### Prefetch to DLL Function Resolution Engine
 
-The tool features an advanced forensic correlation engine that bridges Windows prefetch dependency traces with the Export Address Table (EAT) of target DLLs or binaries. This process maps low-level memory block execution back to meaningful Windows API functions.
+The tool features a forensic correlation engine that bridges Windows prefetch dependency traces with the Export Address Table (EAT) of target DLLs or binaries. This process maps low-level memory block execution back to meaningful Windows API functions.
+
+**WARNING**: This prefetch DLL function mapping WILL MISS FUNCTIONS used but not refetched and it will also identify functions that were not used. This should only be used to get a loose idea of the behavior of an unkown PE binary.
 
 ##### How the Resolution Engine Works
 
