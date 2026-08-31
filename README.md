@@ -30,7 +30,7 @@ If parsing a Windows Prefetch file the tool will try to load any referenced depe
 - Prefetch DLL function mapping WILL MISS FUNCTIONS used but not prefetched
   and it will also identify functions that were not used.
 - This information should only be used to get a loose idea of the behavior of an
-  unkown PE binary..
+  unkown PE binary.
 
 #### Features
 
