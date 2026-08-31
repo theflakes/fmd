@@ -102,6 +102,7 @@ $$\text{Sector End RVA} = \text{Sector Start RVA} + 512$$
 +-------------------------------------------------------+
 |             4. Bitmask & Sector Mapping               |
 |  - Parse binary 'used' bitmask string                 |
+|  - Is sector marked Executable (X)                    |
 |  - Divide 4KB block into 8 x 512-byte sectors         |
 |  - Compute active Sector Start/End RVAs               |
 +-------------------------------------------------------+

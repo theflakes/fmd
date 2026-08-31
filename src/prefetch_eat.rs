@@ -6,7 +6,8 @@
 //! 3. Falls back to system directories using the exact filename provided
 //! 4. Validates the file as a PE binary via **goblin** (MZ/PE header check) regardless of extension
 //! 5. Maps export RVAs to specific sub-sectors using raw file pointer alignment,
-//!    resolving re-exports via debug formatting, filtering for executable `.text` sections, and optimizing with binary search.
+//!    resolving re-exports via debug formatting, filtering for executable `.text` sections,
+//!    restricting analysis to execution (`X`) prefetch trace blocks, and optimizing with binary search.
 
 use crate::data_defs::PrefetchTrace;
 use goblin::pe::PE;
@@ -23,8 +24,8 @@ pub fn normalize_dll_name(name: &str) -> String {
 }
 
 /// Resolve prefetch traces to binary export function names by verifying both
-/// the page range and whether the specific sub-sector bit is active in `used`.
-/// Handles raw file pointer alignment, re-export resolution via `{:?}`, and executable section filtering.
+/// the page range, whether the specific sub-sector bit is active in `used`, and
+/// whether the trace block is explicitly marked as executable (`X`).
 pub fn resolve_prefetch_to_dll_funcs(
     filename: &str,
     traces: &[PrefetchTrace],
@@ -111,6 +112,11 @@ pub fn resolve_prefetch_to_dll_funcs(
     let mut result: HashMap<u32, Vec<String>> = HashMap::new();
 
     for trace in traces {
+        // Filter out non-executable prefetch trace blocks (strictly require 'X' flag execution)
+        if !trace.flags.contains('X') {
+            continue;
+        }
+
         // Parse the binary "used" bitfield string (e.g., "11111110")
         let used_bits = parse_used_bitfield(&trace.used);
         if used_bits == 0 {
