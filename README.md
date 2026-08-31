@@ -24,7 +24,13 @@ https://dfir.science/2017/07/How-To-Fuzzy-Hashing-with-SSDEEP-(similarity-matchi
 https://windowsir.blogspot.com/2025/09/ransomware-artifacts.html
 
 ### Windows Prefetch Analysis
-If parsing a Windows Prefetch file the tool will endeavor to load any referenced dependency, treating it as a valid PE binary if its header checks out (even if it lacks a standard `.dll` extension), and using the block offset and used bitmask determine what functions in the binary MAY have been used. This workflow is laid out below.
+If parsing a Windows Prefetch file the tool will try to load any referenced dependency, treating it as a valid PE binary if its header checks out (even if it lacks a standard `.dll` extension), and using the block offset and used bitmask determine what functions in the binary MAY have been used. This workflow is laid out below.
+
+**WARNING**:
+- Prefetch DLL function mapping WILL MISS FUNCTIONS used but not prefetched
+  and it will also identify functions that were not used.
+- This information should only be used to get a loose idea of the behavior of an
+  unkown PE binary..
 
 #### Features
 
@@ -38,8 +44,6 @@ If parsing a Windows Prefetch file the tool will endeavor to load any referenced
 #### Prefetch to DLL Function Resolution Engine
 
 The tool features a forensic correlation engine that bridges Windows prefetch dependency traces with the Export Address Table (EAT) of target DLLs or binaries. This process maps low-level memory block execution back to meaningful Windows API functions.
-
-**WARNING**: This prefetch DLL function mapping WILL MISS FUNCTIONS used but not refetched and it will also identify functions that were not used. This should only be used to get a loose idea of the behavior of an unkown PE binary.
 
 ##### How the Resolution Engine Works
 

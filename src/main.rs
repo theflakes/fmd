@@ -807,6 +807,12 @@ NOTE:
     - if 'prefetch' is null, the file was not successfully parsed as prefetch,
       though the general file log is still reported.
 
+    WARNING:
+    - Prefetch DLL function mapping WILL MISS FUNCTIONS used but not prefetched
+      and it will also identify functions that were not used.
+    - This information should only be used to get a loose idea of the behavior of an
+      unkown PE binary.
+
     Certain forensic information can only be harvested when the file is analyzed on
     the filesystem of origin.
     - e.g. timestamps and alternate data streams are lost when the file is moved
