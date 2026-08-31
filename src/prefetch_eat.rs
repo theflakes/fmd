@@ -5,7 +5,8 @@
 //! 2. Attempts to load the file directly from the prefetch record or `SystemRoot`
 //! 3. Falls back to system directories using the exact filename provided
 //! 4. Validates the file as a PE binary via **goblin** (MZ/PE header check) regardless of extension
-//! 5. Maps export RVAs to specific sub-sectors of the page using the `used` bitmask
+//! 5. Maps export RVAs to specific sub-sectors using raw file pointer alignment,
+//!    resolving re-exports via debug formatting, filtering for executable `.text` sections, and optimizing with binary search.
 
 use crate::data_defs::PrefetchTrace;
 use goblin::pe::PE;
@@ -22,8 +23,8 @@ pub fn normalize_dll_name(name: &str) -> String {
 }
 
 /// Resolve prefetch traces to binary export function names by verifying both
-/// the 4KB page range and whether the specific sub-sector bit is active in `used`.
-/// Treats any matching file as a valid PE binary if its header checks out, skipping stem searches.
+/// the page range and whether the specific sub-sector bit is active in `used`.
+/// Handles raw file pointer alignment, re-export resolution via `{:?}`, and executable section filtering.
 pub fn resolve_prefetch_to_dll_funcs(
     filename: &str,
     traces: &[PrefetchTrace],
@@ -62,13 +63,50 @@ pub fn resolve_prefetch_to_dll_funcs(
     // Validate the PE headers (MZ / PE signature check via goblin) regardless of file extension
     let pe = PE::parse(&file_bytes).ok()?;
 
-    // Collect all valid exports with their RVAs and names
+    // Identify section virtual bounds and raw file pointer alignments to map prefetch blocks accurately
+    let mut text_section_bounds: Vec<(u64, u64)> = Vec::new();
+    let mut raw_to_va_shifts: Vec<(u64, u64, u64, u64)> = Vec::new(); // (raw_start, raw_end, va_start, va_end)
+
+    for section in &pe.sections {
+        let va_start = section.virtual_address as u64;
+        let va_end = va_start + section.virtual_size as u64;
+        let raw_start = section.pointer_to_raw_data as u64;
+        let raw_end = raw_start + section.size_of_raw_data as u64;
+
+        raw_to_va_shifts.push((raw_start, raw_end, va_start, va_end));
+
+        if let Ok(name_str) = std::str::from_utf8(&section.name) {
+            let clean_name = name_str.trim_matches('\0');
+            if clean_name.eq_ignore_ascii_case(".text") {
+                text_section_bounds.push((va_start, va_end));
+            }
+        }
+    }
+
+    // Collect valid executable exports, resolving re-exports via Debug formatting if present, and sort by RVA
     let mut exports_list = Vec::new();
     for export in &pe.exports {
         if let Some(name) = export.name.as_ref() {
-            exports_list.push((export.rva as u64, name.to_string()));
+            let rva = export.rva as u64;
+
+            // Filter for executable .text sections if section bounds were successfully parsed
+            if text_section_bounds.is_empty()
+                || text_section_bounds
+                    .iter()
+                    .any(|&(start, end)| rva >= start && rva < end)
+            {
+                let mut display_name = name.to_string();
+
+                // If the export points to a re-export/forwarder, format it using its Debug representation
+                if let Some(ref reexport) = export.reexport {
+                    display_name = format!("{} -> {:?}", name, reexport);
+                }
+
+                exports_list.push((rva, display_name));
+            }
         }
     }
+    exports_list.sort_unstable_by_key(|&(rva, _)| rva);
 
     let mut result: HashMap<u32, Vec<String>> = HashMap::new();
 
@@ -79,7 +117,7 @@ pub fn resolve_prefetch_to_dll_funcs(
             continue; // No activity recorded in this trace block
         }
 
-        let block_start_rva = (trace.block_offset as u64) * PAGE_SIZE;
+        let block_offset_bytes = (trace.block_offset as u64) * PAGE_SIZE;
         let sector_size = PAGE_SIZE / (SECTOR_COUNT as u64); // 512 bytes per sector chunk
 
         let mut matched_funcs = Vec::new();
@@ -88,12 +126,28 @@ pub fn resolve_prefetch_to_dll_funcs(
         for sector_idx in 0..SECTOR_COUNT {
             let bit_mask = 1 << sector_idx;
             if (used_bits & bit_mask) != 0 {
-                let sector_start_rva = block_start_rva + (sector_idx as u64 * sector_size);
-                let sector_end_rva = sector_start_rva + sector_size;
+                let sector_file_offset = block_offset_bytes + (sector_idx as u64 * sector_size);
+                let sector_end_file_offset = sector_file_offset + sector_size;
 
-                // Only pull functions whose RVAs land inside this active sector window
-                for (rva, name) in &exports_list {
-                    if *rva >= sector_start_rva && *rva < sector_end_rva {
+                // Map raw file offsets to Virtual Addresses using section alignment mapping if available
+                let mut sector_start_rva = sector_file_offset;
+                let mut sector_end_rva = sector_end_file_offset;
+
+                for &(raw_start, raw_end, va_start, _va_end) in &raw_to_va_shifts {
+                    if sector_file_offset >= raw_start && sector_file_offset < raw_end {
+                        let offset_into_section = sector_file_offset - raw_start;
+                        sector_start_rva = va_start + offset_into_section;
+                        sector_end_rva = sector_start_rva + sector_size;
+                        break;
+                    }
+                }
+
+                // Efficiently find matching exports using binary search range boundaries
+                let start_idx = exports_list.partition_point(|&(rva, _)| rva < sector_start_rva);
+                let end_idx = exports_list.partition_point(|&(rva, _)| rva < sector_end_rva);
+
+                for &(rva, ref name) in &exports_list[start_idx..end_idx] {
+                    if rva >= sector_start_rva && rva < sector_end_rva {
                         if !matched_funcs.contains(name) {
                             matched_funcs.push(name.clone());
                         }
