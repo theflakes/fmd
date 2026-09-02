@@ -27,10 +27,9 @@ https://windowsir.blogspot.com/2025/09/ransomware-artifacts.html
 If parsing a Windows Prefetch file the tool will try to load any referenced dependency, treating it as a valid PE binary if its header checks out (even if it lacks a standard `.dll` extension), and using the block offset and used bitmask determine what functions in the binary MAY have been used. This workflow is laid out below.
 
 **WARNING**:
-- Prefetch DLL function mapping WILL MISS FUNCTIONS used but not prefetched
-  and it will also identify functions that were not used.
-- This information should only be used to get a loose idea of the behavior of an
-  unkown PE binary.
+- Prefetch DLL function mapping WILL MISS FUNCTIONS used but not prefetched and it will also identify functions that were
+not used.
+- This information should only be used to get a loose idea of the behavior of an unkown PE binary.
 
 #### Features
 
